@@ -79,6 +79,7 @@ namespace RimChat.WorldState
             settlementDestructionRecords ??= new List<FactionSettlementDestructionRecord>();
             CleanupLoadedData();
             processedDestroyedBuildingThingIds.Clear();
+            RimChatTrackedEntityRegistry.PrimeFromCurrentGame();
         }
 
         public override void GameComponentTick()

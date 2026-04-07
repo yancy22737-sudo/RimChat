@@ -24,6 +24,10 @@
     <RimChat_OutputLanguageCustomTooltip>Function: use custom language label as prompt language rule. Scope: all diplomacy and pawn dialogue requests.</RimChat_OutputLanguageCustomTooltip>
     <RimChat_APIVersionButtonLabel>Version: {0}</RimChat_APIVersionButtonLabel>
     <RimChat_APIVersionButtonTooltip>Function: open version notes for the current language. Scope: settings-only utility.</RimChat_APIVersionButtonTooltip>
+    <RimChat_DiplomacyVersionTooltip>Function: open version notes language picker. Scope: diplomacy dialogue title bar only.</RimChat_DiplomacyVersionTooltip>
+    <RimChat_VersionLogLanguageChinese>Chinese</RimChat_VersionLogLanguageChinese>
+    <RimChat_VersionLogLanguageEnglish>English</RimChat_VersionLogLanguageEnglish>
+    <RimChat_VersionLogWindowTitleByLanguage>Version Log - {0}</RimChat_VersionLogWindowTitleByLanguage>
     <RimChat_APIGitHubButton>GitHub</RimChat_APIGitHubButton>
     <RimChat_APIGitHubButtonTooltip>Function: open RimChat GitHub repository. Scope: external browser navigation.</RimChat_APIGitHubButtonTooltip>
     <RimChat_VersionLogWindowTitle>Version Log</RimChat_VersionLogWindowTitle>
@@ -559,7 +563,7 @@
 
     <!-- Dialogue -->
     <RimChat_DialogueTitle>Diplomatic Dialogue</RimChat_DialogueTitle>
-    <RimChat_TerminalTitle># RimChat Comms console v0.9</RimChat_TerminalTitle>
+    <RimChat_TerminalTitle># RimChat Comms console</RimChat_TerminalTitle>
     <RimChat_DialogueSend>Send</RimChat_DialogueSend>
     <RimChat_DialogueClose>Close</RimChat_DialogueClose>
     <RimChat_DialogueInputPlaceholder>Enter your message...</RimChat_DialogueInputPlaceholder>
@@ -952,6 +956,7 @@
     <RimChat_SendInfoMenuTaunt>Taunt</RimChat_SendInfoMenuTaunt>
     <RimChat_SendInfoMenuRequestCaravan>Request Caravan</RimChat_SendInfoMenuRequestCaravan>
     <RimChat_SendInfoMenuRequestSupport>Request Support</RimChat_SendInfoMenuRequestSupport>
+    <RimChat_SendInfoMenuRequestQuest>Request Quest</RimChat_SendInfoMenuRequestQuest>
     <RimChat_SendInfoMenuPrisoner>Send Prisoner Info</RimChat_SendInfoMenuPrisoner>
     <RimChat_SendInfoMenuAirdropTrade>Send Airdrop Trade Request</RimChat_SendInfoMenuAirdropTrade>
     <RimChat_SendInfoTauntTitle>Choose a Taunt</RimChat_SendInfoTauntTitle>
@@ -971,6 +976,14 @@
     <RimChat_SendInfoTauntSystemMessage>The player taunted the other side and will trigger a \"{0}.\"</RimChat_SendInfoTauntSystemMessage>
     <RimChat_SendInfoCaravanSystemMessage>The player requested that the other side dispatch a trade caravan.</RimChat_SendInfoCaravanSystemMessage>
     <RimChat_SendInfoSupportSystemMessage>The player requested that the other side dispatch military aid support.</RimChat_SendInfoSupportSystemMessage>
+    <RimChat_SendInfoQuestSystemMessage>The player requested a "{0}" quest from the other side.</RimChat_SendInfoQuestSystemMessage>
+    <RimChat_SendInfoQuestUnavailableHint>No quests can currently be requested from this faction.</RimChat_SendInfoQuestUnavailableHint>
+    <RimChat_SendInfoQuestPickerTitle>Choose a Quest Request</RimChat_SendInfoQuestPickerTitle>
+    <RimChat_SendInfoQuestPickerSubtitle>Select one quest type to request from {0}.</RimChat_SendInfoQuestPickerSubtitle>
+    <RimChat_SendInfoQuestPickerConfirm>Confirm</RimChat_SendInfoQuestPickerConfirm>
+    <RimChat_SendInfoQuestPickerCancel>Cancel</RimChat_SendInfoQuestPickerCancel>
+    <RimChat_SendInfoQuestPickerEmptySelection>Please choose a quest first.</RimChat_SendInfoQuestPickerEmptySelection>
+    <RimChat_SendInfoQuestPickerNoOptions>No requestable quests are currently available.</RimChat_SendInfoQuestPickerNoOptions>
     <RimChat_AirdropTradeCard_Title>Item Airdrop Request</RimChat_AirdropTradeCard_Title>
     <RimChat_AirdropTradeCard_NeedLabel>Item Needed:</RimChat_AirdropTradeCard_NeedLabel>
     <RimChat_AirdropTradeCard_CountLabel>Qty:</RimChat_AirdropTradeCard_CountLabel>
@@ -1206,6 +1219,7 @@
     <RimChat_RansomSelectionCancelledSystem>This ransom flow was cancelled. No payment action was submitted.</RimChat_RansomSelectionCancelledSystem>
     <RimChat_RansomReferenceAskSystem>Based on {0}'s current condition, reference ransom is {1} silver.</RimChat_RansomReferenceAskSystem>
     <RimChat_RansomReferenceAskUnavailableSystem>Reference ransom is currently unavailable for {0}; please retry later.</RimChat_RansomReferenceAskUnavailableSystem>
+    <RimChat_RansomAlreadyPaidPendingReleaseSystem>{0} already has a paid ransom contract pending release. Do not submit another payment for this prisoner.</RimChat_RansomAlreadyPaidPendingReleaseSystem>
     <RimChat_RansomProofCardBody>[Hostage Proof of Life]
 Name: {0}
 Age: {1}
@@ -1259,6 +1273,7 @@ Selected prisoners: {1}
     <RimChat_DiplomacyTypingStatus_13>The opposing leader is using an addictive substance</RimChat_DiplomacyTypingStatus_13>
     <RimChat_DiplomacyTypingStatus_14>The opposing leader is renewing the comms plan</RimChat_DiplomacyTypingStatus_14>
     <RimChat_DiplomacyTypingStatus_15>Windows is installing updates</RimChat_DiplomacyTypingStatus_15>
+    <RimChat_DiplomacyTypingStatus_16>The other side is playing RimTalk</RimChat_DiplomacyTypingStatus_16>
     <RimChat_ErrorLabel>Error</RimChat_ErrorLabel>
     <RimChat_JustNow>Just now</RimChat_JustNow>
     <RimChat_MinutesAgo>{0} min ago</RimChat_MinutesAgo>
@@ -2145,15 +2160,11 @@ Selected prisoners: {1}
     <RimChat_PromptWorkbench_ShowSide>Show Side</RimChat_PromptWorkbench_ShowSide>
     <RimChat_PromptWorkbench_HideSide>Hide Side</RimChat_PromptWorkbench_HideSide>
     <RimChat_PromptWorkbench_VariablesTab>Variables</RimChat_PromptWorkbench_VariablesTab>
-    <RimChat_PromptWorkbench_HelpTab>Help</RimChat_PromptWorkbench_HelpTab>
-    <RimChat_PromptWorkbench_GuideTab>Guide</RimChat_PromptWorkbench_GuideTab>
     <RimChat_PromptWorkbench_VariablesTitle>Prompt Variables</RimChat_PromptWorkbench_VariablesTitle>
     <RimChat_PromptWorkbench_OpenPicker>Open Variable Picker</RimChat_PromptWorkbench_OpenPicker>
     <RimChat_PromptWorkbench_InsertToken>Insert Token</RimChat_PromptWorkbench_InsertToken>
     <RimChat_PromptWorkbench_InsertFailed>Failed to insert token in current editor.</RimChat_PromptWorkbench_InsertFailed>
     <RimChat_PromptWorkbench_SourceHintHeader>Source Mapping Hints</RimChat_PromptWorkbench_SourceHintHeader>
-    <RimChat_PromptWorkbench_HelpTitle>Workbench Help</RimChat_PromptWorkbench_HelpTitle>
-    <RimChat_PromptWorkbench_HelpBody>Use root-channel and prompt-channel navigation to edit canonical section content. Preview always shows the current channel aggregate, and legacy RimTalk payloads now import only once into native sections.</RimChat_PromptWorkbench_HelpBody>
     <RimChat_PromptWorkbench_QuickHeader>Quick Persona</RimChat_PromptWorkbench_QuickHeader>
     <RimChat_PromptWorkbench_QuickFaction>Faction Prompt</RimChat_PromptWorkbench_QuickFaction>
     <RimChat_PromptWorkbench_QuickPawn>Persona Prompt</RimChat_PromptWorkbench_QuickPawn>

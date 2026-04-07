@@ -15,6 +15,7 @@ using RimChat.Prompting;
 using RimChat.Util;
 using RimChat.Core;
 using System.Text;
+using System.IO;
 
 namespace RimChat.UI
 {
@@ -70,10 +71,20 @@ namespace RimChat.UI
         private const float LayoutTabsSpacing = 4f;
         private const float LayoutTraderCardHeight = 60f;
         private const float LayoutTraderCardSpacing = 65f;
+        private const float LayoutTitleWeatherLineTopPadding = 10f;
         private const float LayoutTitleBarHeight = 40f;
-        private const float LayoutTitleLeftPadding = 15f;
-        private const float LayoutTitleTopPadding = 8f;
-        private const float LayoutTitleRightPadding = 45f;
+        private const float LayoutTitleLeftPadding = 10f;
+        private const float LayoutTitleTopPadding = 5f;
+        private const float LayoutTitleRightPadding = 10f;
+        private const float LayoutTitleFactionLineTopPadding = 10f;
+        private const float LayoutTitleVersionLineTopPadding = 9f;
+        private const float LayoutTitleVersionLineHeight = 16f;
+        private const float LayoutTitleVersionLineGap = 6f;
+        private const float LayoutTitleVersionChoiceWidth = 220f;
+        private const float LayoutTitleVersionChoiceHeight = 28f;
+        private const float LayoutTitleVersionChoiceGap = 6f;
+        private const float LayoutTitleVersionChoiceTotalWidth = LayoutTitleVersionChoiceWidth * 2f + LayoutTitleVersionChoiceGap;
+        private const float LayoutTitleVersionRightPadding = 75f;
         private const float LayoutCloseButtonSize = 30f;
         private const float LayoutFactionInnerPadding = 8f;
         private const float LayoutFactionHeaderHeight = 31f;
@@ -131,7 +142,148 @@ namespace RimChat.UI
             public bool DelayWindowLogged;
         }
 
-        public override Vector2 InitialSize => new Vector2(900f, 700f);
+        private sealed class ManualQuestRequestOption
+        {
+            public ManualQuestRequestOption(string questDefName, string label)
+            {
+                QuestDefName = questDefName;
+                Label = label;
+            }
+
+            public string QuestDefName { get; }
+
+            public string Label { get; }
+        }
+
+        private sealed class Dialog_ManualQuestRequestPicker : Window
+        {
+            private readonly Dialog_DiplomacyDialogue owner;
+            private readonly List<ManualQuestRequestOption> options;
+            private ManualQuestRequestOption selectedOption;
+            private Vector2 scrollPosition = Vector2.zero;
+            private bool committed;
+
+            public Dialog_ManualQuestRequestPicker(Dialog_DiplomacyDialogue owner, List<ManualQuestRequestOption> options)
+            {
+                this.owner = owner;
+                this.options = options ?? new List<ManualQuestRequestOption>();
+
+                doCloseX = true;
+                closeOnCancel = true;
+                closeOnClickedOutside = true;
+                absorbInputAroundWindow = true;
+                forcePause = true;
+                onlyOneOfTypeAllowed = true;
+                draggable = true;
+            }
+
+            public override Vector2 InitialSize => new Vector2(620f, 520f);
+
+            public override void DoWindowContents(Rect inRect)
+            {
+                Text.Font = GameFont.Medium;
+                Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 32f), "RimChat_SendInfoQuestPickerTitle".Translate());
+
+                Text.Font = GameFont.Small;
+                Widgets.Label(
+                    new Rect(inRect.x, inRect.y + 34f, inRect.width, 24f),
+                    "RimChat_SendInfoQuestPickerSubtitle".Translate(owner?.faction?.Name ?? "Unknown"));
+
+                Rect listRect = new Rect(inRect.x, inRect.y + 64f, inRect.width, inRect.height - 112f);
+                DrawList(listRect);
+
+                bool hasSelection = selectedOption != null;
+                Rect confirmRect = new Rect(inRect.x + inRect.width - 326f, inRect.yMax - 38f, 160f, 32f);
+                GUI.color = hasSelection ? Color.white : Color.gray;
+                if (Widgets.ButtonText(confirmRect, "RimChat_SendInfoQuestPickerConfirm".Translate()))
+                {
+                    if (!CommitSelection())
+                    {
+                        Messages.Message("RimChat_SendInfoQuestPickerEmptySelection".Translate(), MessageTypeDefOf.RejectInput, false);
+                    }
+                }
+
+                GUI.color = Color.white;
+                Rect cancelRect = new Rect(inRect.x + inRect.width - 160f, inRect.yMax - 38f, 160f, 32f);
+                if (Widgets.ButtonText(cancelRect, "RimChat_SendInfoQuestPickerCancel".Translate()))
+                {
+                    Close();
+                }
+            }
+
+            private void DrawList(Rect rect)
+            {
+                Widgets.DrawMenuSection(rect);
+                Rect inner = rect.ContractedBy(6f);
+                if (options == null || options.Count == 0)
+                {
+                    Text.Anchor = TextAnchor.MiddleCenter;
+                    GUI.color = Color.gray;
+                    Widgets.Label(inner, "RimChat_SendInfoQuestPickerNoOptions".Translate());
+                    GUI.color = Color.white;
+                    Text.Anchor = TextAnchor.UpperLeft;
+                    return;
+                }
+
+                const float rowHeight = 42f;
+                float totalHeight = Mathf.Max(inner.height, options.Count * rowHeight);
+                Rect viewRect = new Rect(0f, 0f, inner.width - 16f, totalHeight);
+                Widgets.BeginScrollView(inner, ref scrollPosition, viewRect);
+                float y = 0f;
+                foreach (ManualQuestRequestOption option in options)
+                {
+                    DrawOptionRow(new Rect(0f, y, viewRect.width, rowHeight - 2f), option);
+                    y += rowHeight;
+                }
+
+                Widgets.EndScrollView();
+            }
+
+            private void DrawOptionRow(Rect rect, ManualQuestRequestOption option)
+            {
+                Widgets.DrawHighlightIfMouseover(rect);
+                Widgets.DrawBox(rect, 1);
+                if (option == null)
+                {
+                    return;
+                }
+
+                bool selected = selectedOption != null && string.Equals(selectedOption.QuestDefName, option.QuestDefName, StringComparison.Ordinal);
+                Widgets.RadioButton(new Vector2(rect.x + 10f, rect.y + 11f), selected);
+                Widgets.Label(new Rect(rect.x + 38f, rect.y + 10f, rect.width - 46f, 22f), option.Label);
+
+                if (!Widgets.ButtonInvisible(rect))
+                {
+                    return;
+                }
+
+                selectedOption = option;
+            }
+
+            private bool CommitSelection()
+            {
+                if (selectedOption == null)
+                {
+                    return false;
+                }
+
+                committed = true;
+                owner?.SubmitManualQuestRequest(selectedOption);
+                Close();
+                return true;
+            }
+
+            public override void PreClose()
+            {
+                base.PreClose();
+                if (!committed)
+                {
+                    owner?.HandleManualQuestRequestPickerClosedWithoutSelection();
+                }
+            }
+        }
+
+        public override Vector2 InitialSize => new Vector2(900f, 720f);
 
         public Dialog_DiplomacyDialogue(
             Faction faction,
@@ -147,7 +299,7 @@ namespace RimChat.UI
             closeOnAccept = false;
             closeOnCancel = true;
             onlyOneOfTypeAllowed = false;
-            forcePause = true;
+            forcePause = false;
             draggable = true;
 
             // Settings打开和关闭音效
@@ -397,27 +549,22 @@ namespace RimChat.UI
         private void DrawTitleBar(Rect inRect)
         {
             Widgets.DrawBoxSolid(new Rect(inRect.x, inRect.y, inRect.width, LayoutTitleBarHeight), new Color(0.15f, 0.15f, 0.18f));
-            
-            // 左侧标题: RimChat Terminal
+
             Text.Font = GameFont.Medium;
             GUI.color = new Color(0.9f, 0.9f, 0.95f);
             string title = "RimChat_TerminalTitle".Translate();
             Widgets.Label(new Rect(inRect.x + LayoutTitleLeftPadding, inRect.y + LayoutTitleTopPadding, 250f, 30f), title);
 
-            // 中间: 当前factionname
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.7f, 0.7f, 0.75f);
             string factionTitle = faction.Name ?? "Unknown";
             float factionTitleWidth = Text.CalcSize(factionTitle).x;
             float centerX = inRect.x + (inRect.width - factionTitleWidth) / 2f;
-            Widgets.Label(new Rect(centerX, inRect.y + 10f, factionTitleWidth + 10f, 25f), factionTitle);
-            DrawCurrentFactionPresenceStatus(new Rect(centerX + factionTitleWidth + 14f, inRect.y + 9f, 132f, 24f));
+            float factionLineY = inRect.y + LayoutTitleFactionLineTopPadding;
+            Widgets.Label(new Rect(centerX, factionLineY, factionTitleWidth + 10f, 25f), factionTitle);
+            DrawCurrentFactionPresenceStatus(new Rect(centerX + factionTitleWidth + 14f, factionLineY - 1f, 132f, 24f));
 
-            // 右侧: 天气和时间
-            string weatherTimeText = GetWeatherAndTimeText();
-            float weatherTimeWidth = Text.CalcSize(weatherTimeText).x;
-            GUI.color = new Color(0.8f, 0.8f, 0.85f);
-            Widgets.Label(new Rect(inRect.xMax - weatherTimeWidth - LayoutTitleRightPadding, inRect.y + 10f, weatherTimeWidth + 10f, 25f), weatherTimeText);
+            DrawVersionLine(inRect, centerX, factionTitleWidth);
 
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
@@ -429,6 +576,71 @@ namespace RimChat.UI
                 Close();
             }
             GUI.color = Color.white;
+        }
+
+        private void DrawVersionLine(Rect inRect, float centerX, float factionTitleWidth)
+        {
+            string versionText = GetDialogueHeaderVersionText();
+            Text.Font = GameFont.Tiny;
+            GUI.color = new Color(0.72f, 0.86f, 0.96f);
+            float versionWidth = Text.CalcSize(versionText).x;
+            float closeButtonX = inRect.xMax - (LayoutCloseButtonSize + 5f);
+            float versionX = closeButtonX - versionWidth - 14f;
+            Rect versionRect = new Rect(versionX, inRect.y + LayoutTitleVersionLineTopPadding, versionWidth + 10f, LayoutTitleVersionLineHeight);
+            Widgets.Label(versionRect, versionText);
+            TooltipHandler.TipRegion(versionRect, "RimChat_DiplomacyVersionTooltip".Translate());
+            if (Widgets.ButtonInvisible(versionRect))
+            {
+                OpenVersionLogLanguageMenu();
+            }
+
+            GUI.color = Color.white;
+            Text.Font = GameFont.Small;
+        }
+
+        private string GetDialogueHeaderVersionText()
+        {
+            var settings = RimChatMod.Instance?.InstanceSettings;
+            string version = settings?.GetVersionDisplayVersion();
+            if (string.IsNullOrWhiteSpace(version))
+            {
+                return "0.0.0";
+            }
+
+            return version.Trim();
+        }
+
+        private void OpenVersionLogLanguageMenu()
+        {
+            var options = new List<FloatMenuOption>
+            {
+                new FloatMenuOption("RimChat_VersionLogLanguageChinese".Translate(), OpenChineseVersionLog),
+                new FloatMenuOption("RimChat_VersionLogLanguageEnglish".Translate(), OpenEnglishVersionLog)
+            };
+            Find.WindowStack.Add(new FloatMenu(options));
+        }
+
+        private void OpenChineseVersionLog()
+        {
+            OpenVersionLogForLanguage("ChineseSimplified", "RimChat_VersionLogLanguageChinese");
+        }
+
+        private void OpenEnglishVersionLog()
+        {
+            OpenVersionLogForLanguage("English", "RimChat_VersionLogLanguageEnglish");
+        }
+
+        private void OpenVersionLogForLanguage(string languageFolder, string languageKey)
+        {
+            var settings = RimChatMod.Instance?.InstanceSettings;
+            if (settings == null)
+            {
+                return;
+            }
+
+            string title = "RimChat_VersionLogWindowTitleByLanguage".Translate(languageKey.Translate());
+            string content = settings.GetVersionLogDisplayContentForLanguage(languageFolder);
+            Find.WindowStack.Add(new Dialog_VersionLogViewer(title, content));
         }
 
         private string GetWeatherAndTimeText()
@@ -921,40 +1133,68 @@ namespace RimChat.UI
 
         private float DrawQuestActions(Rect rect)
         {
-            var quests = Find.QuestManager.QuestsListForReading
+            List<Quest> quests = Find.QuestManager.QuestsListForReading
                 .Where(q => q.State == QuestState.Ongoing && q.InvolvedFactions.Contains(faction) && !q.hidden)
                 .ToList();
 
-            if (!quests.Any()) return 0f;
-
-            float height = 40f;
-            
-            // 标题
-            Rect headerRect = new Rect(rect.x, rect.y, rect.width, 30f);
-            Widgets.DrawBoxSolid(headerRect, new Color(0.1f, 0.15f, 0.2f));
-            Text.Font = GameFont.Small;
-            GUI.color = new Color(0.4f, 0.8f, 1f);
-            Widgets.Label(new Rect(headerRect.x + 10f, headerRect.y + 5f, headerRect.width - 20f, 20f), "RimChat_QuestActions".Translate());
-            GUI.color = Color.white;
-
-            float buttonHeight = 30f;
-            float buttonY = rect.y + 35f;
-
-            foreach (var quest in quests)
+            if (!quests.Any())
             {
-                Rect btnRect = new Rect(rect.x, buttonY, rect.width, buttonHeight);
-                if (Widgets.ButtonText(btnRect, quest.name))
-                {
-                    MainTabWindow_Quests questsWindow = (MainTabWindow_Quests)MainButtonDefOf.Quests.TabWindow;
-                    questsWindow.Select(quest);
-                    Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Quests, true);
-                    Close();
-                }
-                buttonY += buttonHeight + 5f;
-                height += buttonHeight + 5f;
+                return 0f;
             }
 
-            return height + 5f;
+            const float topPadding = 2f;
+            const float leftPadding = 10f;
+            const float rightPadding = 6f;
+            const float horizontalSpacing = 6f;
+            const float verticalSpacing = 2f;
+            const float rowHeight = 20f;
+            const float minColumnWidth = 90f;
+            const float bottomSpacing = 5f;
+
+            Text.Font = GameFont.Small;
+            Vector2 headerSize = Text.CalcSize("RimChat_QuestActions".Translate());
+            Rect headerRect = new Rect(rect.x + leftPadding, rect.y + topPadding, headerSize.x, rowHeight);
+            GUI.color = new Color(0.4f, 0.8f, 1f);
+            Widgets.Label(headerRect, "RimChat_QuestActions".Translate());
+            GUI.color = Color.white;
+
+            float contentX = headerRect.xMax + 10f;
+            float contentWidth = Mathf.Max(minColumnWidth, rect.xMax - rightPadding - contentX);
+            int columns = Mathf.Max(1, Mathf.FloorToInt((contentWidth + horizontalSpacing) / (minColumnWidth + horizontalSpacing)));
+            float itemWidth = (contentWidth - horizontalSpacing * (columns - 1)) / columns;
+            int rowCount = Mathf.CeilToInt(quests.Count / (float)columns);
+
+            Text.Font = GameFont.Tiny;
+            Color previousColor = GUI.color;
+            for (int i = 0; i < quests.Count; i++)
+            {
+                Quest quest = quests[i];
+                int column = i % columns;
+                int row = i / columns;
+                Rect itemRect = new Rect(
+                    contentX + column * (itemWidth + horizontalSpacing),
+                    rect.y + topPadding + row * (rowHeight + verticalSpacing),
+                    itemWidth,
+                    rowHeight);
+
+                Widgets.DrawHighlightIfMouseover(itemRect);
+                GUI.color = new Color(0.72f, 0.86f, 1f);
+                Widgets.Label(itemRect, (quest?.name ?? string.Empty).Truncate(itemRect.width));
+                GUI.color = previousColor;
+
+                if (!Widgets.ButtonInvisible(itemRect))
+                {
+                    continue;
+                }
+
+                MainTabWindow_Quests questsWindow = (MainTabWindow_Quests)MainButtonDefOf.Quests.TabWindow;
+                questsWindow.Select(quest);
+                Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Quests, true);
+            }
+
+            Text.Font = GameFont.Small;
+            GUI.color = previousColor;
+            return rowCount * rowHeight + Mathf.Max(0, rowCount - 1) * verticalSpacing + bottomSpacing + topPadding;
         }
 
         private void DrawChatArea(Rect rect)
@@ -1527,7 +1767,9 @@ namespace RimChat.UI
         private void OpenSendInfoMenu()
         {
             ActionValidationResult airdropValidation = ValidateManualAirdropTradeEntry();
+            List<ManualQuestRequestOption> questOptions = BuildManualQuestRequestOptions();
             string airdropLabel = "RimChat_SendInfoMenuAirdropTrade".Translate().ToString();
+            bool hasQuestOptions = questOptions.Count > 0;
             var options = new List<FloatMenuOption>
             {
                 new FloatMenuOption(
@@ -1540,8 +1782,8 @@ namespace RimChat.UI
                     "RimChat_SendInfoMenuRequestSupport".Translate(),
                     TryStartManualSupportRequestSend),
                 new FloatMenuOption(
-                    "RimChat_SendInfoMenuPrisoner".Translate(),
-                    TryStartManualPrisonerInfoSend),
+                    "RimChat_SendInfoMenuRequestQuest".Translate(),
+                    hasQuestOptions ? (Action)TryStartManualQuestRequestSend : null),
                 new FloatMenuOption(
                     BuildManualAirdropTradeMenuLabel(airdropLabel, airdropValidation),
                     airdropValidation != null && !airdropValidation.Allowed ? null : (Action)TryStartManualAirdropTradeSend)
@@ -1590,6 +1832,72 @@ namespace RimChat.UI
             return string.IsNullOrWhiteSpace(blockedReason)
                 ? (baseLabel ?? string.Empty)
                 : $"{baseLabel} ({blockedReason})";
+        }
+
+        private List<ManualQuestRequestOption> BuildManualQuestRequestOptions()
+        {
+            if (faction == null)
+            {
+                return new List<ManualQuestRequestOption>();
+            }
+
+            FactionQuestAvailabilityReport report = ApiActionEligibilityService.Instance?.GetFactionQuestAvailabilityReport(faction, null);
+            if (report?.AllowedQuestDefs == null || report.AllowedQuestDefs.Count == 0)
+            {
+                return new List<ManualQuestRequestOption>();
+            }
+
+            var options = new List<ManualQuestRequestOption>();
+            foreach (string questDefName in report.AllowedQuestDefs)
+            {
+                QuestScriptDef questDef = DefDatabase<QuestScriptDef>.GetNamedSilentFail(questDefName);
+                string label = questDef?.label;
+                if (string.IsNullOrWhiteSpace(label))
+                {
+                    label = questDefName;
+                }
+
+                options.Add(new ManualQuestRequestOption(questDefName, label.CapitalizeFirst()));
+            }
+
+            return options
+                .OrderBy(option => option.Label)
+                .ToList();
+        }
+
+        private void TryStartManualQuestRequestSend()
+        {
+            if (!CanSendMessageNow() || session == null || faction == null)
+            {
+                return;
+            }
+
+            List<ManualQuestRequestOption> options = BuildManualQuestRequestOptions();
+            if (options.Count == 0)
+            {
+                Messages.Message("RimChat_SendInfoQuestUnavailableHint".Translate(), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            Find.WindowStack.Add(new Dialog_ManualQuestRequestPicker(this, options));
+        }
+
+        private void SubmitManualQuestRequest(ManualQuestRequestOption option)
+        {
+            if (option == null || !CanSendMessageNow() || session == null || faction == null)
+            {
+                return;
+            }
+
+            string systemMessage = "RimChat_SendInfoQuestSystemMessage".Translate(option.Label).ToString();
+            string hiddenDirective = BuildSendInfoHiddenDirective(
+                AIActionNames.CreateQuest,
+                extraParameterLines: $"questDefName: {option.QuestDefName}\nrequire_exact_questDefName: true");
+            SendSystemInfoRequest(systemMessage, hiddenDirective);
+        }
+
+        private void HandleManualQuestRequestPickerClosedWithoutSelection()
+        {
         }
 
         private void OnAirdropTradeCardSubmitted(ItemAirdropTradeCardPayload payload)
@@ -2430,6 +2738,8 @@ namespace RimChat.UI
             bool hasUnpaidRansomRequest = hasSessionUnpaidRansomRequest;
             if (currentRequestPaid && currentRequestTargetPawnLoadId > 0)
             {
+                currentRequestTargetPawnLoadId = 0;
+                currentRequestPaid = false;
                 hasUnpaidRansomRequest =
                     currentSession.isWaitingForRansomTargetSelection ||
                     currentSession.hasPendingRansomBatchSelection;

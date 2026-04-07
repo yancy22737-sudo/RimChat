@@ -228,16 +228,26 @@ namespace RimChat.UI
         {
             float height = 54f;
             height += GetTextHeight(post?.Headline, contentWidth, GameFont.Medium) + 6f;
-            height += GetTextHeight(post?.Lead, contentWidth, GameFont.Small) + 10f;
-            height += GetSectionHeight(post?.Cause, contentWidth);
-            height += GetSectionHeight(post?.Process, contentWidth);
-            height += GetSectionHeight(post?.Outlook, contentWidth);
+            height += GetActorsLineHeight(post, contentWidth);
+            height += GetTextHeight(BuildNarrativeBody(post), contentWidth, GameFont.Small) + 12f;
             if (!string.IsNullOrWhiteSpace(post?.Quote))
             {
                 height += GetQuoteHeight(post, contentWidth);
             }
 
             return Mathf.Max(156f, height + 12f);
+        }
+
+        private float GetActorsLineHeight(PublicSocialPost post, float width)
+        {
+            string sourceName = post?.SourceFaction?.Name;
+            string targetName = post?.TargetFaction?.Name;
+            if (string.IsNullOrWhiteSpace(sourceName) && string.IsNullOrWhiteSpace(targetName))
+            {
+                return 0f;
+            }
+
+            return GetTextHeight(BuildActorsLine(post), width, GameFont.Small) + 6f;
         }
 
         private float GetSectionHeight(string content, float width)
@@ -273,11 +283,8 @@ namespace RimChat.UI
 
             y = DrawMetaLine(new Rect(x, y, width, 18f), post);
             y = DrawHeadline(new Rect(x, y, width, 40f), post) + 4f;
-            y = DrawActorsLine(new Rect(x, y, width, 18f), post);
-            y = DrawLead(new Rect(x, y, width, 200f), post) + 6f;
-            y = DrawNewsSection(x, y, width, "RimChat_SocialNewsCauseLabel", post.Cause);
-            y = DrawNewsSection(x, y, width, "RimChat_SocialNewsProcessLabel", post.Process);
-            y = DrawNewsSection(x, y, width, "RimChat_SocialNewsOutlookLabel", post.Outlook);
+            y = DrawActorsLine(new Rect(x, y, width, 36f), post);
+            y = DrawNarrativeBody(new Rect(x, y, width, 1200f), post) + 8f;
             DrawQuoteBlock(x, y, width, post, accent);
             GUI.color = Color.white;
         }
@@ -312,59 +319,80 @@ namespace RimChat.UI
 
         private float DrawActorsLine(Rect rect, PublicSocialPost post)
         {
-            string sourceName = post?.SourceFaction?.Name;
-            string targetName = post?.TargetFaction?.Name;
-            bool hasSource = !string.IsNullOrWhiteSpace(sourceName);
-            bool hasTarget = !string.IsNullOrWhiteSpace(targetName);
-
-            if (!hasSource && !hasTarget)
+            string actorsLine = BuildActorsLine(post);
+            if (string.IsNullOrWhiteSpace(actorsLine))
             {
                 return rect.y;
             }
 
+            float height = GetTextHeight(actorsLine, rect.width, GameFont.Small);
+            Rect drawRect = new Rect(rect.x, rect.y, rect.width, height);
             GUI.color = new Color(0.77f, 0.84f, 0.91f);
-            if (hasSource && hasTarget)
-            {
-                Widgets.Label(rect, "RimChat_SocialNewsActorsLine".Translate(sourceName, targetName));
-            }
-            else
-            {
-                string factionName = hasSource ? sourceName : targetName;
-                Widgets.Label(rect, "RimChat_SocialNewsSingleFactionLine".Translate(factionName));
-            }
-
+            Widgets.Label(drawRect, actorsLine);
             GUI.color = Color.white;
-            return rect.yMax + 2f;
+            return drawRect.yMax + 4f;
         }
 
-        private float DrawLead(Rect rect, PublicSocialPost post)
+        private float DrawNarrativeBody(Rect rect, PublicSocialPost post)
         {
-            float height = GetTextHeight(post?.Lead, rect.width, GameFont.Small);
+            string body = BuildNarrativeBody(post);
+            float height = GetTextHeight(body, rect.width, GameFont.Small);
             Rect drawRect = new Rect(rect.x, rect.y, rect.width, height);
             GUI.color = new Color(0.88f, 0.9f, 0.95f);
-            Widgets.Label(drawRect, post?.Lead ?? string.Empty);
+            Widgets.Label(drawRect, body);
             GUI.color = Color.white;
             return drawRect.yMax;
         }
 
-        private float DrawNewsSection(float x, float y, float width, string labelKey, string content)
+        private string BuildActorsLine(PublicSocialPost post)
         {
-            if (string.IsNullOrWhiteSpace(content))
+            string sourceName = post?.SourceFaction?.Name;
+            string targetName = post?.TargetFaction?.Name;
+            bool hasSource = !string.IsNullOrWhiteSpace(sourceName);
+            bool hasTarget = !string.IsNullOrWhiteSpace(targetName);
+            if (!hasSource && !hasTarget)
             {
-                return y;
+                return string.Empty;
             }
 
-            Rect labelRect = new Rect(x, y, width, 18f);
-            GUI.color = new Color(0.68f, 0.82f, 0.93f);
-            Widgets.Label(labelRect, labelKey.Translate());
-            GUI.color = Color.white;
+            if (hasSource && hasTarget)
+            {
+                return "RimChat_SocialNewsActorsLine".Translate(sourceName, targetName);
+            }
 
-            float height = GetTextHeight(content, width, GameFont.Small);
-            Rect textRect = new Rect(x, labelRect.yMax, width, height);
-            GUI.color = new Color(0.86f, 0.89f, 0.94f);
-            Widgets.Label(textRect, content);
-            GUI.color = Color.white;
-            return textRect.yMax + 8f;
+            string factionName = hasSource ? sourceName : targetName;
+            return "RimChat_SocialNewsSingleFactionLine".Translate(factionName);
+        }
+
+        private string BuildNarrativeBody(PublicSocialPost post)
+        {
+            List<string> parts = new List<string>();
+            AppendNarrativePart(parts, post?.Lead);
+            AppendNarrativePart(parts, post?.Cause);
+            AppendNarrativePart(parts, post?.Process);
+            AppendNarrativePart(parts, post?.Outlook);
+            if (parts.Count == 0)
+            {
+                AppendNarrativePart(parts, post?.Content);
+            }
+
+            return string.Join("\n", parts);
+        }
+
+        private static void AppendNarrativePart(List<string> parts, string content)
+        {
+            string normalized = (content ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return;
+            }
+
+            if (parts.Count > 0 && string.Equals(parts[parts.Count - 1], normalized, System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            parts.Add(normalized);
         }
 
         private void DrawQuoteBlock(float x, float y, float width, PublicSocialPost post, Color accent)

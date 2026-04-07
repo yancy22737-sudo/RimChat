@@ -43,6 +43,7 @@ namespace RimChat.Config
 
         private const int CurrentSchemaVersion = 2;
         private const int LegacyRpgNodeMigrationVersion = 2;
+        private const int LegacySocialNewsNodeMigrationVersion = 3;
         private const string ImmutableDefaultPresetId = "rimchat_default_preset";
         private const string ImmutableDefaultPresetName = "Default";
         private const string PresetStoreFileName = "PromptPresets_Custom.json";
@@ -469,6 +470,7 @@ namespace RimChat.Config
                 if (!IsImmutableDefaultId(store.Presets[i].Id))
                 {
                     ApplyLegacyRpgNodeMigrationIfNeeded(store.Presets[i]);
+                    ApplyLegacySocialNewsNodeMigrationIfNeeded(store.Presets[i]);
                 }
             }
 
@@ -1170,6 +1172,59 @@ namespace RimChat.Config
 
             catalog.MigrationVersion = LegacyRpgNodeMigrationVersion;
             Log.Message($"[RimChat] Legacy RPG node migration applied to preset '{preset.Id}': {overriddenCount} nodes overridden, new migrationVersion={catalog.MigrationVersion}.");
+        }
+
+        private static void ApplyLegacySocialNewsNodeMigrationIfNeeded(PromptPresetConfig preset)
+        {
+            if (preset?.ChannelPayloads?.UnifiedPromptCatalog == null)
+            {
+                return;
+            }
+
+            PromptUnifiedCatalog catalog = preset.ChannelPayloads.UnifiedPromptCatalog;
+            if (catalog.MigrationVersion >= LegacySocialNewsNodeMigrationVersion)
+            {
+                return;
+            }
+
+            PromptUnifiedCatalog authoritative = PromptUnifiedCatalog.CreateFallback();
+            int overriddenCount = 0;
+            overriddenCount += TryOverrideLegacySocialNewsNode(catalog, authoritative, "social_news_style", "文风：中性新闻播报");
+            overriddenCount += TryOverrideLegacySocialNewsNode(catalog, authoritative, "social_news_json_contract", "如果 quote 为空，quote_attribution 也必须为空。", "narrative_mode");
+            overriddenCount += TryOverrideLegacySocialNewsNode(catalog, authoritative, "social_news_fact", "基于以下事实种子生成一条社交圈世界新闻卡片。", "narrative_mode={{ world.social.narrative_mode }}");
+            catalog.MigrationVersion = LegacySocialNewsNodeMigrationVersion;
+            if (overriddenCount > 0)
+            {
+                Log.Message($"[RimChat] Legacy social news node migration applied to preset '{preset.Id}': {overriddenCount} nodes overridden, new migrationVersion={catalog.MigrationVersion}.");
+            }
+        }
+
+        private static int TryOverrideLegacySocialNewsNode(
+            PromptUnifiedCatalog catalog,
+            PromptUnifiedCatalog authoritative,
+            string nodeId,
+            string legacyMarker,
+            string missingMarker = null)
+        {
+            string current = catalog.ResolveNode(RimTalkPromptEntryChannelCatalog.Any, nodeId)?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(current) || !current.Contains(legacyMarker))
+            {
+                return 0;
+            }
+
+            if (!string.IsNullOrWhiteSpace(missingMarker) && current.Contains(missingMarker))
+            {
+                return 0;
+            }
+
+            string authoritativeValue = authoritative.ResolveNode(RimTalkPromptEntryChannelCatalog.Any, nodeId);
+            if (string.IsNullOrWhiteSpace(authoritativeValue))
+            {
+                return 0;
+            }
+
+            catalog.SetNode(RimTalkPromptEntryChannelCatalog.Any, nodeId, authoritativeValue);
+            return 1;
         }
 
         private static bool ShouldCreateMigratedPreset(

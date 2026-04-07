@@ -371,6 +371,54 @@ namespace RimChat.Config
             return "RimChat_VersionLogEmpty".Translate(cachedVersionLogPath);
         }
 
+        internal string GetVersionDisplayVersion()
+        {
+            EnsureVersionLogCache();
+            return cachedVersionValue;
+        }
+
+        internal string GetVersionLogDisplayContentForLanguage(string languageFolder)
+        {
+            string path = ResolveVersionLogPath(languageFolder);
+            string content = ReadVersionLogContentFromPath(path, out string readError);
+            if (!string.IsNullOrWhiteSpace(content))
+            {
+                return content;
+            }
+
+            if (!string.IsNullOrWhiteSpace(readError))
+            {
+                return "RimChat_VersionLogReadFailed".Translate(path, readError);
+            }
+
+            if (!File.Exists(path))
+            {
+                return "RimChat_VersionLogMissing".Translate(path);
+            }
+
+            return "RimChat_VersionLogEmpty".Translate(path);
+        }
+
+        private static string ReadVersionLogContentFromPath(string filePath, out string readError)
+        {
+            readError = string.Empty;
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                return File.ReadAllText(filePath, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                readError = ex.Message;
+                Log.Warning($"[RimChat] Failed to read version log file: {filePath}. {ex.Message}");
+                return string.Empty;
+            }
+        }
+
         private static string ParseVersionFirstLine(string content)
         {
             if (string.IsNullOrWhiteSpace(content))

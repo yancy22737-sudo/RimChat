@@ -46,5 +46,6 @@ namespace RimChat.DiplomacySystem
         public string Outlook = string.Empty;
         public string Quote = string.Empty;
         public string QuoteAttribution = string.Empty;
+        public string NarrativeMode = string.Empty;
     }
 }

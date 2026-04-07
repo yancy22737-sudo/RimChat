@@ -41,7 +41,6 @@ namespace RimChat.Core
             // Initialize custom patches that require dynamic method lookup
             RimChat.Patches.CommsConsolePatch.Initialize(harmony);
             RimChat.Patches.QuestGenPatch.Initialize(harmony);
-            LongEventHandler.ExecuteWhenFinished(PawnDialogueCompDefInjector.EnsureInjected);
 
             DLCCompatibility.LogDLCStatus();
             Log.Message("[RimChat] Mod initialized successfully.");

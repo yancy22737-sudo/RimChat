@@ -19,7 +19,17 @@ namespace RimChat.UI
             "RimChat_DiplomacyTypingStatus_03",
             "RimChat_DiplomacyTypingStatus_04",
             "RimChat_DiplomacyTypingStatus_05",
-            "RimChat_DiplomacyTypingStatus_06"
+            "RimChat_DiplomacyTypingStatus_06",
+            "RimChat_DiplomacyTypingStatus_07",
+            "RimChat_DiplomacyTypingStatus_08",
+            "RimChat_DiplomacyTypingStatus_09",
+            "RimChat_DiplomacyTypingStatus_10",
+            "RimChat_DiplomacyTypingStatus_11",
+            "RimChat_DiplomacyTypingStatus_12",
+            "RimChat_DiplomacyTypingStatus_13",
+            "RimChat_DiplomacyTypingStatus_14",
+            "RimChat_DiplomacyTypingStatus_15",
+            "RimChat_DiplomacyTypingStatus_16"
         };
 
         private void DrawDiplomacyTypingStatus(Rect rect)

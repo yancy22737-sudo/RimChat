@@ -5,6 +5,7 @@ using RimWorld;
 using RimChat.Dialogue;
 using RimChat.UI;
 using RimChat.Core;
+using RimChat.WorldState;
 
 namespace RimChat.Comp
 {
@@ -19,6 +20,9 @@ namespace RimChat.Comp
 
             if (targetPawn == null || targetPawn == selPawn)
                 yield break;
+
+            RimChatTrackedEntityRegistry.TrackPawn(selPawn);
+            RimChatTrackedEntityRegistry.TrackPawn(targetPawn);
 
             if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(selPawn, targetPawn, out _))
                 yield break;
@@ -38,6 +42,8 @@ namespace RimChat.Comp
             string label = "RimChat_RPGDialogue_Dialogue".Translate();
             yield return new FloatMenuOption(label, () =>
             {
+                RimChatTrackedEntityRegistry.TrackPawn(selPawn);
+                RimChatTrackedEntityRegistry.TrackPawn(targetPawn);
                 var rpgManager = Current.Game?.GetComponent<RimChat.DiplomacySystem.GameComponent_RPGManager>();
                 if (rpgManager != null && rpgManager.IsRpgDialogueOnCooldown(targetPawn, out int remainingTicks))
                 {
@@ -62,7 +68,6 @@ namespace RimChat.Comp
                 Job dialogueJob = JobMaker.MakeJob(dialogueJobDef, targetPawn);
                 dialogueJob.playerForced = true;
 
-                // Force interrupt current work so dialogue job starts immediately.
                 if (selPawn.jobs?.curJob != null)
                 {
                     selPawn.jobs.EndCurrentJob(JobCondition.InterruptForced);

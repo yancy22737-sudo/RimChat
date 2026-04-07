@@ -6,6 +6,7 @@ using System.Linq;
 using UnityEngine;
 using RimChat.Dialogue;
 using RimChat.Memory;
+using RimChat.WorldState;
 
 namespace RimChat.DiplomacySystem
 {
@@ -44,6 +45,7 @@ namespace RimChat.DiplomacySystem
             base.StartedNewGame();
             Instance = this;
             SaveContextTracker.Reset();
+            RimChatTrackedEntityRegistry.Reset();
             ResetPersistentRpgSaveSlotIdForNewGame();
             RpgNpcDialogueArchiveManager.Instance.OnNewGame();
             MarkNpcPersonaBootstrapAsNewGame();

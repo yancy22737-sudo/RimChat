@@ -80,12 +80,16 @@ namespace RimChat.WorldState
         public override void StartedNewGame()
         {
             base.StartedNewGame();
+            RimChatTrackedEntityRegistry.Reset();
+            RimChatTrackedEntityRegistry.PrimeFromCurrentGame();
             RebuildRuntimeCaches();
         }
 
         public override void LoadedGame()
         {
             base.LoadedGame();
+            RimChatTrackedEntityRegistry.Reset();
+            RimChatTrackedEntityRegistry.PrimeFromCurrentGame();
             RebuildRuntimeCaches();
             CleanupLoadedData();
         }

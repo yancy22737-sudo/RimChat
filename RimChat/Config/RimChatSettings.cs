@@ -169,6 +169,7 @@ namespace RimChat.Config
         // Presence Settings
         public bool EnableFactionPresenceStatus = true;
         public float PresenceCacheHours = 2f;
+        // Legacy compatibility field only. Runtime forced-offline duration is fixed in manager logic and this value is no longer exposed in UI.
         public float PresenceForcedOfflineHours = 24f;
         public bool PresenceNightBiasEnabled = true;
         public int PresenceNightStartHour = 22;
@@ -193,6 +194,7 @@ namespace RimChat.Config
         // Social Circle Settings
         public bool EnableSocialCircle = true;
         public ScheduledNewsFrequencyLevel ScheduledNewsFrequencyLevel = ScheduledNewsFrequencyLevel.High;
+        // Legacy migration fields only. Current runtime scheduling uses ScheduledNewsFrequencyLevel; these values are kept for old save import.
         public int SocialPostIntervalMinDays = 5;
         public int SocialPostIntervalMaxDays = 7;
         public bool EnablePlayerInfluenceNews = true;

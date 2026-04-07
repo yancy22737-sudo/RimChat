@@ -12,6 +12,11 @@ namespace RimChat.Patches
     {
         private static void Postfix(WorldObject __instance)
         {
+            if (!RimChatTrackedEntityRegistry.IsWorldObjectTracked(__instance))
+            {
+                return;
+            }
+
             FactionIntelLedgerComponent.Instance?.RecordSettlementDestroyed(__instance);
         }
     }

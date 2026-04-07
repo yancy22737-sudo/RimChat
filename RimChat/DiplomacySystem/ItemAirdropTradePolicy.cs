@@ -12,9 +12,9 @@ namespace RimChat.DiplomacySystem
     internal static class ItemAirdropTradePolicy
     {
         private const string TradersGuildDefName = "TradersGuild";
-        private const float DefaultNeedPriceMultiplier = 1.8f;
-        private const float ExoticMiscNeedPriceMultiplier = 3.0f;
-        private const float OfferPriceMultiplier = 0.6f;
+        private const float DefaultNeedPriceMultiplier = 1.15f;
+        private const float ExoticMiscNeedPriceMultiplier = 1.35f;
+        private const float OfferPriceMultiplier = 1.00f;
         private const float BaseFloor = 500f;
         private const float GoodwillCore = 2600f;
         private const float WealthCore = 650f;

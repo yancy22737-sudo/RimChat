@@ -136,6 +136,8 @@ namespace RimChat.Config
             Scribe_Values.Look(ref NpcQueueMaxPerFaction, "NpcQueueMaxPerFaction", 3);
             Scribe_Values.Look(ref NpcQueueExpireHours, "NpcQueueExpireHours", 12f);
             Scribe_Values.Look(ref NpcGlobalDeliveryCooldownHours, "NpcGlobalDeliveryCooldownHours", 6f);
+            Scribe_Values.Look(ref NpcGlobalMaxMessagesPerWindow, "NpcGlobalMaxMessagesPerWindow", 3);
+            Scribe_Values.Look(ref NpcGlobalWindowHours, "NpcGlobalWindowHours", 24f);
             Scribe_Values.Look(ref NpcFactionCooldownMinDays, "NpcFactionCooldownMinDays", 3);
             Scribe_Values.Look(ref NpcFactionCooldownMaxDays, "NpcFactionCooldownMaxDays", 7);
             Scribe_Values.Look(ref EnableBusyByDrafted, "EnableBusyByDrafted", true);
@@ -195,6 +197,8 @@ namespace RimChat.Config
             NpcQueueMaxPerFaction = Mathf.Clamp(NpcQueueMaxPerFaction, 1, 10);
             NpcQueueExpireHours = Mathf.Clamp(NpcQueueExpireHours, 1f, 48f);
             NpcGlobalDeliveryCooldownHours = Mathf.Clamp(NpcGlobalDeliveryCooldownHours, 1f, 24f);
+            NpcGlobalMaxMessagesPerWindow = Mathf.Clamp(NpcGlobalMaxMessagesPerWindow, 1, 10);
+            NpcGlobalWindowHours = Mathf.Clamp(NpcGlobalWindowHours, 6f, 72f);
             NpcFactionCooldownMinDays = Mathf.Clamp(NpcFactionCooldownMinDays, 1, 30);
             NpcFactionCooldownMaxDays = Mathf.Clamp(NpcFactionCooldownMaxDays, NpcFactionCooldownMinDays, 30);
             PawnRpgProtagonistCap = Mathf.Clamp(PawnRpgProtagonistCap, 1, 100);
@@ -474,10 +478,6 @@ namespace RimChat.Config
 
             listing.Label("RimChat_PresenceCacheHours".Translate(PresenceCacheHours.ToString("F1")));
             PresenceCacheHours = listing.Slider(PresenceCacheHours, 1f, 48f);
-
-            listing.Label("RimChat_PresenceForcedOfflineHours".Translate(PresenceForcedOfflineHours.ToString("F1")));
-            // Keep the legacy slider visible for UI continuity; forced presence durations are now fixed in manager logic.
-            PresenceForcedOfflineHours = listing.Slider(PresenceForcedOfflineHours, 1f, 72f);
 
             listing.CheckboxLabeled("RimChat_PresenceNightBiasEnabled".Translate(), ref PresenceNightBiasEnabled);
             if (PresenceNightBiasEnabled)

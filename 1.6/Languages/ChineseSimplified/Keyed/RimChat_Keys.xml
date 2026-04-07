@@ -98,6 +98,10 @@
     <RimChat_OutputLanguageCustomTooltip>功能：使用自定义语言标签生成语言约束。作用域：外交与人物对话请求。</RimChat_OutputLanguageCustomTooltip>
     <RimChat_APIVersionButtonLabel>版本: {0}</RimChat_APIVersionButtonLabel>
     <RimChat_APIVersionButtonTooltip>功能：打开当前语言的版本日志内容。作用域：仅设置页工具。</RimChat_APIVersionButtonTooltip>
+    <RimChat_DiplomacyVersionTooltip>功能：打开版本日志语言选择菜单。作用域：仅外交界面标题栏。</RimChat_DiplomacyVersionTooltip>
+    <RimChat_VersionLogLanguageChinese>中文</RimChat_VersionLogLanguageChinese>
+    <RimChat_VersionLogLanguageEnglish>英文</RimChat_VersionLogLanguageEnglish>
+    <RimChat_VersionLogWindowTitleByLanguage>版本日志 - {0}</RimChat_VersionLogWindowTitleByLanguage>
     <RimChat_APIGitHubButton>GitHub</RimChat_APIGitHubButton>
     <RimChat_APIGitHubButtonTooltip>功能：打开 RimChat GitHub 仓库页面。作用域：外部浏览器跳转。</RimChat_APIGitHubButtonTooltip>
     <RimChat_VersionLogWindowTitle>版本日志</RimChat_VersionLogWindowTitle>
@@ -543,7 +547,7 @@
 
     <!-- 对话 -->
     <RimChat_DialogueTitleLegacy>RimChat</RimChat_DialogueTitleLegacy>
-    <RimChat_TerminalTitle># RimChat 通讯台 v0.9</RimChat_TerminalTitle>
+    <RimChat_TerminalTitle># RimChat 通讯台</RimChat_TerminalTitle>
     <RimChat_DialogueSend>发送</RimChat_DialogueSend>
     <RimChat_DialogueClose>关闭</RimChat_DialogueClose>
     <RimChat_DialogueInputPlaceholder>输入你的消息...</RimChat_DialogueInputPlaceholder>
@@ -622,6 +626,7 @@
     <RimChat_SendInfoMenuTaunt>挑衅</RimChat_SendInfoMenuTaunt>
     <RimChat_SendInfoMenuRequestCaravan>请求商队</RimChat_SendInfoMenuRequestCaravan>
     <RimChat_SendInfoMenuRequestSupport>请求支援</RimChat_SendInfoMenuRequestSupport>
+    <RimChat_SendInfoMenuRequestQuest>请求任务</RimChat_SendInfoMenuRequestQuest>
     <RimChat_SendInfoMenuPrisoner>发送囚犯信息</RimChat_SendInfoMenuPrisoner>
     <RimChat_SendInfoMenuAirdropTrade>发送空投交易请求</RimChat_SendInfoMenuAirdropTrade>
     <RimChat_SendInfoTauntTitle>选择挑衅方式</RimChat_SendInfoTauntTitle>
@@ -641,6 +646,14 @@
     <RimChat_SendInfoTauntSystemMessage>玩家挑衅了对方，将引发“{0}”。</RimChat_SendInfoTauntSystemMessage>
     <RimChat_SendInfoCaravanSystemMessage>玩家向对方请求派遣商队交易。</RimChat_SendInfoCaravanSystemMessage>
     <RimChat_SendInfoSupportSystemMessage>玩家向对方请求派遣军事援助支援。</RimChat_SendInfoSupportSystemMessage>
+    <RimChat_SendInfoQuestSystemMessage>玩家向对方请求“{0}”任务。</RimChat_SendInfoQuestSystemMessage>
+    <RimChat_SendInfoQuestUnavailableHint>该派系当前没有可请求的任务。</RimChat_SendInfoQuestUnavailableHint>
+    <RimChat_SendInfoQuestPickerTitle>选择请求任务</RimChat_SendInfoQuestPickerTitle>
+    <RimChat_SendInfoQuestPickerSubtitle>请选择一个向 {0} 请求的任务类型。</RimChat_SendInfoQuestPickerSubtitle>
+    <RimChat_SendInfoQuestPickerConfirm>确认</RimChat_SendInfoQuestPickerConfirm>
+    <RimChat_SendInfoQuestPickerCancel>取消</RimChat_SendInfoQuestPickerCancel>
+    <RimChat_SendInfoQuestPickerEmptySelection>请先选择一个任务。</RimChat_SendInfoQuestPickerEmptySelection>
+    <RimChat_SendInfoQuestPickerNoOptions>当前没有可请求的任务。</RimChat_SendInfoQuestPickerNoOptions>
     <RimChat_AirdropTradeCard_Title>物资空投请求</RimChat_AirdropTradeCard_Title>
     <RimChat_AirdropTradeCard_NeedLabel>需求物资:</RimChat_AirdropTradeCard_NeedLabel>
     <RimChat_AirdropTradeCard_CountLabel>数量:</RimChat_AirdropTradeCard_CountLabel>
@@ -876,6 +889,7 @@
     <RimChat_RansomSelectionCancelledSystem>本次赎金流程已取消，未提交任何支付动作。</RimChat_RansomSelectionCancelledSystem>
     <RimChat_RansomReferenceAskSystem>根据 {0} 当前状态，参考赎金：{1} 银。</RimChat_RansomReferenceAskSystem>
     <RimChat_RansomReferenceAskUnavailableSystem>暂时无法为 {0} 计算参考赎金，请稍后重试。</RimChat_RansomReferenceAskUnavailableSystem>
+    <RimChat_RansomAlreadyPaidPendingReleaseSystem>{0} 的赎金已支付，当前正在等待放人。不要再为该囚犯重复付款。</RimChat_RansomAlreadyPaidPendingReleaseSystem>
     <RimChat_RansomProofCardBody>【囚犯存活证明】
 姓名：{0}
 年龄：{1}
@@ -929,6 +943,7 @@ ID：{5}
     <RimChat_DiplomacyTypingStatus_13>对方首领正在使用成瘾品</RimChat_DiplomacyTypingStatus_13>
     <RimChat_DiplomacyTypingStatus_14>对方首领正在续费通讯套餐</RimChat_DiplomacyTypingStatus_14>
     <RimChat_DiplomacyTypingStatus_15>Windows系统更新中</RimChat_DiplomacyTypingStatus_15>
+    <RimChat_DiplomacyTypingStatus_16>对方正在玩RimTalk</RimChat_DiplomacyTypingStatus_16>
     <RimChat_ErrorLabel>错误</RimChat_ErrorLabel>
     <RimChat_JustNow>刚刚</RimChat_JustNow>
     <RimChat_MinutesAgo>{0}分钟前</RimChat_MinutesAgo>
@@ -2237,15 +2252,11 @@ ID：{5}
     <RimChat_PromptWorkbench_ShowSide>显示侧栏</RimChat_PromptWorkbench_ShowSide>
     <RimChat_PromptWorkbench_HideSide>隐藏侧栏</RimChat_PromptWorkbench_HideSide>
     <RimChat_PromptWorkbench_VariablesTab>变量</RimChat_PromptWorkbench_VariablesTab>
-    <RimChat_PromptWorkbench_HelpTab>帮助</RimChat_PromptWorkbench_HelpTab>
-    <RimChat_PromptWorkbench_GuideTab>指南</RimChat_PromptWorkbench_GuideTab>
     <RimChat_PromptWorkbench_VariablesTitle>提示词变量</RimChat_PromptWorkbench_VariablesTitle>
     <RimChat_PromptWorkbench_OpenPicker>打开变量选择器</RimChat_PromptWorkbench_OpenPicker>
     <RimChat_PromptWorkbench_InsertToken>插入 Token</RimChat_PromptWorkbench_InsertToken>
     <RimChat_PromptWorkbench_InsertFailed>当前编辑器插入 Token 失败。</RimChat_PromptWorkbench_InsertFailed>
     <RimChat_PromptWorkbench_SourceHintHeader>来源归并提示</RimChat_PromptWorkbench_SourceHintHeader>
-    <RimChat_PromptWorkbench_HelpTitle>工作台帮助</RimChat_PromptWorkbench_HelpTitle>
-    <RimChat_PromptWorkbench_HelpBody>使用根通道与提示词通道导航编辑规范化 section 内容。预览始终显示当前通道的 canonical aggregate，旧 RimTalk payload 现在只在导入时一次性迁移到原生 section。</RimChat_PromptWorkbench_HelpBody>
     <RimChat_PromptWorkbench_QuickHeader>快速专属</RimChat_PromptWorkbench_QuickHeader>
     <RimChat_PromptWorkbench_QuickFaction>派系提示词</RimChat_PromptWorkbench_QuickFaction>
     <RimChat_PromptWorkbench_QuickPawn>人设提示词</RimChat_PromptWorkbench_QuickPawn>

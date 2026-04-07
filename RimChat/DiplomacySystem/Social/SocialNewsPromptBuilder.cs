@@ -15,6 +15,14 @@ namespace RimChat.DiplomacySystem
  ///</summary>
     internal static class SocialNewsPromptBuilder
     {
+        private static readonly string[] NarrativeModes =
+        {
+            "scene_report",
+            "rumor_wire",
+            "war_dispatch",
+            "personal_chronicle"
+        };
+
         public static List<ChatMessageData> BuildMessages(SocialNewsSeed seed)
         {
             var variables = new Dictionary<string, object>(System.StringComparer.OrdinalIgnoreCase);
@@ -24,7 +32,7 @@ namespace RimChat.DiplomacySystem
             }
 
             variables["dialogue.primary_objective"] = "Generate one social-circle post from the input fact seed.";
-            variables["dialogue.optional_followup"] = "Keep output compact and world-grounded.";
+            variables["dialogue.optional_followup"] = "Keep it vivid, compact, world-grounded, and structurally varied.";
             variables["dialogue.latest_unresolved_intent"] = string.Empty;
             Faction faction = seed?.SourceFaction ?? seed?.TargetFaction;
             DialogueScenarioContext context = DialogueScenarioContext.CreateDiplomacy(
@@ -63,6 +71,8 @@ namespace RimChat.DiplomacySystem
                 ["world.social.credibility_label"] = SocialCircleService.ResolveDisplayLabel(seed?.CredibilityLabel),
                 ["world.social.credibility_value"] = (seed?.CredibilityValue ?? 0.6f).ToString("F2", CultureInfo.InvariantCulture),
                 ["world.social.fact_lines"] = BuildFactLines(seed),
+                ["world.social.narrative_mode"] = PickNarrativeMode(seed),
+                ["world.social.style_constraints"] = BuildStyleConstraints(),
                 ["system.game_language"] = LanguageDatabase.activeLanguage?.FriendlyNameNative ?? "English"
             };
         }
@@ -90,14 +100,37 @@ namespace RimChat.DiplomacySystem
             string target = seed?.TargetFaction?.Name ?? "None";
             string credibility = SocialCircleService.ResolveDisplayLabel(seed?.CredibilityLabel);
             string facts = BuildFactLines(seed);
+            string narrativeMode = PickNarrativeMode(seed);
             return "origin=" + origin + "\n"
                 + "category=" + category + "\n"
                 + "source_faction=" + source + "\n"
                 + "target_faction=" + target + "\n"
                 + "credibility=" + credibility + "\n"
+                + "narrative_mode=" + narrativeMode + "\n"
                 + "summary=" + summary + "\n"
                 + "intent_hint=" + intent + "\n"
                 + "facts:\n" + facts;
+        }
+
+        private static string PickNarrativeMode(SocialNewsSeed seed)
+        {
+            if (seed == null)
+            {
+                return NarrativeModes[0];
+            }
+
+            int hash = GenText.StableStringHash(seed.OriginKey ?? string.Empty);
+            int tickBucket = seed.OccurredTick / 60000;
+            int index = System.Math.Abs(hash + tickBucket) % NarrativeModes.Length;
+            return NarrativeModes[index];
+        }
+
+        private static string BuildStyleConstraints()
+        {
+            return "Avoid formulaic transitions and repeated sentence openings. "
+                + "Prefer concrete sensory or situational detail over abstract summary. "
+                + "Allow light hearsay, witness angle, or field-observer texture without adding new facts. "
+                + "Let each section carry new information instead of restating the previous one.";
         }
     }
 }

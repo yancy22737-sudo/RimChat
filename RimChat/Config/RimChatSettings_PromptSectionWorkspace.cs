@@ -445,26 +445,21 @@ namespace RimChat.Config
         {
             Widgets.DrawBoxSolid(rect, new Color(0.09f, 0.10f, 0.12f));
             Rect inner = rect.ContractedBy(8f);
-            float buttonWidth = (inner.width - 12f) / 3f;
+            float buttonWidth = (inner.width - 6f) / 2f;
             Rect previewRect = new Rect(inner.x, inner.y, buttonWidth, 24f);
             Rect varsRect = new Rect(previewRect.xMax + 6f, inner.y, buttonWidth, 24f);
-            Rect reportRect = new Rect(varsRect.xMax + 6f, inner.y, buttonWidth, 24f);
 
             DrawWorkbenchSideButton(previewRect, PromptWorkbenchInfoPanel.Preview, "RimChat_PreviewTitleShort");
             DrawWorkbenchSideButton(varsRect, PromptWorkbenchInfoPanel.Variables, "RimChat_PromptWorkbench_VariablesTab");
-            DrawWorkbenchSideButton(reportRect, PromptWorkbenchInfoPanel.Help, "RimChat_PromptWorkbench_GuideTab");
 
             Rect contentRect = new Rect(inner.x, previewRect.yMax + 6f, inner.width, inner.height - 30f);
             switch (_workbenchSidePanelTab)
             {
-                case PromptWorkbenchInfoPanel.Preview:
-                    DrawPromptWorkspacePreview(contentRect);
-                    break;
                 case PromptWorkbenchInfoPanel.Variables:
                     DrawPromptWorkspaceVariables(contentRect);
                     break;
                 default:
-                    DrawPromptWorkspaceReport(contentRect);
+                    DrawPromptWorkspacePreview(contentRect);
                     break;
             }
         }
@@ -488,30 +483,6 @@ namespace RimChat.Config
                     return TryInsertVariableTokenToPromptWorkspace(token);
                 },
                 showCustomCrud: true);
-        }
-
-        private void DrawPromptWorkspaceReport(Rect rect)
-        {
-            Widgets.DrawBoxSolid(rect, new Color(0.03f, 0.03f, 0.04f));
-            Rect inner = rect.ContractedBy(6f);
-            LegacyPromptMigrationReport report = PromptLegacyCompatMigration.GetLatestReport();
-            string summary =
-                $"Source: {report.SourceId}\n" +
-                $"Imported: {report.ImportedCount}\n" +
-                $"Rewritten: {report.RewrittenCount}\n" +
-                $"Rejected: {report.RejectedCount}\n" +
-                $"Defaulted: {report.DefaultedCount}\n\n";
-            List<string> lines = report.Entries
-                .Select(entry =>
-                    $"- [{entry.Status}] {entry.PromptChannel}/{entry.SectionId} :: {entry.Detail}" +
-                    (entry.FallbackApplied ? " (defaulted)" : string.Empty))
-                .ToList();
-            string body = summary + (lines.Count == 0 ? "No legacy import activity recorded in this session." : string.Join("\n", lines));
-            float contentHeight = Mathf.Max(inner.height, Text.CalcHeight(body, inner.width - 16f) + 12f);
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, contentHeight);
-            _promptWorkspaceReportScroll = GUI.BeginScrollView(inner, _promptWorkspaceReportScroll, viewRect);
-            Widgets.Label(new Rect(0f, 0f, viewRect.width, contentHeight), body);
-            GUI.EndScrollView();
         }
 
         private void SetPromptWorkspaceRoot(PromptWorkbenchChannel root)

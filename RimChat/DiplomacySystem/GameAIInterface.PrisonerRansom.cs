@@ -97,6 +97,16 @@ namespace RimChat.DiplomacySystem
                     $"target not eligible: pawn_load_id={pawnLoadId}, reason={eligibilityReason}");
             }
 
+            string factionId = faction.GetUniqueLoadID() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(factionId) &&
+                RansomContractManager.Instance?.HasPendingReleaseContractForTarget(factionId, pawnLoadId) == true)
+            {
+                return FailFastRansom(
+                    "target_already_paid_pending_release",
+                    "RimChat_RansomAlreadyPaidPendingReleaseSystem".Translate(targetPawn.LabelShortCap).ToString(),
+                    $"duplicate payment blocked: faction_id={factionId}, pawn_load_id={pawnLoadId}");
+            }
+
             if (!prisonerRansomService.TryGetOrCreateNegotiationState(
                 faction,
                 targetPawn,
@@ -255,16 +265,13 @@ namespace RimChat.DiplomacySystem
                 return APIResult.FailureResult("Faction cannot be null.");
             }
 
-            int safePenalty = Math.Abs(goodwillPenalty);
-            if (safePenalty > 0)
-            {
-                faction.TryAffectGoodwillWith(Faction.OfPlayer, -safePenalty, false, true, null);
-            }
+            int safePenalty = ResolveSoftenedRansomPenalty(goodwillPenalty, triggerRaid, reasonTag);
+            bool forceHostile = triggerRaid;
+            int goodwillApplied = ApplyRansomRelationPenalty(faction, safePenalty, forceHostile);
 
             bool raidTriggered = false;
             if (triggerRaid)
             {
-                EnsureHostileBeforePenaltyRaid(faction);
                 raidTriggered = DiplomacyEventManager.TriggerRaidEvent(faction, -1f, null, null);
                 if (raidTriggered)
                 {
@@ -275,14 +282,14 @@ namespace RimChat.DiplomacySystem
             RecordAPICall(
                 "RansomPenalty",
                 true,
-                $"faction={faction.Name},penalty={safePenalty},raid={raidTriggered},reason={reasonTag},targetPawn={targetPawn?.thingIDNumber ?? -1}");
+                $"faction={faction.Name},penalty={goodwillApplied},raid={raidTriggered},reason={reasonTag},targetPawn={targetPawn?.thingIDNumber ?? -1}");
 
             return APIResult.SuccessResult(
                 "Ransom penalty applied.",
                 new
                 {
                     Faction = faction.Name,
-                    GoodwillPenalty = safePenalty,
+                    GoodwillPenalty = goodwillApplied,
                     RaidTriggered = raidTriggered,
                     Reason = reasonTag ?? string.Empty
                 });
@@ -367,20 +374,50 @@ namespace RimChat.DiplomacySystem
             return true;
         }
 
-        private static void EnsureHostileBeforePenaltyRaid(Faction faction)
+        private static int ResolveSoftenedRansomPenalty(int goodwillPenalty, bool triggerRaid, string reasonTag)
         {
-            if (faction?.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+            int absolutePenalty = Math.Abs(goodwillPenalty);
+            if (absolutePenalty <= 0)
             {
-                return;
+                return 0;
             }
 
-            int currentGoodwill = faction?.PlayerGoodwill ?? 0;
-            int goodwillDelta = Math.Min(-80, currentGoodwill) - currentGoodwill;
-            if (goodwillDelta != 0)
+            if (triggerRaid)
             {
-                faction?.TryAffectGoodwillWith(Faction.OfPlayer, goodwillDelta, false, true, null);
+                return Math.Max(1, Mathf.RoundToInt(absolutePenalty * 0.25f));
             }
 
+            if (string.Equals(reasonTag, "drop_penalty", StringComparison.Ordinal))
+            {
+                return Mathf.RoundToInt(absolutePenalty * 0.15f);
+            }
+
+            return Math.Max(1, Mathf.RoundToInt(absolutePenalty * 0.20f));
+        }
+
+        private static int ApplyRansomRelationPenalty(Faction faction, int goodwillPenalty, bool forceHostile)
+        {
+            if (faction == null)
+            {
+                return 0;
+            }
+
+            int appliedPenalty = Math.Max(0, goodwillPenalty);
+            if (appliedPenalty > 0)
+            {
+                faction.TryAffectGoodwillWith(Faction.OfPlayer, -appliedPenalty, false, true, null);
+            }
+
+            if (forceHostile)
+            {
+                EnsureHostileRelation(faction);
+            }
+
+            return appliedPenalty;
+        }
+
+        private static void EnsureHostileRelation(Faction faction)
+        {
             if (faction?.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
             {
                 return;

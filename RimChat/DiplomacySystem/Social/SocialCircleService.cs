@@ -253,14 +253,48 @@ namespace RimChat.DiplomacySystem
 
         private static string BuildCompositeContent(SocialNewsDraft draft)
         {
-            List<string> parts = new List<string>
-            {
-                draft.Lead ?? string.Empty,
-                draft.Cause ?? string.Empty,
-                draft.Process ?? string.Empty,
-                draft.Outlook ?? string.Empty
-            };
+            List<string> parts = BuildOrderedNarrativeParts(draft);
             return string.Join("\n\n", parts.Where(item => !string.IsNullOrWhiteSpace(item)));
+        }
+
+        private static List<string> BuildOrderedNarrativeParts(SocialNewsDraft draft)
+        {
+            string mode = (draft?.NarrativeMode ?? string.Empty).Trim();
+            switch (mode)
+            {
+                case "rumor_wire":
+                    return new List<string>
+                    {
+                        draft?.Lead ?? string.Empty,
+                        draft?.Process ?? string.Empty,
+                        draft?.Cause ?? string.Empty,
+                        draft?.Outlook ?? string.Empty
+                    };
+                case "war_dispatch":
+                    return new List<string>
+                    {
+                        draft?.Lead ?? string.Empty,
+                        draft?.Cause ?? string.Empty,
+                        draft?.Outlook ?? string.Empty,
+                        draft?.Process ?? string.Empty
+                    };
+                case "personal_chronicle":
+                    return new List<string>
+                    {
+                        draft?.Lead ?? string.Empty,
+                        draft?.Cause ?? string.Empty,
+                        draft?.Process ?? string.Empty,
+                        draft?.Outlook ?? string.Empty
+                    };
+                default:
+                    return new List<string>
+                    {
+                        draft?.Lead ?? string.Empty,
+                        draft?.Cause ?? string.Empty,
+                        draft?.Process ?? string.Empty,
+                        draft?.Outlook ?? string.Empty
+                    };
+            }
         }
 
         private static bool ShouldEscalateRaidIntent(PublicSocialPost post)

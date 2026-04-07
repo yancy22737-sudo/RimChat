@@ -37,6 +37,8 @@ namespace RimChat.UI
             new HashSet<string>(StringComparer.Ordinal);
         private static readonly Dictionary<string, Texture2D> InlineImageTextureCache =
             new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+        private static readonly LinkedList<string> InlineImageTextureCacheOrder =
+            new LinkedList<string>();
 
         private void DrawImageMessageBubble(DialogueMessageData msg, Rect rect)
         {
@@ -416,6 +418,7 @@ namespace RimChat.UI
 
             if (InlineImageTextureCache.TryGetValue(path, out Texture2D cached) && cached != null)
             {
+                TouchInlineImageCacheKey(path);
                 texture = cached;
                 return true;
             }
@@ -442,18 +445,57 @@ namespace RimChat.UI
 
                 loaded.wrapMode = TextureWrapMode.Clamp;
                 loaded.filterMode = FilterMode.Bilinear;
-                if (InlineImageTextureCache.Count >= InlineImageCacheSoftLimit)
-                {
-                    ClearInlineImageTextureCache();
-                }
-
                 InlineImageTextureCache[path] = loaded;
+                TouchInlineImageCacheKey(path);
+                TrimInlineImageTextureCache();
                 texture = loaded;
                 return true;
             }
             catch
             {
                 return false;
+            }
+        }
+
+        private static void TouchInlineImageCacheKey(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            LinkedListNode<string> node = InlineImageTextureCacheOrder.First;
+            while (node != null)
+            {
+                LinkedListNode<string> next = node.Next;
+                if (string.Equals(node.Value, path, StringComparison.OrdinalIgnoreCase))
+                {
+                    InlineImageTextureCacheOrder.Remove(node);
+                    break;
+                }
+
+                node = next;
+            }
+
+            InlineImageTextureCacheOrder.AddLast(path);
+        }
+
+        private static void TrimInlineImageTextureCache()
+        {
+            while (InlineImageTextureCache.Count > InlineImageCacheSoftLimit && InlineImageTextureCacheOrder.First != null)
+            {
+                string evictPath = InlineImageTextureCacheOrder.First.Value;
+                InlineImageTextureCacheOrder.RemoveFirst();
+                if (!InlineImageTextureCache.TryGetValue(evictPath, out Texture2D evicted))
+                {
+                    continue;
+                }
+
+                InlineImageTextureCache.Remove(evictPath);
+                if (evicted != null)
+                {
+                    UnityEngine.Object.Destroy(evicted);
+                }
             }
         }
 
@@ -468,12 +510,13 @@ namespace RimChat.UI
             }
 
             InlineImageTextureCache.Clear();
+            InlineImageTextureCacheOrder.Clear();
         }
 
         private const float AirdropCardThumbSize = 36f;
         private const float AirdropCardPadding = 8f;
         private const float AirdropCardHeaderHeight = 14f;
-        private const float AirdropCardTitleBandHeight = 20f;
+        private const float AirdropCardTitleBandHeight = 28f;
         private const float AirdropCardRowGap = 4f;
         private const float AirdropCardMetricGap = 2f;
         private const float AirdropCardMetricHeight = 30f;
@@ -487,12 +530,15 @@ namespace RimChat.UI
 
         private float CalculateAirdropTradeCardBubbleHeight(DialogueMessageData msg, float width)
         {
+            float contentWidth = Mathf.Max(1f, width - AirdropCardPadding * 2f);
             float headerTotal = AirdropCardHeaderHeight + 4f;
-            float titleTotal = AirdropCardTitleBandHeight + 4f;
+            string title = "RimChat_AirdropTradeCard_BubbleTitle".Translate().ToString();
+            float titleHeight = Mathf.Max(AirdropCardTitleBandHeight, Text.CalcHeight(title, contentWidth));
+            float titleTotal = titleHeight + 4f;
             float flowRowHeight = AirdropCardMiniCardHeight + 6f;
-            float shippingHeight = Mathf.Max(18f, Text.CalcHeight(BuildAirdropBubbleShippingText(msg), Mathf.Max(1f, width - AirdropCardPadding * 2f)));
+            float shippingHeight = Mathf.Max(18f, Text.CalcHeight(BuildAirdropBubbleShippingText(msg), contentWidth));
             float totalHeight = headerTotal + titleTotal + flowRowHeight + 6f + shippingHeight;
-            return Mathf.Max(184f, totalHeight);
+            return Mathf.Max(198f, totalHeight);
         }
 
         private void DrawAirdropTradeCardBubble(DialogueMessageData msg, Rect rect)
@@ -532,10 +578,12 @@ namespace RimChat.UI
 
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.09f, 0.11f, 0.10f, 1f);
-            DrawSingleLineClippedLabel(new Rect(contentX, contentY, contentWidth, AirdropCardTitleBandHeight), "RimChat_AirdropTradeCard_BubbleTitle".Translate());
+            string title = "RimChat_AirdropTradeCard_BubbleTitle".Translate().ToString();
+            float titleHeight = Mathf.Max(AirdropCardTitleBandHeight, Text.CalcHeight(title, contentWidth));
+            Widgets.Label(new Rect(contentX, contentY, contentWidth, titleHeight), title);
             GUI.color = Color.white;
 
-            contentY += AirdropCardTitleBandHeight + 3f;
+            contentY += titleHeight + 3f;
             Widgets.DrawBoxSolid(new Rect(contentX, contentY, contentWidth, 1f), dividerColor);
             contentY += 3f;
 

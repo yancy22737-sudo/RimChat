@@ -188,10 +188,7 @@ namespace RimChat.DiplomacySystem
 
         private static string ResolveCurrentSaveKey()
         {
-            string saveName = ResolveCurrentSaveName();
-            uint hash = ComputeStableHash(saveName);
-            string key = $"Save_{hash}_{saveName}".SanitizeFileName();
-            return string.IsNullOrWhiteSpace(key) ? "Save_Default" : key;
+            return SaveScopeKeyResolver.ResolveOrThrow();
         }
 
         private static string ResolveCurrentSaveName()

@@ -19,6 +19,7 @@ namespace RimChat.UI
         private readonly SearchStateManager searchState = new SearchStateManager();
         private readonly List<InventoryDisplayEntry> inventoryItems = new List<InventoryDisplayEntry>();
         private readonly List<InventoryDisplayEntry> filteredInventoryItems = new List<InventoryDisplayEntry>();
+        private List<InventoryDisplayEntry> pendingInventoryItems;
 
         private string needSearchText = string.Empty;
         private string requestedCountText = "1";
@@ -34,11 +35,12 @@ namespace RimChat.UI
         private bool showInlineSuggestions;
         private bool isLoadingInventory;
         private float inventoryLoadProgress;
+        private bool inventoryLoadCompleted;
 
-        private const float TitleHeight = 54f;
-        private const float SearchAreaHeight = 84f;
-        private const float SuggestionRowHeight = 32f;
-        private const float FooterHeight = 160f;
+        private const float TitleHeight = 62f;
+        private const float SearchAreaHeight = 76f;
+        private const float SuggestionRowHeight = 38f;
+        private const float FooterHeight = 164f;
         private const float Padding = 12f;
         private const float InventoryRowHeight = 46f;
         private const float CardImageSize = 54f;
@@ -64,8 +66,9 @@ namespace RimChat.UI
         public override void PreOpen()
         {
             base.PreOpen();
+            ApplyPendingInventoryLoadIfReady();
             ApplyCounterofferDefaults();
-            EnsureDefaultOfferSelection();
+            EnsureOfferSelectionState();
         }
 
         private void ApplyCounterofferDefaults()
@@ -84,26 +87,26 @@ namespace RimChat.UI
 
         private void ForceSelectSilverAsOffer()
         {
-            InventoryDisplayEntry silver = inventoryItems.FirstOrDefault(entry =>
-                string.Equals(entry.DefName, "Silver", StringComparison.OrdinalIgnoreCase));
+            InventoryDisplayEntry silver = FindInventoryEntryByDefName("Silver");
             if (silver != null)
             {
                 ApplyOfferSelection(silver);
             }
         }
 
-        private void EnsureDefaultOfferSelection()
+        private void EnsureOfferSelectionState()
         {
-            if (!string.IsNullOrWhiteSpace(selectedOfferDefName))
+            InventoryDisplayEntry selectedEntry = FindInventoryEntryByDefName(selectedOfferDefName);
+            if (selectedEntry != null)
             {
+                ApplyOfferSelection(selectedEntry);
                 return;
             }
 
-            InventoryDisplayEntry silver = filteredInventoryItems.FirstOrDefault(entry =>
-                string.Equals(entry.DefName, "Silver", StringComparison.OrdinalIgnoreCase));
-            InventoryDisplayEntry fallback = silver ?? filteredInventoryItems.FirstOrDefault();
+            InventoryDisplayEntry fallback = FindInventoryEntryByDefName("Silver") ?? inventoryItems.FirstOrDefault();
             if (fallback == null)
             {
+                ClearOfferSelection();
                 return;
             }
 
@@ -121,17 +124,18 @@ namespace RimChat.UI
         private void LoadInventoryItemsAsync()
         {
             isLoadingInventory = true;
+            inventoryLoadCompleted = false;
             inventoryLoadProgress = 0f;
             TechLevel factionTechLevel = faction?.def?.techLevel ?? TechLevel.Archotech;
             LongEventHandler.QueueLongEvent(() =>
             {
-                inventoryItems.Clear();
+                var loadedItems = new List<InventoryDisplayEntry>();
                 Map map = Find.AnyPlayerHomeMap ?? Find.CurrentMap;
                 if (map != null)
                 {
                     List<Thing> tradeables = CollectBeaconTradeableThings(map);
                     inventoryLoadProgress = 0.35f;
-                    inventoryItems.AddRange(tradeables
+                    loadedItems.AddRange(tradeables
                         .Where(thing => thing?.def != null && IsWithinFactionTechLevel(thing.def, factionTechLevel))
                         .GroupBy(thing => thing.def.defName)
                         .Select(group => new InventoryDisplayEntry
@@ -150,10 +154,8 @@ namespace RimChat.UI
                 }
 
                 inventoryLoadProgress = 0.8f;
-                ApplyInventoryFilter();
-                EnsureDefaultOfferSelection();
-                inventoryLoadProgress = 1f;
-                isLoadingInventory = false;
+                pendingInventoryItems = loadedItems;
+                inventoryLoadCompleted = true;
             }, "LoadingInventory", false, null);
         }
 
@@ -279,6 +281,8 @@ namespace RimChat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
+            ApplyPendingInventoryLoadIfReady();
+
             float y = inRect.y;
             Rect titleRect = new Rect(inRect.x, y, inRect.width, TitleHeight);
             DrawTitle(titleRect);
@@ -312,12 +316,18 @@ namespace RimChat.UI
         private void DrawTitle(Rect rect)
         {
             Widgets.DrawBoxSolid(rect, new Color(0.14f, 0.14f, 0.18f));
-            GUI.color = new Color(0.95f, 0.95f, 0.98f);
+            float textWidth = rect.width - 28f;
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(rect.x + 14f, rect.y + 8f, rect.width - 28f, 28f), "RimChat_AirdropTradeCard_Title".Translate());
+            float titleHeight = Mathf.Max(26f, Text.CalcHeight("RimChat_AirdropTradeCard_Title".Translate(), textWidth));
+            GUI.color = new Color(0.95f, 0.95f, 0.98f);
+            Widgets.Label(new Rect(rect.x + 14f, rect.y + 6f, textWidth, titleHeight), "RimChat_AirdropTradeCard_Title".Translate());
+
             Text.Font = GameFont.Tiny;
+            string hint = "RimChat_AirdropTradeCard_TitleHint".Translate().ToString();
+            float hintY = rect.y + 8f + titleHeight;
+            float hintHeight = Mathf.Max(14f, Text.CalcHeight(hint, textWidth));
             GUI.color = new Color(0.68f, 0.72f, 0.82f);
-            Widgets.Label(new Rect(rect.x + 14f, rect.y + 34f, rect.width - 28f, 18f), "RimChat_AirdropTradeCard_TitleHint".Translate());
+            Widgets.Label(new Rect(rect.x + 14f, hintY, textWidth, hintHeight), hint);
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
         }
@@ -325,10 +335,10 @@ namespace RimChat.UI
         private void DrawSearchArea(Rect rect)
         {
             DrawPanel(rect, new Color(0.09f, 0.09f, 0.12f, 0.98f));
-            Rect labelRect = new Rect(rect.x + 12f, rect.y + 10f, 90f, 22f);
+            Rect labelRect = new Rect(rect.x + 12f, rect.y + 8f, 90f, 20f);
             Widgets.Label(labelRect, "RimChat_AirdropTradeCard_NeedLabel".Translate());
 
-            Rect inputRect = new Rect(rect.x + 104f, rect.y + 8f, rect.width - 116f, 30f);
+            Rect inputRect = new Rect(rect.x + 104f, rect.y + 6f, rect.width - 116f, 28f);
             Widgets.DrawBoxSolid(inputRect, new Color(0.15f, 0.15f, 0.19f));
             string newText = Widgets.TextField(inputRect, needSearchText ?? string.Empty);
             if (!string.Equals(newText, needSearchText, StringComparison.Ordinal))
@@ -352,17 +362,19 @@ namespace RimChat.UI
                 }
             }
 
-            Rect statusRect = new Rect(rect.x + 12f, rect.y + 46f, rect.width - 24f, 28f);
+            Rect statusRect = new Rect(rect.x + 12f, rect.y + 40f, rect.width - 24f, rect.height - 46f);
             DrawNeedBindingStatus(statusRect);
         }
 
         private void DrawNeedBindingStatus(Rect rect)
         {
+            Text.Font = GameFont.Tiny;
             if (boundNeedRecord?.Def == null)
             {
                 GUI.color = new Color(0.88f, 0.72f, 0.3f);
                 Widgets.Label(rect, "RimChat_AirdropTradeCard_NeedBindingMissing".Translate());
                 GUI.color = Color.white;
+                Text.Font = GameFont.Small;
                 return;
             }
 
@@ -370,16 +382,17 @@ namespace RimChat.UI
             string text = "RimChat_AirdropTradeCard_NeedBindingReady".Translate(boundNeedRecord.Label, boundNeedRecord.DefName).ToString();
             Widgets.Label(rect, text);
             GUI.color = Color.white;
+            Text.Font = GameFont.Small;
         }
 
         private void DrawInlineSuggestionDropDown(Rect rect)
         {
             DrawPanel(rect, new Color(0.1f, 0.1f, 0.14f, 0.98f));
-            float rowY = rect.y + 4f;
+            float rowY = rect.y + 3f;
             for (int i = 0; i < searchState.Suggestions.Count && i < 6; i++)
             {
                 ThingDefRecord record = searchState.Suggestions[i];
-                Rect rowRect = new Rect(rect.x + 4f, rowY, rect.width - 8f, SuggestionRowHeight - 3f);
+                Rect rowRect = new Rect(rect.x + 4f, rowY, rect.width - 8f, SuggestionRowHeight - 2f);
                 bool hovered = Mouse.IsOver(rowRect);
                 Widgets.DrawBoxSolid(rowRect, hovered ? new Color(0.25f, 0.37f, 0.55f, 0.82f) : new Color(0.12f, 0.12f, 0.16f, 0.76f));
                 if (Widgets.ButtonInvisible(rowRect))
@@ -389,9 +402,9 @@ namespace RimChat.UI
 
                 Text.Font = GameFont.Tiny;
                 GUI.color = hovered ? Color.white : new Color(0.88f, 0.9f, 0.94f);
-                Widgets.Label(new Rect(rowRect.x + 8f, rowRect.y + 3f, rowRect.width - 16f, 14f), record.Label);
+                Widgets.Label(new Rect(rowRect.x + 8f, rowRect.y + 2f, rowRect.width - 16f, 16f), record.Label);
                 GUI.color = new Color(0.62f, 0.68f, 0.8f);
-                Widgets.Label(new Rect(rowRect.x + 8f, rowRect.y + 17f, rowRect.width - 16f, 12f), record.DefName);
+                Widgets.Label(new Rect(rowRect.x + 8f, rowRect.y + 18f, rowRect.width - 16f, 16f), record.DefName);
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
                 rowY += SuggestionRowHeight;
@@ -521,21 +534,36 @@ namespace RimChat.UI
 
             float textX = iconRect.xMax + 10f;
             float textWidth = rect.width - (textX - rect.x) - 12f;
+            float lineHeight = 16f;
+
             Text.Font = GameFont.Small;
             GUI.color = new Color(0.93f, 0.94f, 0.98f);
-            Widgets.Label(new Rect(textX, contentY, textWidth, 20f), record.Label);
+            string label = record.Label ?? record.DefName;
+            float labelHeight = Mathf.Max(20f, Text.CalcHeight(label, textWidth));
+            Widgets.Label(new Rect(textX, contentY, textWidth, labelHeight), label);
+
             Text.Font = GameFont.Tiny;
             GUI.color = new Color(0.6f, 0.66f, 0.78f);
-            Widgets.Label(new Rect(textX, contentY + 20f, textWidth, 16f), record.DefName);
+            float defNameY = contentY + labelHeight;
+            float defNameHeight = Mathf.Max(lineHeight, Text.CalcHeight(record.DefName ?? string.Empty, textWidth));
+            Widgets.Label(new Rect(textX, defNameY, textWidth, defNameHeight), record.DefName);
+
+            float metricsY = Mathf.Max(iconRect.yMax - 2f, defNameY + defNameHeight + 2f);
+            float halfWidth = textWidth * 0.5f;
+
             GUI.color = new Color(0.84f, 0.86f, 0.92f);
-            Widgets.Label(new Rect(textX, contentY + 38f, textWidth * 0.52f, 14f), "RimChat_Price".Translate() + ": " + unitPrice.ToString("F1", CultureInfo.InvariantCulture));
-            Widgets.Label(new Rect(textX + textWidth * 0.52f, contentY + 38f, textWidth * 0.48f, 14f), "RimChat_StackLimit".Translate() + ": " + record.StackLimit);
+            Widgets.Label(new Rect(textX, metricsY, halfWidth, lineHeight), "RimChat_Price".Translate() + ": " + unitPrice.ToString("F1", CultureInfo.InvariantCulture));
+            Widgets.Label(new Rect(textX + halfWidth, metricsY, halfWidth, lineHeight), "RimChat_StackLimit".Translate() + ": " + record.StackLimit);
+
             GUI.color = new Color(0.78f, 0.83f, 0.9f);
-            Widgets.Label(new Rect(textX, contentY + 56f, textWidth * 0.52f, 14f), "RimChat_AirdropTradeCard_CountLabel".Translate() + ": " + count);
+            Widgets.Label(new Rect(textX, metricsY + lineHeight, halfWidth, lineHeight), "RimChat_AirdropTradeCard_CountLabel".Translate() + ": " + count);
             GUI.color = new Color(0.94f, 0.8f, 0.42f);
-            Widgets.Label(new Rect(textX + textWidth * 0.52f, contentY + 56f, textWidth * 0.48f, 14f), "RimChat_AirdropTradeCard_TotalPriceLabel".Translate() + ": " + totalPrice.ToString("F1", CultureInfo.InvariantCulture));
+            Widgets.Label(new Rect(textX + halfWidth, metricsY + lineHeight, halfWidth, lineHeight), "RimChat_AirdropTradeCard_TotalPriceLabel".Translate() + ": " + totalPrice.ToString("F1", CultureInfo.InvariantCulture));
+
             GUI.color = new Color(0.72f, 0.78f, 0.9f);
-            Widgets.Label(new Rect(textX, contentY + 74f, textWidth, 14f), "RimChat_AirdropTradeCard_PriceSemanticLabel".Translate(BuildPriceSemanticTag(priceSemantic)).ToString());
+            float semanticY = metricsY + lineHeight * 2f;
+            float semanticHeight = Mathf.Max(lineHeight, Text.CalcHeight("RimChat_AirdropTradeCard_PriceSemanticLabel".Translate(BuildPriceSemanticTag(priceSemantic)).ToString(), textWidth));
+            Widgets.Label(new Rect(textX, semanticY, textWidth, semanticHeight), "RimChat_AirdropTradeCard_PriceSemanticLabel".Translate(BuildPriceSemanticTag(priceSemantic)).ToString());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
         }
@@ -587,7 +615,7 @@ namespace RimChat.UI
             {
                 inventorySearchText = newText;
                 ApplyInventoryFilter();
-                EnsureDefaultOfferSelection();
+                EnsureOfferSelectionState();
             }
         }
 
@@ -644,31 +672,27 @@ namespace RimChat.UI
         {
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.13f));
 
-            // Row 1: reference price block
-            Rect statRect = new Rect(rect.x + 12f, rect.y + 10f, rect.width * 0.58f, 42f);
+            Rect statRect = new Rect(rect.x + 12f, rect.y + 8f, rect.width * 0.58f, 38f);
             DrawReferencePriceBlock(statRect);
 
-            // Row 2: inputs
             float inputWidth = rect.width * 0.55f;
-            DrawFooterInputs(new Rect(rect.x + 12f, rect.y + 56f, inputWidth, 28f));
+            DrawFooterInputs(new Rect(rect.x + 12f, rect.y + 50f, inputWidth, 26f));
 
-            // Row 3: trade limit + pod info
-            DrawTradeRulesInfo(new Rect(rect.x + 12f, rect.y + 90f, rect.width - 24f, 32f));
+            DrawTradeRulesInfo(new Rect(rect.x + 12f, rect.y + 82f, rect.width - 24f, 28f));
 
-            // Row 4: validation hint
             string failReason = GetSubmitDisabledReason();
             if (!string.IsNullOrWhiteSpace(failReason))
             {
                 Text.Font = GameFont.Tiny;
                 GUI.color = new Color(0.9f, 0.74f, 0.32f);
-                Widgets.Label(new Rect(rect.x + 12f, rect.y + 124f, rect.width * 0.82f, 18f), failReason);
+                Widgets.Label(new Rect(rect.x + 12f, rect.y + 114f, rect.width * 0.82f, 16f), failReason);
                 GUI.color = Color.white;
                 Text.Font = GameFont.Small;
             }
 
             float buttonWidth = 160f;
-            Rect cancelRect = new Rect(rect.xMax - buttonWidth - 12f, rect.yMax - 40f, buttonWidth, 32f);
-            Rect submitRect = new Rect(cancelRect.x - buttonWidth - 10f, cancelRect.y, buttonWidth, 32f);
+            Rect cancelRect = new Rect(rect.xMax - buttonWidth - 12f, rect.yMax - 36f, buttonWidth, 28f);
+            Rect submitRect = new Rect(cancelRect.x - buttonWidth - 10f, cancelRect.y, buttonWidth, 28f);
             bool canSubmit = CanSubmit();
             GUI.enabled = canSubmit;
             if (Widgets.ButtonText(submitRect, "RimChat_AirdropTradeCard_Submit".Translate()))
@@ -890,6 +914,47 @@ namespace RimChat.UI
             showInlineSuggestions = false;
         }
 
+        private void ApplyPendingInventoryLoadIfReady()
+        {
+            if (!inventoryLoadCompleted)
+            {
+                return;
+            }
+
+            inventoryLoadCompleted = false;
+            inventoryItems.Clear();
+            if (pendingInventoryItems != null && pendingInventoryItems.Count > 0)
+            {
+                inventoryItems.AddRange(pendingInventoryItems);
+            }
+
+            pendingInventoryItems = null;
+            ApplyInventoryFilter();
+            EnsureOfferSelectionState();
+            inventoryLoadProgress = 1f;
+            isLoadingInventory = false;
+        }
+
+        private InventoryDisplayEntry FindInventoryEntryByDefName(string defName)
+        {
+            if (string.IsNullOrWhiteSpace(defName))
+            {
+                return null;
+            }
+
+            return inventoryItems.FirstOrDefault(entry =>
+                string.Equals(entry.DefName, defName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void ClearOfferSelection()
+        {
+            selectedOfferDefName = string.Empty;
+            selectedOfferLabel = string.Empty;
+            selectedOfferStackLimit = 1;
+            selectedOfferUnitPrice = 1f;
+            selectedOfferPriceSemantic = string.Empty;
+        }
+
         private void ClearNeedBinding()
         {
             boundNeedRecord = null;
@@ -950,8 +1015,7 @@ namespace RimChat.UI
                 return "RimChat_AirdropSubmitOrbitalBase".Translate();
             }
 
-            InventoryDisplayEntry offerEntry = filteredInventoryItems.FirstOrDefault(entry =>
-                string.Equals(entry.DefName, selectedOfferDefName, StringComparison.OrdinalIgnoreCase));
+            InventoryDisplayEntry offerEntry = FindInventoryEntryByDefName(selectedOfferDefName);
             if (offerEntry == null || offerEntry.Count < offerCount)
             {
                 return "RimChat_AirdropSubmitInsufficientOffer".Translate(

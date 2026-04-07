@@ -23,8 +23,8 @@ namespace RimChat.UI
         private const int RansomProofPortraitSize = 160;
         private const string RansomProofImageSourceUrl = "rimchat://ransom-proof";
         private const string RequestInfoTypePrisoner = "prisoner";
-        private const float RansomOfferWindowMinMultiplier = 0.60f;
-        private const float RansomOfferWindowMaxMultiplier = 1.40f;
+        private const float RansomOfferWindowMinMultiplier = 0.10f;
+        private const float RansomOfferWindowMaxMultiplier = 3.00f;
         private const float BatchRansomEstimateMultiplier = 0.80f;
         private const float RansomAutoReplyTimeoutCooldownSeconds = 90f;
         private const string BatchGroupIdParameterKey = "batch_group_id";

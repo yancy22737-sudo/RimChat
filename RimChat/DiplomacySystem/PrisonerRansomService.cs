@@ -15,10 +15,10 @@ namespace RimChat.DiplomacySystem
     /// </summary>
     internal sealed class PrisonerRansomService
     {
-        private const float StartAskMultiplier = 1.25f;
-        private const float FloorMultiplier = 0.80f;
-        private const float OfferWindowMinMultiplier = 0.60f;
-        private const float OfferWindowMaxMultiplier = 1.40f;
+        private const float StartAskMultiplier = 1.10f;
+        private const float FloorMultiplier = 0.10f;
+        private const float OfferWindowMinMultiplier = 0.10f;
+        private const float OfferWindowMaxMultiplier = 3.00f;
         private const float PawnValueCap = 5000f;
         private static readonly string[] CoreOrganDefNames = { "Heart", "Liver", "Lung", "Kidney", "Eye" };
         private static readonly HashSet<string> CoreOrganDefNameSet =

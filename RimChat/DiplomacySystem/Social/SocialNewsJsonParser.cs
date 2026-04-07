@@ -104,6 +104,7 @@ namespace RimChat.DiplomacySystem
             public string outlook = string.Empty;
             public string quote = string.Empty;
             public string quote_attribution = string.Empty;
+            public string narrative_mode = string.Empty;
 
             public SocialNewsDraft ToDraft()
             {
@@ -115,7 +116,8 @@ namespace RimChat.DiplomacySystem
                     Process = NormalizeField(process),
                     Outlook = NormalizeField(outlook),
                     Quote = NormalizeField(quote),
-                    QuoteAttribution = NormalizeField(quote_attribution)
+                    QuoteAttribution = NormalizeField(quote_attribution),
+                    NarrativeMode = NormalizeField(narrative_mode)
                 };
             }
 

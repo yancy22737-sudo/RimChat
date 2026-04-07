@@ -1,10 +1,11 @@
 using System.IO;
+using RimChat.DiplomacySystem;
 
 namespace RimChat.Memory
 {
     /// <summary>
-    /// Dependencies: filesystem name normalization and StringExtensions.SanitizeFileName.
-    /// Responsibility: hold the latest observed active save filename captured from game load/save entry points.
+    /// Dependencies: filesystem name normalization, RPG persistent slot identity, and StringExtensions.SanitizeFileName.
+    /// Responsibility: retain latest observed save filename for diagnostics while exposing the stable RimChat binding id as the primary save context.
     /// </summary>
     public static class SaveContextTracker
     {
@@ -29,6 +30,12 @@ namespace RimChat.Memory
         public static string GetCurrentSaveName()
         {
             return currentSaveName ?? string.Empty;
+        }
+
+        public static string GetStableBindingId()
+        {
+            string slotId = GameComponent_RPGManager.Instance?.GetPersistentRpgSaveSlotId();
+            return string.IsNullOrWhiteSpace(slotId) ? string.Empty : slotId.SanitizeFileName();
         }
 
         private static string NormalizeSaveName(string rawSaveName)

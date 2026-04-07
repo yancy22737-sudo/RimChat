@@ -12,7 +12,7 @@ namespace RimChat.Patches
     {
         private static void Postfix(Thing __instance, DamageInfo dinfo)
         {
-            if (__instance == null || !__instance.Destroyed)
+            if (__instance == null || !__instance.Destroyed || !RimChatTrackedEntityRegistry.IsThingTracked(__instance))
             {
                 return;
             }

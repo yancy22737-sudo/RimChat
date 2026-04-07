@@ -20,8 +20,7 @@ namespace RimChat.Config
         private enum PromptWorkbenchInfoPanel
         {
             Preview = 0,
-            Variables = 1,
-            Help = 2
+            Variables = 1
         }
 
         private IPromptPresetService _promptPresetService;
@@ -408,26 +407,21 @@ namespace RimChat.Config
         {
             Widgets.DrawBoxSolid(rect, new Color(0.09f, 0.10f, 0.12f));
             Rect inner = rect.ContractedBy(8f);
-            float buttonWidth = (inner.width - 12f) / 3f;
+            float buttonWidth = (inner.width - 6f) / 2f;
             Rect previewRect = new Rect(inner.x, inner.y, buttonWidth, 24f);
             Rect varsRect = new Rect(previewRect.xMax + 6f, inner.y, buttonWidth, 24f);
-            Rect helpRect = new Rect(varsRect.xMax + 6f, inner.y, buttonWidth, 24f);
 
             DrawWorkbenchSideButton(previewRect, PromptWorkbenchInfoPanel.Preview, "RimChat_PreviewTitleShort");
             DrawWorkbenchSideButton(varsRect, PromptWorkbenchInfoPanel.Variables, "RimChat_PromptWorkbench_VariablesTab");
-            DrawWorkbenchSideButton(helpRect, PromptWorkbenchInfoPanel.Help, "RimChat_PromptWorkbench_HelpTab");
 
             Rect contentRect = new Rect(inner.x, previewRect.yMax + 6f, inner.width, inner.height - 30f);
             switch (_workbenchSidePanelTab)
             {
-                case PromptWorkbenchInfoPanel.Preview:
-                    DrawWorkbenchPreview(contentRect);
-                    break;
                 case PromptWorkbenchInfoPanel.Variables:
                     DrawWorkbenchVariables(contentRect);
                     break;
                 default:
-                    DrawWorkbenchHelp(contentRect);
+                    DrawWorkbenchPreview(contentRect);
                     break;
             }
         }
@@ -707,14 +701,6 @@ namespace RimChat.Config
             RimTalkChannelCompatConfig config = GetWorkbenchEditingChannelConfig();
             RimTalkPromptEntryConfig selectedEntry = GetSelectedRimTalkPromptEntry(config);
             DrawRimTalkWorkbenchVariableBrowser(contentRect, selectedEntry?.Content);
-        }
-
-        private void DrawWorkbenchHelp(Rect rect)
-        {
-            Widgets.Label(new Rect(rect.x, rect.y, rect.width, 22f), "RimChat_PromptWorkbench_HelpTitle".Translate());
-            GUI.color = Color.gray;
-            Widgets.Label(new Rect(rect.x, rect.y + 24f, rect.width, rect.height - 24f), "RimChat_PromptWorkbench_HelpBody".Translate());
-            GUI.color = Color.white;
         }
 
         private string[] GetCurrentSourceHints()
