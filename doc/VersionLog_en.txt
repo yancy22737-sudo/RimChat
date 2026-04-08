@@ -1,3 +1,10 @@
+0.9.91
+- Root fix: reworked dialogue-triggered social-news fact packs into an explicit "public claim / background tension / observed reaction / gameplay implication" structure instead of feeding abstract metadata directly into generation.
+- Root fix: social-news headlines and quotes now must state a clear claim, demand, or stance; empty phrases like "stirred debate", "signal", or "new line" are no longer acceptable as the main payload.
+- Changed: added explicit-claim validation in the social-news parser so drafts with vague headlines or quotes fail fast before entering the social feed.
+- Docs: synchronized `About/About.xml`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.91`.
+
 0.9.90
 - Summary: refactored the Pawn/RPG dialogue routing and context-validation flow, added `PawnDialogueRoutingPolicy`, and synchronized the related job driver, component, and letter-trigger paths.
 - Summary: reworked airdrop trade rules and safety validation, expanded candidate parsing / safety filtering / thing catalog flow, and unified trade-limit, shipping, cooldown, and bubble premium-display semantics.

@@ -46,9 +46,6 @@ namespace RimChat.Config
             listing.Begin(new Rect(0f, 0f, viewRect.width, viewRect.height));
 
             DrawImageApiConnectionSection(listing);
-            listing.Gap(6f);
-            listing.GapLine();
-            DrawImageTemplateEditorSection(listing);
 
             listing.End();
             Widgets.EndScrollView();
@@ -56,24 +53,8 @@ namespace RimChat.Config
 
         private float CalculateImageApiContentHeight(float width)
         {
-            int templateCount = DiplomacyImagePromptTemplates?.Count ?? 0;
-            float selectorHeight = Mathf.Max(56f, templateCount * 24f + 10f);
-            float captionWidth = Mathf.Max(140f, width - 28f);
-            float styleHeight = Mathf.Max(84f, Text.CalcHeight(SendImageCaptionStylePrompt ?? string.Empty, captionWidth) + 22f);
-            float fallbackHeight = Mathf.Max(84f, Text.CalcHeight(SendImageCaptionFallbackTemplate ?? string.Empty, captionWidth) + 22f);
-            DiplomacyImagePromptTemplate selected = GetSelectedImageTemplate();
-            float templateTextHeight = 170f;
-            if (selected != null)
-            {
-                float textWidth = Mathf.Max(140f, width - 20f);
-                float dynamicHeight = Text.CalcHeight(selected.Text ?? string.Empty, textWidth - 20f) + 22f;
-                templateTextHeight = Mathf.Max(170f, dynamicHeight);
-            }
-
-            // Keep generous safety space so the multiline template editor is never clipped
-            // by page-content height underestimation in different UI scales.
-            float estimatedHeight = 1260f + selectorHeight + templateTextHeight + styleHeight + fallbackHeight;
-            return Mathf.Max(estimatedHeight, 1300f);
+            float estimatedHeight = 720f;
+            return Mathf.Max(estimatedHeight, 760f);
         }
 
         private void DrawImageApiConnectionSection(Listing_Standard listing)
@@ -81,7 +62,7 @@ namespace RimChat.Config
             listing.CheckboxLabeled("RimChat_ImageApiEnabled".Translate(), ref DiplomacyImageApi.IsEnabled);
             Text.Font = GameFont.Tiny;
             GUI.color = Color.gray;
-            listing.Label("RimChat_ImageApiExperimentalHint".Translate());
+            listing.Label("这里应填写支持图生图的图片 API；自拍功能会把游戏中小人的渲染图作为输入图发送。普通纯文生图接口可能无法用于自拍。");
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
 
@@ -106,6 +87,16 @@ namespace RimChat.Config
             DiplomacyImageApi.DefaultSize = DrawTextFieldWithPlaceholder(listing.GetRect(26f), DiplomacyImageApi.DefaultSize ?? string.Empty, "2560x1440");
 
             listing.CheckboxLabeled("RimChat_ImageApiDefaultWatermark".Translate(), ref DiplomacyImageApi.DefaultWatermark);
+            if (string.Equals(DiplomacyImageApi.ProviderPreset, DiplomacyImageApiConfig.ProviderPresetComfyUiLocal, StringComparison.OrdinalIgnoreCase))
+            {
+                listing.Label("ComfyUI 图生图加载节点名");
+                DiplomacyImageApi.ComfyUiImageLoaderNode = DrawTextFieldWithPlaceholder(listing.GetRect(26f), DiplomacyImageApi.ComfyUiImageLoaderNode ?? string.Empty, "LoadImageBase64");
+                Text.Font = GameFont.Tiny;
+                GUI.color = Color.gray;
+                listing.Label("填写你本地 ComfyUI 用于接收 base64 输入图的节点 class_type，例如 LoadImageBase64。这里只改节点名，不改其他 workflow 结构。");
+                GUI.color = Color.white;
+                Text.Font = GameFont.Small;
+            }
             listing.Label("RimChat_ImageApiTimeout".Translate(DiplomacyImageApi.TimeoutSeconds));
             DiplomacyImageApi.TimeoutSeconds = Mathf.RoundToInt(listing.Slider(DiplomacyImageApi.TimeoutSeconds, 10f, 300f));
             DrawImageConnectionTestButton(listing);
@@ -132,26 +123,6 @@ namespace RimChat.Config
                 }
             }
 
-            listing.Gap(4f);
-            listing.Label("RimChat_SendImageCaptionStylePromptLabel".Translate());
-            Text.Font = GameFont.Tiny;
-            GUI.color = Color.gray;
-            listing.Label("RimChat_SendImageCaptionStylePromptHint".Translate());
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-            Rect styleRect = listing.GetRect(86f);
-            Widgets.DrawBox(styleRect);
-            SendImageCaptionStylePrompt = Widgets.TextArea(styleRect.ContractedBy(4f), SendImageCaptionStylePrompt ?? string.Empty);
-
-            listing.Label("RimChat_SendImageCaptionFallbackTemplateLabel".Translate());
-            Text.Font = GameFont.Tiny;
-            GUI.color = Color.gray;
-            listing.Label("RimChat_SendImageCaptionFallbackTemplateHint".Translate());
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-            Rect fallbackRect = listing.GetRect(86f);
-            Widgets.DrawBox(fallbackRect);
-            SendImageCaptionFallbackTemplate = Widgets.TextArea(fallbackRect.ContractedBy(4f), SendImageCaptionFallbackTemplate ?? string.Empty);
         }
 
         private void DrawImageApiTextField(Listing_Standard listing, string labelKey, ref string value, string placeholder)
@@ -351,6 +322,7 @@ namespace RimChat.Config
                 AsyncSubmitPath = DiplomacyImageApi.AsyncSubmitPath,
                 AsyncStatusPathTemplate = DiplomacyImageApi.AsyncStatusPathTemplate,
                 AsyncImageFetchPath = DiplomacyImageApi.AsyncImageFetchPath,
+                ComfyUiImageLoaderNode = DiplomacyImageApi.ComfyUiImageLoaderNode,
                 PollIntervalMs = DiplomacyImageApi.PollIntervalMs,
                 PollMaxAttempts = DiplomacyImageApi.PollMaxAttempts
             };
@@ -614,17 +586,6 @@ namespace RimChat.Config
 
         private void EnsureSendImageCaptionDefaults()
         {
-            SendImageCaptionStylePrompt = (SendImageCaptionStylePrompt ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(SendImageCaptionStylePrompt))
-            {
-                SendImageCaptionStylePrompt = PromptTextConstants.SendImageCaptionStylePromptDefault;
-            }
-
-            SendImageCaptionFallbackTemplate = (SendImageCaptionFallbackTemplate ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(SendImageCaptionFallbackTemplate))
-            {
-                SendImageCaptionFallbackTemplate = PromptTextConstants.SendImageCaptionFallbackTemplateDefault;
-            }
         }
 
         private string ResolveDefaultApiEndpointForImage()
@@ -662,115 +623,6 @@ namespace RimChat.Config
             }
 
             return CloudConfigs[0];
-        }
-
-        private void DrawImageTemplateEditorSection(Listing_Standard listing)
-        {
-            listing.Label("RimChat_ImageTemplateSection".Translate());
-            DrawImageTemplateToolbar(listing);
-            DrawImageTemplateSelector(listing);
-
-            DiplomacyImagePromptTemplate selected = GetSelectedImageTemplate();
-            if (selected == null)
-            {
-                return;
-            }
-
-            listing.Gap(4f);
-            listing.CheckboxLabeled("RimChat_ImageTemplateEnabled".Translate(), ref selected.Enabled);
-
-            listing.Label("RimChat_ImageTemplateId".Translate());
-            selected.Id = Widgets.TextField(listing.GetRect(26f), selected.Id ?? string.Empty);
-
-            listing.Label("RimChat_ImageTemplateName".Translate());
-            selected.Name = Widgets.TextField(listing.GetRect(26f), selected.Name ?? string.Empty);
-
-            listing.Label("RimChat_ImageTemplateDescription".Translate());
-            selected.Description = Widgets.TextField(listing.GetRect(26f), selected.Description ?? string.Empty);
-
-            listing.Label("RimChat_ImageTemplateText".Translate());
-            Rect textRect = listing.GetRect(170f);
-            Widgets.DrawBox(textRect);
-            Rect editorRect = textRect.ContractedBy(4f);
-            selected.Text = Widgets.TextArea(editorRect, selected.Text ?? string.Empty);
-            EnsureImageTemplateIds();
-        }
-
-        private void DrawImageTemplateToolbar(Listing_Standard listing)
-        {
-            Rect row = listing.GetRect(26f);
-            float buttonWidth = 120f;
-            Rect addRect = new Rect(row.x, row.y, buttonWidth, row.height);
-            Rect deleteRect = new Rect(addRect.xMax + 8f, row.y, buttonWidth, row.height);
-
-            if (Widgets.ButtonText(addRect, "RimChat_ImageTemplateAdd".Translate()))
-            {
-                DiplomacyImagePromptTemplates.Add(new DiplomacyImagePromptTemplate
-                {
-                    Id = Guid.NewGuid().ToString("N"),
-                    Name = "RimChat_ImageTemplateNewName".Translate(),
-                    Text = string.Empty,
-                    Description = string.Empty,
-                    Enabled = true
-                });
-                _selectedImageTemplateIndex = DiplomacyImagePromptTemplates.Count - 1;
-                _imageTemplateTextScroll = Vector2.zero;
-            }
-
-            bool canDelete = DiplomacyImagePromptTemplates.Count > 1;
-            if (!canDelete)
-            {
-                GUI.color = new Color(1f, 1f, 1f, 0.4f);
-            }
-            if (Widgets.ButtonText(deleteRect, "RimChat_ImageTemplateDelete".Translate()) && canDelete)
-            {
-                int index = Mathf.Clamp(_selectedImageTemplateIndex, 0, DiplomacyImagePromptTemplates.Count - 1);
-                DiplomacyImagePromptTemplates.RemoveAt(index);
-                _selectedImageTemplateIndex = Mathf.Clamp(index - 1, 0, DiplomacyImagePromptTemplates.Count - 1);
-                _imageTemplateTextScroll = Vector2.zero;
-            }
-            GUI.color = Color.white;
-        }
-
-        private void DrawImageTemplateSelector(Listing_Standard listing)
-        {
-            for (int i = 0; i < DiplomacyImagePromptTemplates.Count; i++)
-            {
-                DiplomacyImagePromptTemplate template = DiplomacyImagePromptTemplates[i];
-                if (template == null)
-                {
-                    continue;
-                }
-
-                Rect row = listing.GetRect(24f);
-                bool selected = i == _selectedImageTemplateIndex;
-                if (selected)
-                {
-                    Widgets.DrawBoxSolid(row, new Color(0.23f, 0.32f, 0.44f, 0.85f));
-                }
-
-                string name = string.IsNullOrWhiteSpace(template.Name) ? template.Id : template.Name;
-                string state = template.Enabled
-                    ? "RimChat_CommsToggleStatusOn".Translate().ToString()
-                    : "RimChat_CommsToggleStatusOff".Translate().ToString();
-                Widgets.Label(row, $"[{state}] {name}");
-                if (Widgets.ButtonInvisible(row))
-                {
-                    _selectedImageTemplateIndex = i;
-                    _imageTemplateTextScroll = Vector2.zero;
-                }
-            }
-        }
-
-        private DiplomacyImagePromptTemplate GetSelectedImageTemplate()
-        {
-            if (DiplomacyImagePromptTemplates == null || DiplomacyImagePromptTemplates.Count == 0)
-            {
-                return null;
-            }
-
-            _selectedImageTemplateIndex = Mathf.Clamp(_selectedImageTemplateIndex, 0, DiplomacyImagePromptTemplates.Count - 1);
-            return DiplomacyImagePromptTemplates[_selectedImageTemplateIndex];
         }
 
         private void EnsureImageTemplateIds()

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.DiplomacySystem;
@@ -18,6 +17,7 @@ namespace RimChat.UI
     public sealed class Dialog_DiplomacySelfieConfig : Window
     {
         private const int PortraitSize = 512;
+        private const string DefaultPromptText = "帮我生成图片：将图片的动漫风格角色转为低饱和二次元摄影cos风格，做自拍动作，采用现实对脸自拍构图，保留核心服饰元素，背景设为派系典型场景，光线偏暖调以增强氛围感，全身照。比例 4:3。";
 
         private readonly Faction faction;
         private readonly Pawn negotiator;
@@ -31,10 +31,26 @@ namespace RimChat.UI
         private string status = string.Empty;
         private Vector2 scrollPos = Vector2.zero;
 
-        private bool includeBasicProfile = true;
-        private bool includeAppearanceProfile = true;
-        private bool includeStatusProfile = true;
-        private bool includeEquipmentProfile = true;
+        private bool includeAge = true;
+        private bool includeGender = true;
+        private bool includeFaction = true;
+        private bool includeRole = true;
+        private bool includeBodyType = true;
+        private bool includeHair = true;
+        private bool includeXenotype = true;
+        private bool includeApparel = true;
+        private bool includeHediffs = true;
+        private bool includeHealth = true;
+        private bool includeWeapon = true;
+        private bool includeEquipment = true;
+        private bool includePositivePrompt;
+        private bool includeNegativePrompt;
+
+        private const string PositivePromptDefault = "masterwork, masterpiece, best quality, detailed, depth of field, high detail, very aesthetic, dynamic pose, dynamic angle";
+        private const string NegativePromptDefault = "lowres, worst quality, low quality, bad anatomy, bad hands, jpeg, artifacts ((signature, watermark, text, logo, artist name, patreon_username, web_address, username):1.5), extra digits, censored, chibi, sweat, particles, parted lips, artist logo";
+
+        private string positivePromptText = PositivePromptDefault;
+        private string negativePromptText = NegativePromptDefault;
 
         public override Vector2 InitialSize => new Vector2(720f, 640f);
 
@@ -57,9 +73,13 @@ namespace RimChat.UI
                 watermark = imageConfig.DefaultWatermark;
             }
 
+            ApplyPersistedState(settings);
+
             string colonistName = selectedColonist?.LabelShort ?? negotiator?.LabelShort ?? "Pawn";
-            captionText = "RimChat_SelfieDefaultCaption".Translate(colonistName);
-            promptText = "帮我生成图片：将图片的动漫风格角色转为低饱和二次元摄影cos风格，做自拍动作，采用现实对脸自拍构图，保留核心服饰元素，背景设为派系典型场景，光线偏暖调以增强氛围感，全身照。比例 4:3。";
+            captionText = string.IsNullOrWhiteSpace(captionText)
+                ? "RimChat_SelfieDefaultCaption".Translate(colonistName)
+                : captionText;
+            promptText = string.IsNullOrWhiteSpace(promptText) ? DefaultPromptText : promptText;
         }
 
         public override void DoWindowContents(Rect inRect)
@@ -84,7 +104,7 @@ namespace RimChat.UI
 
         private void DrawForm(Rect rect)
         {
-            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, 860f);
+            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, 1220f);
             Widgets.BeginScrollView(rect, ref scrollPos, viewRect);
             float y = 0f;
 
@@ -105,7 +125,7 @@ namespace RimChat.UI
             Widgets.CheckboxLabeled(new Rect(0f, y, viewRect.width, 24f), "RimChat_SelfieWatermark".Translate(), ref watermark);
             y += 32f;
 
-            y += DrawInjectionSwitches(new Rect(0f, y, viewRect.width, 116f));
+            y += DrawInjectionSwitches(new Rect(0f, y, viewRect.width, 360f));
             y += 10f;
             DrawContextPreview(new Rect(0f, y, viewRect.width, 220f));
             Widgets.EndScrollView();
@@ -124,6 +144,7 @@ namespace RimChat.UI
                     {
                         selectedColonist = pawn;
                         captionText = "RimChat_SelfieDefaultCaption".Translate(selectedColonist?.LabelShort ?? "Pawn");
+                        PersistUiState();
                     }))
                     .ToList();
                 if (options.Count == 0)
@@ -145,18 +166,41 @@ namespace RimChat.UI
             Widgets.Label(new Rect(rect.x + 8f, rect.y + 6f, rect.width - 16f, 24f), "附加提示词选项");
             GUI.color = Color.white;
 
-            float leftX = rect.x + 8f;
+            float x = rect.x + 8f;
+            float y = rect.y + 32f;
+            float leftWidth = rect.width * 0.48f;
             float rightX = rect.x + rect.width * 0.5f;
-            float rowY = rect.y + 32f;
-            float leftWidth = rect.width * 0.5f - 12f;
-            float rightWidth = rect.width * 0.5f - 12f;
+            float rightWidth = rect.width * 0.48f;
 
-            Widgets.CheckboxLabeled(new Rect(leftX, rowY, leftWidth, 24f), "基础参数：年龄/性别/派系/身份", ref includeBasicProfile);
-            rowY += 24f;
-            Widgets.CheckboxLabeled(new Rect(leftX, rowY, leftWidth, 24f), "外观参数：体型/发型/种族/服饰", ref includeAppearanceProfile);
-            rowY += 24f;
-            Widgets.CheckboxLabeled(new Rect(rightX, rect.y + 32f, rightWidth, 24f), "状态参数：hediff/伤痕/义体/健康", ref includeStatusProfile);
-            Widgets.CheckboxLabeled(new Rect(rightX, rect.y + 56f, rightWidth, 24f), "装备参数：武器/装备", ref includeEquipmentProfile);
+            Widgets.CheckboxLabeled(new Rect(x, y, leftWidth, 24f), "年龄", ref includeAge); y += 24f;
+            Widgets.CheckboxLabeled(new Rect(x, y, leftWidth, 24f), "性别", ref includeGender); y += 24f;
+            Widgets.CheckboxLabeled(new Rect(x, y, leftWidth, 24f), "派系", ref includeFaction); y += 24f;
+            Widgets.CheckboxLabeled(new Rect(x, y, leftWidth, 24f), "身份/职业", ref includeRole); y += 24f;
+            Widgets.CheckboxLabeled(new Rect(x, y, leftWidth, 24f), "体型", ref includeBodyType); y += 24f;
+            Widgets.CheckboxLabeled(new Rect(x, y, leftWidth, 24f), "发型", ref includeHair);
+
+            float rightY = rect.y + 32f;
+            Widgets.CheckboxLabeled(new Rect(rightX, rightY, rightWidth, 24f), "种族/异种型", ref includeXenotype); rightY += 24f;
+            Widgets.CheckboxLabeled(new Rect(rightX, rightY, rightWidth, 24f), "服饰", ref includeApparel); rightY += 24f;
+            Widgets.CheckboxLabeled(new Rect(rightX, rightY, rightWidth, 24f), "hediff", ref includeHediffs); rightY += 24f;
+            Widgets.CheckboxLabeled(new Rect(rightX, rightY, rightWidth, 24f), "当前健康状态", ref includeHealth); rightY += 24f;
+            Widgets.CheckboxLabeled(new Rect(rightX, rightY, rightWidth, 24f), "武器", ref includeWeapon); rightY += 24f;
+            Widgets.CheckboxLabeled(new Rect(rightX, rightY, rightWidth, 24f), "装备", ref includeEquipment);
+
+            float promptY = rect.y + 182f;
+            Widgets.CheckboxLabeled(new Rect(rect.x + 8f, promptY, rect.width - 16f, 24f), "附加 Positive prompt", ref includePositivePrompt);
+            if (includePositivePrompt)
+            {
+                positivePromptText = Widgets.TextArea(new Rect(rect.x + 8f, promptY + 26f, rect.width - 16f, 42f), positivePromptText ?? string.Empty);
+            }
+
+            float negativeY = includePositivePrompt ? promptY + 74f : promptY + 26f;
+            Widgets.CheckboxLabeled(new Rect(rect.x + 8f, negativeY, rect.width - 16f, 24f), "附加 Negative prompt", ref includeNegativePrompt);
+            if (includeNegativePrompt)
+            {
+                negativePromptText = Widgets.TextArea(new Rect(rect.x + 8f, negativeY + 26f, rect.width - 16f, 56f), negativePromptText ?? string.Empty);
+            }
+
             return rect.height;
         }
 
@@ -199,6 +243,7 @@ namespace RimChat.UI
 
         private void StartGenerate()
         {
+            PersistUiState();
             if (isGenerating)
             {
                 return;
@@ -251,6 +296,7 @@ namespace RimChat.UI
                 AsyncSubmitPath = imageConfig.AsyncSubmitPath,
                 AsyncStatusPathTemplate = imageConfig.AsyncStatusPathTemplate,
                 AsyncImageFetchPath = imageConfig.AsyncImageFetchPath,
+                ComfyUiImageLoaderNode = imageConfig.ComfyUiImageLoaderNode,
                 PollIntervalMs = imageConfig.PollIntervalMs,
                 PollMaxAttempts = imageConfig.PollMaxAttempts,
                 SourceImageBytes = sourceImageBytes,
@@ -263,92 +309,176 @@ namespace RimChat.UI
 
         private string BuildSelfiePrompt()
         {
-            var sb = new StringBuilder();
-            sb.AppendLine((promptText ?? string.Empty).Trim());
-            sb.AppendLine();
-            sb.AppendLine(BuildPromptAppendix(selectedColonist, includeBase64Preview: false));
-            return sb.ToString().Trim();
+            string basePrompt = (promptText ?? string.Empty).Trim();
+            string appendix = BuildPromptAppendix(selectedColonist, includeBase64Preview: false);
+            if (string.IsNullOrWhiteSpace(appendix))
+            {
+                return basePrompt;
+            }
+
+            return string.IsNullOrWhiteSpace(basePrompt)
+                ? appendix
+                : basePrompt + "\n\n" + appendix;
         }
 
         private string BuildPromptAppendix(Pawn pawn, bool includeBase64Preview)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("以下内容为参考补充信息，供自拍图生成时保持人物一致性：");
-
-            if (includeBasicProfile)
+            var lines = new List<string>();
+            if (includeAge)
             {
-                sb.AppendLine(BuildBasicProfileLine(pawn));
+                lines.Add($"年龄={ResolveAgeText(pawn)}");
+            }
+            if (includeGender)
+            {
+                lines.Add($"性别={pawn?.gender.ToString() ?? "Unknown"}");
+            }
+            if (includeFaction)
+            {
+                lines.Add($"派系={pawn?.Faction?.Name ?? faction?.Name ?? "Unknown"}");
+            }
+            if (includeRole)
+            {
+                lines.Add($"身份/职业={pawn?.story?.TitleCap ?? pawn?.kindDef?.label ?? "Colonist"}");
+            }
+            if (includeBodyType)
+            {
+                lines.Add($"体型={pawn?.story?.bodyType?.label ?? "unknown"}");
+            }
+            if (includeHair)
+            {
+                lines.Add($"发型={pawn?.story?.hairDef?.label ?? "unknown"}");
+            }
+            if (includeXenotype)
+            {
+                lines.Add($"种族/异种型={pawn?.genes?.XenotypeLabelCap ?? pawn?.def?.label ?? "unknown"}");
+            }
+            if (includeApparel)
+            {
+                lines.Add($"服饰={ResolveApparelText(pawn)}");
+            }
+            if (includeHediffs)
+            {
+                lines.Add($"hediff={ResolveHediffText(pawn)}");
+            }
+            if (includeHealth)
+            {
+                lines.Add($"当前健康状态={pawn?.health?.summaryHealth?.SummaryHealthPercent.ToStringPercent() ?? "unknown"}");
+            }
+            if (includeWeapon)
+            {
+                lines.Add($"武器={pawn?.equipment?.Primary?.LabelCap ?? "none"}");
+            }
+            if (includeEquipment)
+            {
+                lines.Add($"装备={ResolveApparelText(pawn)}");
+            }
+            if (includePositivePrompt && !string.IsNullOrWhiteSpace(positivePromptText))
+            {
+                lines.Add($"Positive prompt: {positivePromptText.Trim()}");
+            }
+            if (includeNegativePrompt && !string.IsNullOrWhiteSpace(negativePromptText))
+            {
+                lines.Add($"Negative prompt: {negativePromptText.Trim()}");
             }
 
-            if (includeAppearanceProfile)
+            if (lines.Count == 0)
             {
-                sb.AppendLine(BuildAppearanceProfileLine(pawn));
+                return string.Empty;
             }
 
-            if (includeStatusProfile)
-            {
-                sb.AppendLine(BuildStatusProfileLine(pawn));
-            }
-
-            if (includeEquipmentProfile)
-            {
-                sb.AppendLine(BuildEquipmentProfileLine(pawn));
-            }
-
-            return sb.ToString().Trim();
+            return "以下内容为参考补充信息，供自拍图生成时保持人物一致性：\n- " + string.Join("\n- ", lines);
         }
 
-        private string BuildBasicProfileLine(Pawn pawn)
+        private void ApplyPersistedState(RimChatSettings settings)
         {
-            string age = pawn?.ageTracker == null ? "unknown" : Math.Floor(pawn.ageTracker.AgeBiologicalYearsFloat).ToString();
-            string gender = pawn?.gender.ToString() ?? "Unknown";
-            string factionName = pawn?.Faction?.Name ?? faction?.Name ?? "Unknown";
-            string role = pawn?.story?.TitleCap ?? pawn?.kindDef?.label ?? "Colonist";
-            return $"基础参数：姓名={pawn?.LabelShortCap ?? "Unknown"}；年龄={age}；性别={gender}；派系={factionName}；身份/职业={role}。";
+            if (settings == null)
+            {
+                return;
+            }
+
+            includeAge = settings.SelfieIncludeAge;
+            includeGender = settings.SelfieIncludeGender;
+            includeFaction = settings.SelfieIncludeFaction;
+            includeRole = settings.SelfieIncludeRole;
+            includeBodyType = settings.SelfieIncludeBodyType;
+            includeHair = settings.SelfieIncludeHair;
+            includeXenotype = settings.SelfieIncludeXenotype;
+            includeApparel = settings.SelfieIncludeApparel;
+            includeHediffs = settings.SelfieIncludeHediffs;
+            includeHealth = settings.SelfieIncludeHealth;
+            includeWeapon = settings.SelfieIncludeWeapon;
+            includeEquipment = settings.SelfieIncludeEquipment;
+            includePositivePrompt = settings.SelfieIncludePositivePrompt;
+            includeNegativePrompt = settings.SelfieIncludeNegativePrompt;
+
+            promptText = string.IsNullOrWhiteSpace(settings.SelfiePromptText) ? DefaultPromptText : settings.SelfiePromptText;
+            captionText = settings.SelfieCaptionText ?? string.Empty;
+            sizeText = string.IsNullOrWhiteSpace(settings.SelfieSizeText) ? sizeText : settings.SelfieSizeText;
+            watermark = settings.SelfieWatermark;
+            positivePromptText = string.IsNullOrWhiteSpace(settings.SelfiePositivePromptText) ? PositivePromptDefault : settings.SelfiePositivePromptText;
+            negativePromptText = string.IsNullOrWhiteSpace(settings.SelfieNegativePromptText) ? NegativePromptDefault : settings.SelfieNegativePromptText;
+
+            if (!string.IsNullOrWhiteSpace(settings.SelfieSelectedColonistThingId))
+            {
+                Pawn persisted = selectableColonists.FirstOrDefault(pawn => pawn != null && pawn.ThingID == settings.SelfieSelectedColonistThingId);
+                if (persisted != null)
+                {
+                    selectedColonist = persisted;
+                }
+            }
         }
 
-        private string BuildAppearanceProfileLine(Pawn pawn)
+        private void PersistUiState()
         {
-            string bodyType = pawn?.story?.bodyType?.label ?? "unknown";
-            string hair = pawn?.story?.hairDef?.label ?? "unknown";
-            string xenotype = pawn?.genes?.XenotypeLabelCap ?? pawn?.def?.label ?? "unknown";
+            RimChatSettings settings = Core.RimChatMod.Settings;
+            if (settings == null)
+            {
+                return;
+            }
+
+            settings.SelfieSelectedColonistThingId = selectedColonist?.ThingID ?? string.Empty;
+            settings.SelfiePromptText = string.IsNullOrWhiteSpace(promptText) ? DefaultPromptText : promptText;
+            settings.SelfieCaptionText = captionText ?? string.Empty;
+            settings.SelfieSizeText = string.IsNullOrWhiteSpace(sizeText) ? DiplomacyImageApiConfig.DefaultImageSize : sizeText;
+            settings.SelfieWatermark = watermark;
+            settings.SelfieIncludeAge = includeAge;
+            settings.SelfieIncludeGender = includeGender;
+            settings.SelfieIncludeFaction = includeFaction;
+            settings.SelfieIncludeRole = includeRole;
+            settings.SelfieIncludeBodyType = includeBodyType;
+            settings.SelfieIncludeHair = includeHair;
+            settings.SelfieIncludeXenotype = includeXenotype;
+            settings.SelfieIncludeApparel = includeApparel;
+            settings.SelfieIncludeHediffs = includeHediffs;
+            settings.SelfieIncludeHealth = includeHealth;
+            settings.SelfieIncludeWeapon = includeWeapon;
+            settings.SelfieIncludeEquipment = includeEquipment;
+            settings.SelfieIncludePositivePrompt = includePositivePrompt;
+            settings.SelfieIncludeNegativePrompt = includeNegativePrompt;
+            settings.SelfiePositivePromptText = string.IsNullOrWhiteSpace(positivePromptText) ? PositivePromptDefault : positivePromptText;
+            settings.SelfieNegativePromptText = string.IsNullOrWhiteSpace(negativePromptText) ? NegativePromptDefault : negativePromptText;
+            Core.RimChatMod.Instance?.WriteSettings();
+        }
+
+        private static string ResolveAgeText(Pawn pawn)
+        {
+            return pawn?.ageTracker == null ? "unknown" : Math.Floor(pawn.ageTracker.AgeBiologicalYearsFloat).ToString();
+        }
+
+        private static string ResolveApparelText(Pawn pawn)
+        {
             string apparel = pawn?.apparel?.WornApparel == null
                 ? "none"
                 : string.Join("、", pawn.apparel.WornApparel.Where(item => item != null).Select(item => item.LabelCap).Take(8));
-            if (string.IsNullOrWhiteSpace(apparel))
-            {
-                apparel = "none";
-            }
-
-            return $"外观参数：体型={bodyType}；发型={hair}；种族/异种型={xenotype}；服饰={apparel}。";
+            return string.IsNullOrWhiteSpace(apparel) ? "none" : apparel;
         }
 
-        private string BuildStatusProfileLine(Pawn pawn)
+        private static string ResolveHediffText(Pawn pawn)
         {
             string hediffs = pawn?.health?.hediffSet?.hediffs == null
                 ? "none"
                 : string.Join("、", pawn.health.hediffSet.hediffs.Where(h => h != null).Select(h => h.LabelCap).Distinct().Take(10));
-            if (string.IsNullOrWhiteSpace(hediffs))
-            {
-                hediffs = "none";
-            }
-
-            string health = pawn?.health?.summaryHealth?.SummaryHealthPercent.ToStringPercent() ?? "unknown";
-            return $"状态参数：hediff/伤痕/义体={hediffs}；当前健康状态={health}。";
-        }
-
-        private string BuildEquipmentProfileLine(Pawn pawn)
-        {
-            string weapon = pawn?.equipment?.Primary?.LabelCap ?? "none";
-            string equipment = pawn?.apparel?.WornApparel == null
-                ? "none"
-                : string.Join("、", pawn.apparel.WornApparel.Where(item => item != null).Select(item => item.LabelCap).Take(8));
-            if (string.IsNullOrWhiteSpace(equipment))
-            {
-                equipment = "none";
-            }
-
-            return $"装备参数：武器={weapon}；装备={equipment}。";
+            return string.IsNullOrWhiteSpace(hediffs) ? "none" : hediffs;
         }
 
         private void OnGenerated(DiplomacyImageGenerationResult result)

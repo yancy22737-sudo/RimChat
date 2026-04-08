@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using RimChat.Dialogue;
 using RimWorld;
 using Verse;
@@ -1159,7 +1160,14 @@ namespace RimChat.AI
                     "needDef",
                     "__airdrop_bound_need_def"))
             {
-                SetCanonicalParameter(parameters, "need", need.Trim());
+                string normalizedNeed = need.Trim();
+                SetCanonicalParameter(parameters, "need", normalizedNeed);
+                int explicitNeedCount = ExtractSingleExplicitAirdropNeedCount(normalizedNeed);
+                if (explicitNeedCount > 0)
+                {
+                    SetCanonicalParameter(parameters, "count", explicitNeedCount);
+                    parameters["__airdrop_explicit_need_count"] = explicitNeedCount;
+                }
             }
 
             if (!TryReadParameterByAliases(parameters, out object rawPaymentItems, "payment_items") ||
@@ -1182,6 +1190,24 @@ namespace RimChat.AI
             }
 
             SetCanonicalParameter(parameters, "payment_items", normalizedItems);
+        }
+
+        private static int ExtractSingleExplicitAirdropNeedCount(string need)
+        {
+            if (string.IsNullOrWhiteSpace(need))
+            {
+                return 0;
+            }
+
+            MatchCollection matches = System.Text.RegularExpressions.Regex.Matches(need, "\\d+");
+            if (matches.Count != 1)
+            {
+                return 0;
+            }
+
+            return int.TryParse(matches[0].Value, out int parsed)
+                ? Math.Max(0, parsed)
+                : 0;
         }
 
         private static void NormalizeAirdropPaymentItem(Dictionary<string, object> item)

@@ -140,7 +140,13 @@ namespace RimChat.UI
             }
 
             Faction targetFaction = GameComponent_DiplomacyManager.Instance?.ResolveSocialTargetFaction(string.Empty, currentFaction);
-            string summary = BuildRandomDialogueSocialSummary(aiText, category);
+            string summary = SocialNewsSeedFactory.TryBuildFactionDialoguePublicClaim(
+                currentFaction,
+                category,
+                sentiment,
+                aiText,
+                playerMessage,
+                targetFaction);
             bool queued = GameComponent_DiplomacyManager.Instance != null &&
                           GameComponent_DiplomacyManager.Instance.EnqueuePublicPost(
                               currentFaction,
@@ -158,28 +164,6 @@ namespace RimChat.UI
             }
 
             currentSession?.AddMessage("System", "RimChat_SocialActionQueued".Translate(), false, DialogueMessageType.System);
-        }
-
-        private static string BuildRandomDialogueSocialSummary(string aiText, SocialPostCategory category)
-        {
-            string trimmed = (aiText ?? string.Empty).Trim();
-            if (!string.IsNullOrWhiteSpace(trimmed))
-            {
-                if (trimmed.Length <= 140)
-                {
-                    return trimmed;
-                }
-
-                return trimmed.Substring(0, 140).TrimEnd() + "...";
-            }
-
-            return category switch
-            {
-                SocialPostCategory.Military => "Diplomatic tensions escalated after a public exchange.",
-                SocialPostCategory.Economic => "A public diplomatic exchange highlighted economic cooperation.",
-                SocialPostCategory.Anomaly => "A public diplomatic exchange focused on unusual external events.",
-                _ => "A public diplomatic exchange has drawn wider inter-faction attention."
-            };
         }
 
         private static string GetStringParameter(Dictionary<string, object> parameters, string key)

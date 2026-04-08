@@ -365,6 +365,9 @@ namespace RimChat.DiplomacySystem
             }
 
             RequestedCountExtraction requestedCount = ExtractRequestedCount(intent?.NeedText);
+            requestedCount = MergeRequestedCountWithParameters(requestedCount, parameters);
+            string requestedCountAudit = $"need_text={need},explicit={requestedCount.HasExplicitCount}:{requestedCount.RequestedCount},parameter={requestedCount.HasParameterCount}:{requestedCount.ParameterCount}";
+            RecordStageAudit("requested_count", faction, parameters, requestedCountAudit);
             APIResult validationResult = ValidateAirdropSelection(
                 selection,
                 candidatePack,
@@ -374,7 +377,11 @@ namespace RimChat.DiplomacySystem
                 "llm",
                 out ThingDefRecord selectedRecord,
                 out int validatedCount,
-                out _);
+                out _,
+                out int requestedOriginalCount,
+                out int maxByBudget,
+                out int maxBySystem,
+                out int hardMax);
             if (!validationResult.Success)
             {
                 return FailFastAirdrop(
@@ -396,6 +403,13 @@ namespace RimChat.DiplomacySystem
                 SelectedDefName = selectedRecord.DefName,
                 ResolvedLabel = selectedRecord.Label,
                 Quantity = validatedCount,
+                RequestedQuantity = requestedOriginalCount,
+                MaxByBudget = maxByBudget,
+                MaxBySystem = maxBySystem,
+                HardMax = hardMax,
+                CountAdjustmentReason = validatedCount < requestedOriginalCount
+                    ? $"clamped_to_hard_max({requestedOriginalCount}->{validatedCount})"
+                    : "none",
                 BudgetSilver = budget,
                 PaymentTotalSilver = paymentTotalSilver,
                 PaymentOverpaySilver = overpay,
@@ -927,6 +941,11 @@ namespace RimChat.DiplomacySystem
         public string SelectedDefName { get; set; }
         public string ResolvedLabel { get; set; }
         public int Quantity { get; set; }
+        public int RequestedQuantity { get; set; }
+        public int MaxByBudget { get; set; }
+        public int MaxBySystem { get; set; }
+        public int HardMax { get; set; }
+        public string CountAdjustmentReason { get; set; }
         public int BudgetSilver { get; set; }
         public float NeedQuotedUnitSilver { get; set; }
         public int PaymentTotalSilver { get; set; }

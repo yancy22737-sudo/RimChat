@@ -70,6 +70,12 @@ namespace RimChat.DiplomacySystem
                 return null;
             }
 
+            string resolvedLocation = ResolvePostLocation(seed, draft);
+            string resolvedQuote = SanitizeQuoteForPost(draft.Quote);
+            string resolvedAttribution = SanitizeQuoteAttributionForPost(draft.QuoteAttribution, resolvedQuote, seed);
+            draft.Quote = resolvedQuote;
+            draft.QuoteAttribution = resolvedAttribution;
+            draft.LocationName = resolvedLocation;
             var post = new PublicSocialPost
             {
                 PostId = Guid.NewGuid().ToString("N"),
@@ -90,9 +96,9 @@ namespace RimChat.DiplomacySystem
                 Cause = draft.Cause ?? string.Empty,
                 Process = draft.Process ?? string.Empty,
                 Outlook = draft.Outlook ?? string.Empty,
-                Quote = draft.Quote ?? string.Empty,
-                QuoteAttribution = draft.QuoteAttribution ?? string.Empty,
-                LocationName = draft.LocationName ?? string.Empty,
+                Quote = resolvedQuote,
+                QuoteAttribution = resolvedAttribution,
+                LocationName = resolvedLocation,
                 Content = BuildCompositeContent(draft),
                 EffectSummary = string.Empty,
                 IsFromPlayerDialogue = seed.IsFromPlayerDialogue,
@@ -250,6 +256,80 @@ namespace RimChat.DiplomacySystem
             return keyOrText.StartsWith("RimChat_", StringComparison.Ordinal)
                 ? keyOrText.Translate().ToString()
                 : keyOrText;
+        }
+
+        private static string ResolvePostLocation(SocialNewsSeed seed, SocialNewsDraft draft)
+        {
+            if (!string.IsNullOrWhiteSpace(draft?.LocationName))
+            {
+                return draft.LocationName.Trim();
+            }
+
+            return ExtractLocationFromFacts(seed?.Facts);
+        }
+
+        private static string ExtractLocationFromFacts(IEnumerable<string> facts)
+        {
+            foreach (string fact in facts ?? Enumerable.Empty<string>())
+            {
+                if (string.IsNullOrWhiteSpace(fact))
+                {
+                    continue;
+                }
+
+                const string prefix = "Stronghold/settlement explicitly tied to this event:";
+                if (fact.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return fact.Substring(prefix.Length).Trim();
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static string SanitizeQuoteForPost(string quote)
+        {
+            if (string.IsNullOrWhiteSpace(quote))
+            {
+                return string.Empty;
+            }
+
+            string value = quote.Trim();
+            string[] blockedFragments =
+            {
+                "消息源：",
+                "消息来源：",
+                "来源：",
+                "Source:",
+                "source:",
+                "公开社交圈转述"
+            };
+
+            foreach (string fragment in blockedFragments)
+            {
+                int index = value.IndexOf(fragment, StringComparison.OrdinalIgnoreCase);
+                if (index >= 0)
+                {
+                    value = value.Substring(0, index).Trim();
+                }
+            }
+
+            return value.Trim('"', '“', '”');
+        }
+
+        private static string SanitizeQuoteAttributionForPost(string attribution, string quote, SocialNewsSeed seed)
+        {
+            if (string.IsNullOrWhiteSpace(quote))
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(attribution))
+            {
+                return attribution.Trim().Trim('"', '“', '”');
+            }
+
+            return ResolveDisplayLabel(seed?.SourceLabel);
         }
 
         private static string BuildCompositeContent(SocialNewsDraft draft)

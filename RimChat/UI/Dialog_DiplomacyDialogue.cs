@@ -699,6 +699,7 @@ namespace RimChat.UI
 
             var allFactions = GetAvailableFactions(true);
             CleanupGoodwillHoverAlpha(allFactions);
+            CleanupHoverCardAlpha(allFactions.Select(f => $"faction:{f.loadID}"));
 
             float rowHeight = LayoutFactionRowHeight;
             float contentHeight = allFactions.Count * (rowHeight + LayoutFactionRowSpacing);
@@ -888,6 +889,8 @@ namespace RimChat.UI
 
             Text.Font = GameFont.Small;
             GUI.color = Color.white;
+
+            DrawFactionHoverCard(f, rect);
 
             if (!isSelected && Widgets.ButtonInvisible(rect))
             {
@@ -1333,8 +1336,9 @@ namespace RimChat.UI
             {
                 userIsScrolling = false;
             }
-            
+
             GUI.EndScrollView();
+            DrawHoverCardIfNeeded();
         }
 
         private bool ShouldShowTimeGap(int prevGameTick, int currentGameTick)
@@ -3298,7 +3302,7 @@ namespace RimChat.UI
 
             pendingAirdropDialogState = null;
             Log.Message(
-                $"[RimChat] AirdropConfirmDisplayed: def={state.PreparedTrade.SelectedDefName ?? "unknown"},count={state.PreparedTrade.Quantity},payment={state.PreparedTrade.PaymentTotalSilver}");
+                $"[RimChat] AirdropConfirmDisplayed: def={state.PreparedTrade.SelectedDefName ?? "unknown"},count={state.PreparedTrade.Quantity},requested={state.PreparedTrade.RequestedQuantity},hardMax={state.PreparedTrade.HardMax},adjustment={state.PreparedTrade.CountAdjustmentReason},payment={state.PreparedTrade.PaymentTotalSilver}");
             OpenQueuedAirdropTradeConfirmationDialog(state);
         }
 

@@ -81,7 +81,7 @@ namespace RimChat.AI
                 ?? new List<DialogueMessageData>();
             List<DialogueCompressionTurn> turns = ConvertFromDialogueMessages(source);
             List<ChatMessageData> packed = BuildFromTurns(turns, ResolveOptions(options));
-            AppendPinnedRansomSystemMessages(source, packed);
+            AppendPinnedTopicSystemMessages(source, packed);
             return packed;
         }
 
@@ -434,7 +434,7 @@ namespace RimChat.AI
             return result;
         }
 
-        private static void AppendPinnedRansomSystemMessages(
+        private static void AppendPinnedTopicSystemMessages(
             IReadOnlyList<DialogueMessageData> source,
             List<ChatMessageData> packed)
         {
@@ -443,7 +443,14 @@ namespace RimChat.AI
                 return;
             }
 
-            List<ChatMessageData> pinned = ExtractPinnedRansomSystemMessages(source);
+            bool pinRansom = HasRecentTopicSignal(source, RansomSystemKeywords);
+            bool pinAirdrop = HasRecentTopicSignal(source, AirdropSystemKeywords);
+            if (!pinRansom && !pinAirdrop)
+            {
+                return;
+            }
+
+            List<ChatMessageData> pinned = ExtractPinnedTopicSystemMessages(source, pinRansom, pinAirdrop);
             if (pinned.Count == 0)
             {
                 return;
@@ -467,14 +474,17 @@ namespace RimChat.AI
             }
         }
 
-        private static List<ChatMessageData> ExtractPinnedRansomSystemMessages(IReadOnlyList<DialogueMessageData> source)
+        private static List<ChatMessageData> ExtractPinnedTopicSystemMessages(
+            IReadOnlyList<DialogueMessageData> source,
+            bool includeRansom,
+            bool includeAirdrop)
         {
             var reversePinned = new List<ChatMessageData>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (int i = source.Count - 1; i >= 0 && reversePinned.Count < MaxPinnedRansomSystemMessages; i--)
             {
                 DialogueMessageData message = source[i];
-                if (!ShouldPinRansomSystemMessage(message))
+                if (!ShouldPinTopicSystemMessage(message, includeRansom, includeAirdrop))
                 {
                     continue;
                 }
@@ -496,15 +506,49 @@ namespace RimChat.AI
             return reversePinned;
         }
 
-        private static bool ShouldPinRansomSystemMessage(DialogueMessageData message)
+        private static bool ShouldPinTopicSystemMessage(
+            DialogueMessageData message,
+            bool includeRansom,
+            bool includeAirdrop)
         {
             if (message == null || !message.IsSystemMessage() || string.IsNullOrWhiteSpace(message.message))
             {
                 return false;
             }
 
-            return ContainsAnyKeyword(message.message, RansomSystemKeywords) ||
-                   ContainsAnyKeyword(message.message, AirdropSystemKeywords);
+            return (includeRansom && ContainsAnyKeyword(message.message, RansomSystemKeywords)) ||
+                   (includeAirdrop && ContainsAnyKeyword(message.message, AirdropSystemKeywords));
+        }
+
+        private static bool HasRecentTopicSignal(IReadOnlyList<DialogueMessageData> source, string[] keywords)
+        {
+            if (source == null || keywords == null || keywords.Length == 0)
+            {
+                return false;
+            }
+
+            int scanned = 0;
+            for (int i = source.Count - 1; i >= 0 && scanned < 6; i--)
+            {
+                DialogueMessageData message = source[i];
+                if (message == null || string.IsNullOrWhiteSpace(message.message))
+                {
+                    continue;
+                }
+
+                scanned++;
+                if (ContainsAnyKeyword(message.message, keywords))
+                {
+                    return true;
+                }
+
+                if (!message.IsSystemMessage() && !message.isPlayer)
+                {
+                    continue;
+                }
+            }
+
+            return false;
         }
 
         private static List<DialogueCompressionTurn> ConvertFromChatMessages(IEnumerable<ChatMessageData> messages)

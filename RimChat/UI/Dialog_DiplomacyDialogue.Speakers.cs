@@ -453,6 +453,76 @@ namespace RimChat.UI
             {
                 DrawAvatarFallback(avatarRect, GetDisplaySenderName(message));
             }
+
+            Pawn hoverPawn = speakerPawn;
+            Faction hoverFaction = speakerPawn?.Faction ?? faction;
+            if (hoverPawn == null && IsPlayerVisualMessage(message))
+            {
+                hoverPawn = ResolvePlayerSpeakerPawn();
+                hoverFaction = hoverPawn?.Faction ?? Faction.OfPlayer;
+            }
+
+            if (hoverPawn == null && hoverFaction == null)
+            {
+                hoverPawn = ResolvePlayerSpeakerPawn();
+                hoverFaction = hoverPawn?.Faction ?? Faction.OfPlayer;
+            }
+
+            string key = hoverPawn != null
+                ? $"speaker:{hoverPawn.thingIDNumber}"
+                : $"speaker-faction:{hoverFaction?.loadID ?? -1}";
+
+            bool isHovered = Mouse.IsOver(avatarRect);
+
+            if (isHovered)
+            {
+                lastHoveredAvatarKey = key;
+                lastHoveredAvatarRect = avatarRect;
+                lastHoveredAvatarFaction = hoverFaction;
+                lastHoveredAvatarPawn = hoverPawn;
+                isCurrentlyHovered = true;
+                UpdateHoverCardAlpha(key, true);
+            }
+            else
+            {
+                isCurrentlyHovered = false;
+                UpdateHoverCardAlpha(key, false);
+            }
+        }
+
+        public void DrawHoverCardIfNeeded()
+        {
+            if (string.IsNullOrEmpty(lastHoveredAvatarKey))
+            {
+                return;
+            }
+
+            float alpha = GetHoverCardAlpha(lastHoveredAvatarKey);
+
+            if (alpha <= 0.01f)
+            {
+                isCurrentlyHovered = false;
+                lastHoveredAvatarKey = null;
+                return;
+            }
+
+            if (lastHoveredAvatarFaction != null)
+            {
+                DrawHoverCardForFaction(lastHoveredAvatarFaction, lastHoveredAvatarPawn, lastHoveredAvatarRect, alpha);
+            }
+
+            UpdateHoverCardAlpha(lastHoveredAvatarKey, isCurrentlyHovered);
+        }
+
+        private float GetHoverCardAlpha(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return 0f;
+            }
+
+            float current = hoverCardAlphaByKey.TryGetValue(key, out float value) ? value : 0f;
+            return current;
         }
 
         private Rect BuildAvatarRect(DialogueMessageData message, Rect bubbleRect)

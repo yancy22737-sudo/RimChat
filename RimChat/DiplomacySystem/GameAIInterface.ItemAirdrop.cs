@@ -288,11 +288,19 @@ namespace RimChat.DiplomacySystem
             string defaultCountSource,
             out ThingDefRecord selectedRecord,
             out int validatedCount,
-            out string resolvedCountSource)
+            out string resolvedCountSource,
+            out int requestedOriginalCount,
+            out int maxByBudget,
+            out int maxBySystem,
+            out int hardMax)
         {
             selectedRecord = null;
             validatedCount = 0;
             resolvedCountSource = string.IsNullOrWhiteSpace(defaultCountSource) ? "llm" : defaultCountSource;
+            requestedOriginalCount = 0;
+            maxByBudget = 0;
+            maxBySystem = 0;
+            hardMax = 0;
             if (selection == null)
             {
                 return BuildSelectionFailure("selection_null", "Selection payload is null.");
@@ -340,7 +348,8 @@ namespace RimChat.DiplomacySystem
                 return BuildSelectionFailure("selection_count_invalid", "count must be greater than 0.");
             }
 
-            ComputeLegalCountWindow(budget, selectedRecord, candidatePack, settings, out int maxByBudget, out int maxBySystem, out int hardMax);
+            requestedOriginalCount = targetCount;
+            ComputeLegalCountWindow(budget, selectedRecord, candidatePack, settings, out maxByBudget, out maxBySystem, out hardMax);
             if (hardMax <= 0)
             {
                 string message = $"Budget {budget} is too low for {selectedRecord.DefName}. maxByBudget={maxByBudget},maxBySystem={maxBySystem},hardMax={hardMax}.";
@@ -362,6 +371,14 @@ namespace RimChat.DiplomacySystem
             RequestedCountExtraction requestedCount,
             Dictionary<string, object> parameters)
         {
+            int explicitNeedCount = 0;
+            bool hasExplicitNeedCount = TryReadIntParameter(parameters, "__airdrop_explicit_need_count", out explicitNeedCount);
+            if (hasExplicitNeedCount && explicitNeedCount > 0)
+            {
+                requestedCount.HasExplicitCount = true;
+                requestedCount.RequestedCount = Mathf.Clamp(explicitNeedCount, 1, 5000);
+            }
+
             int parameterCount = 0;
             bool hasCount = TryReadIntParameter(parameters, "count", out parameterCount);
             if (!hasCount)
@@ -595,7 +612,7 @@ namespace RimChat.DiplomacySystem
             float safePrice = candidatePack?.ResolveUnitPrice(record) ?? Math.Max(0.01f, record.MarketValue);
             maxByBudget = Mathf.FloorToInt(Math.Max(0, budget) / safePrice);
             maxBySystem = ComputeMaxDeliverableByStacks(record.Def, settings);
-            hardMax = Math.Max(0, Math.Min(maxByBudget, maxBySystem));
+            hardMax = Math.Max(0, maxByBudget);
         }
 
         private static int ComputeMaxDeliverableByStacks(ThingDef def, RimChatSettings settings)

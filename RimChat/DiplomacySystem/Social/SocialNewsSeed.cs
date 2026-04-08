@@ -23,6 +23,8 @@ namespace RimChat.DiplomacySystem
         public bool IsFromPlayerDialogue;
         public bool ApplyDiplomaticImpact;
         public DebugGenerateReason DebugReason = DebugGenerateReason.Scheduled;
+        public string PrimaryClaim = string.Empty;
+        public string QuoteAttributionHint = string.Empty;
         public List<string> Facts = new List<string>();
 
         public bool IsValid()

@@ -880,7 +880,9 @@ namespace RimChat.UI
             float needUnitPrice = ResolveNeedUnitPrice();
             var payload = new ItemAirdropTradeCardPayload
             {
-                Need = boundNeedRecord.Label,
+                Need = string.IsNullOrWhiteSpace(boundNeedRecord.Label)
+                    ? $"{boundNeedRecord.DefName} x{requestedCount}"
+                    : $"{boundNeedRecord.Label} x{requestedCount}",
                 RequestedCount = requestedCount,
                 OfferItemDefName = selectedOfferDefName,
                 OfferItemLabel = selectedOfferLabel,

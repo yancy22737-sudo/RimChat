@@ -126,6 +126,12 @@ namespace RimChat.DiplomacySystem
             try
             {
                 messages = SocialNewsPromptBuilder.BuildMessages(seed);
+                Log.Message(
+                    "[RimChat][SocialNewsPrompt] "
+                    + $"origin_type={seed.OriginType}, origin_key={seed.OriginKey ?? string.Empty}, "
+                    + $"source_faction={seed.SourceFaction?.Name ?? "None"}, target_faction={seed.TargetFaction?.Name ?? "None"}, "
+                    + $"facts={BuildResponsePreview(string.Join(" | ", (seed.Facts ?? new List<string>()).Where(item => !string.IsNullOrWhiteSpace(item))), 800)}, "
+                    + $"prompt_input={BuildResponsePreview(SocialNewsPromptBuilder.BuildPromptInputPayloadForDebug(seed), 1000)}");
             }
             catch (RimTalkPromptRenderCompatibilityException ex)
             {
@@ -255,7 +261,12 @@ namespace RimChat.DiplomacySystem
             }
 
             int currentTick = Find.TickManager?.TicksGame ?? pending.QueuedTick;
-            if (!SocialNewsJsonParser.TryParse(response, out SocialNewsDraft draft, out string error))
+            if (!SocialNewsJsonParser.TryParse(
+                    response,
+                    out SocialNewsDraft draft,
+                    out string error,
+                    pending.Seed?.PrimaryClaim ?? string.Empty,
+                    pending.Seed?.QuoteAttributionHint ?? string.Empty))
             {
                 Log.Warning(
                     "[RimChat] Social news generation failed to parse. " +
@@ -267,6 +278,12 @@ namespace RimChat.DiplomacySystem
             }
 
             PublicSocialPost post = SocialCircleService.CreatePostFromDraft(pending.Seed, draft);
+            Log.Message(
+                "[RimChat][SocialNewsDraft] "
+                + $"origin_type={pending.Seed?.OriginType.ToString() ?? "Unknown"}, origin_key={pending.Seed?.OriginKey ?? string.Empty}, "
+                + $"location_name={draft?.LocationName ?? string.Empty}, quote_attribution={draft?.QuoteAttribution ?? string.Empty}, "
+                + $"headline={BuildResponsePreview(draft?.Headline ?? string.Empty, 160)}, lead={BuildResponsePreview(draft?.Lead ?? string.Empty, 220)}, "
+                + $"quote={BuildResponsePreview(draft?.Quote ?? string.Empty, 220)}");
             if (post == null || HasPublishedOrigin(pending.Seed))
             {
                 socialCircleState.MarkOriginState(pending.Seed.OriginType, pending.Seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);

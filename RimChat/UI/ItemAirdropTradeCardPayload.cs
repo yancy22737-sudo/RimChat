@@ -27,9 +27,23 @@ namespace RimChat.UI
 
         public string GetNeedReferenceText()
         {
-            return string.IsNullOrWhiteSpace(NeedDefName)
-                ? (Need ?? string.Empty)
-                : NeedDefName;
+            int requestedCount = Math.Max(1, RequestedCount);
+            if (!string.IsNullOrWhiteSpace(NeedLabel))
+            {
+                return $"{NeedLabel} x{requestedCount}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(Need))
+            {
+                return Need;
+            }
+
+            if (!string.IsNullOrWhiteSpace(NeedDefName))
+            {
+                return $"{NeedDefName} x{requestedCount}";
+            }
+
+            return string.Empty;
         }
 
         public string ToVisibleSummary()

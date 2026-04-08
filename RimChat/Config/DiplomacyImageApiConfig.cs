@@ -45,10 +45,11 @@ namespace RimChat.Config
         public string ApiKeyHeaderName = "X-API-Key";
         public string ApiKeyQueryName = "api_key";
         public string ResponseUrlPath = "url,data[0].url,images[0].url,output[0].url";
-        public string ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json";
+        public string ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json,data[0].b64";
         public string AsyncSubmitPath = "/prompt";
         public string AsyncStatusPathTemplate = "/history/{job_id}";
         public string AsyncImageFetchPath = "/view";
+        public string ComfyUiImageLoaderNode = "LoadImageBase64";
         public int PollIntervalMs = 1000;
         public int PollMaxAttempts = 180;
         public string ProviderPreset = ProviderPresetArk;
@@ -69,10 +70,11 @@ namespace RimChat.Config
             Scribe_Values.Look(ref ApiKeyHeaderName, "apiKeyHeaderName", "X-API-Key");
             Scribe_Values.Look(ref ApiKeyQueryName, "apiKeyQueryName", "api_key");
             Scribe_Values.Look(ref ResponseUrlPath, "responseUrlPath", "url,data[0].url,images[0].url,output[0].url");
-            Scribe_Values.Look(ref ResponseB64Path, "responseB64Path", "b64_json,data[0].b64_json,images[0].b64_json");
+            Scribe_Values.Look(ref ResponseB64Path, "responseB64Path", "b64_json,data[0].b64_json,images[0].b64_json,data[0].b64");
             Scribe_Values.Look(ref AsyncSubmitPath, "asyncSubmitPath", "/prompt");
             Scribe_Values.Look(ref AsyncStatusPathTemplate, "asyncStatusPathTemplate", "/history/{job_id}");
             Scribe_Values.Look(ref AsyncImageFetchPath, "asyncImageFetchPath", "/view");
+            Scribe_Values.Look(ref ComfyUiImageLoaderNode, "comfyUiImageLoaderNode", "LoadImageBase64");
             Scribe_Values.Look(ref PollIntervalMs, "pollIntervalMs", 1000);
             Scribe_Values.Look(ref PollMaxAttempts, "pollMaxAttempts", 180);
             Scribe_Values.Look(ref ProviderPreset, "providerPreset", ProviderPresetArk);
@@ -100,10 +102,11 @@ namespace RimChat.Config
             ApiKeyHeaderName = NormalizeText(ApiKeyHeaderName);
             ApiKeyQueryName = NormalizeText(ApiKeyQueryName);
             ResponseUrlPath = NormalizePathSpec(ResponseUrlPath, "url,data[0].url,images[0].url,output[0].url");
-            ResponseB64Path = NormalizePathSpec(ResponseB64Path, "b64_json,data[0].b64_json,images[0].b64_json");
+            ResponseB64Path = NormalizePathSpec(ResponseB64Path, "b64_json,data[0].b64_json,images[0].b64_json,data[0].b64");
             AsyncSubmitPath = NormalizeText(AsyncSubmitPath);
             AsyncStatusPathTemplate = NormalizeText(AsyncStatusPathTemplate);
             AsyncImageFetchPath = NormalizeText(AsyncImageFetchPath);
+            ComfyUiImageLoaderNode = NormalizeText(ComfyUiImageLoaderNode);
             ProviderPreset = NormalizeProviderPreset(ProviderPreset);
 
             TimeoutSeconds = Math.Max(10, Math.Min(300, TimeoutSeconds));
@@ -264,6 +267,10 @@ namespace RimChat.Config
                 {
                     AsyncImageFetchPath = "/view";
                 }
+                if (string.IsNullOrWhiteSpace(ComfyUiImageLoaderNode))
+                {
+                    ComfyUiImageLoaderNode = "LoadImageBase64";
+                }
                 if (string.IsNullOrWhiteSpace(ResponseUrlPath))
                 {
                     ResponseUrlPath = "url,data[0].url,images[0].url,output[0].url";
@@ -281,7 +288,7 @@ namespace RimChat.Config
                 }
                 if (string.IsNullOrWhiteSpace(ResponseB64Path))
                 {
-                    ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json";
+                    ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json,data[0].b64";
                 }
             }
         }
@@ -300,6 +307,9 @@ namespace RimChat.Config
                 Mode = ModeAsyncJob;
                 AuthMode = AuthModeNone;
                 PollMaxAttempts = Math.Max(PollMaxAttempts, 180);
+                ComfyUiImageLoaderNode = string.IsNullOrWhiteSpace(ComfyUiImageLoaderNode) ? "LoadImageBase64" : ComfyUiImageLoaderNode;
+                ResponseUrlPath = "url,data[0].url,images[0].url,output[0].url";
+                ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json,data[0].b64";
                 if (string.IsNullOrWhiteSpace(Endpoint))
                 {
                     Endpoint = "http://127.0.0.1:8188/prompt";
@@ -311,11 +321,13 @@ namespace RimChat.Config
                 || string.Equals(preset, ProviderPresetSiliconFlow, StringComparison.OrdinalIgnoreCase);
             SchemaPreset = useOpenAiSchema ? SchemaPresetOpenAI : SchemaPresetArk;
             Mode = string.Equals(preset, ProviderPresetSiliconFlow, StringComparison.OrdinalIgnoreCase)
-                ? ModeSyncUrl
+                ? ModeSyncPayload
                 : (string.Equals(preset, ProviderPresetOpenAI, StringComparison.OrdinalIgnoreCase)
                     ? ModeSyncPayload
                     : ModeSyncUrl);
             AuthMode = AuthModeBearer;
+            ResponseUrlPath = "url,data[0].url,images[0].url,output[0].url";
+            ResponseB64Path = "b64_json,data[0].b64_json,images[0].b64_json,data[0].b64";
 
             if (string.Equals(preset, ProviderPresetSiliconFlow, StringComparison.OrdinalIgnoreCase))
             {

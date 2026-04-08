@@ -111,6 +111,28 @@
     <RimChat_VersionLogReadFailed>读取版本日志失败: {0} ({1})</RimChat_VersionLogReadFailed>
     <RimChat_CloseButton>关闭</RimChat_CloseButton>
 
+    <RimChat_HoverCardBio>简介</RimChat_HoverCardBio>
+    <RimChat_HoverCardIdentity>身份</RimChat_HoverCardIdentity>
+    <RimChat_HoverCardAge>年龄</RimChat_HoverCardAge>
+    <RimChat_HoverCardGender>性别</RimChat_HoverCardGender>
+    <RimChat_HoverCardRace>种族</RimChat_HoverCardRace>
+    <RimChat_HoverCardFaction>派系</RimChat_HoverCardFaction>
+    <RimChat_HoverCardLeader>领袖</RimChat_HoverCardLeader>
+    <RimChat_HoverCardSettlement>据点</RimChat_HoverCardSettlement>
+    <RimChat_HoverCardRelation>关系</RimChat_HoverCardRelation>
+    <RimChat_HoverCardGoodwill>好感</RimChat_HoverCardGoodwill>
+    <RimChat_HoverCardUnknownMask>???</RimChat_HoverCardUnknownMask>
+    <RimChat_HoverCardUnknownValue>未知</RimChat_HoverCardUnknownValue>
+    <RimChat_HoverCardNoBio>暂未整理出可公开的档案简介。</RimChat_HoverCardNoBio>
+    <RimChat_HoverCardNoSettlement>暂无已知据点</RimChat_HoverCardNoSettlement>
+    <RimChat_HoverCardSettlementSummary>{0}（共 {1} 个）</RimChat_HoverCardSettlementSummary>
+    <RimChat_HoverCardSettlementCountOnly>{0} 个据点</RimChat_HoverCardSettlementCountOnly>
+    <RimChat_HoverCardRevealTier>情报等级：{0}</RimChat_HoverCardRevealTier>
+    <RimChat_HoverCardTierHostile>高度遮蔽</RimChat_HoverCardTierHostile>
+    <RimChat_HoverCardTierLow>有限公开</RimChat_HoverCardTierLow>
+    <RimChat_HoverCardTierMedium>部分公开</RimChat_HoverCardTierMedium>
+    <RimChat_HoverCardTierHigh>充分公开</RimChat_HoverCardTierHigh>
+
     <!-- 云端 API 配置 -->
     <RimChat_CloudApiConfigurations>云端 API 配置</RimChat_CloudApiConfigurations>
     <RimChat_CloudApiConfigurationsDesc>配置多个 API 提供商，系统会按顺序尝试使用可用的配置</RimChat_CloudApiConfigurationsDesc>
@@ -736,7 +758,7 @@
     <RimChat_SelfieCaption>标题</RimChat_SelfieCaption>
     <RimChat_SelfieWatermark>水印</RimChat_SelfieWatermark>
     <RimChat_SelfieGenerate>生成</RimChat_SelfieGenerate>
-    <RimChat_SelfieGenerating>正在生成自拍...</RimChat_SelfieGenerating>
+    <RimChat_SelfieGenerating>正在生成自拍</RimChat_SelfieGenerating>
     <RimChat_SelfieGenerateSuccess>自拍生成成功。</RimChat_SelfieGenerateSuccess>
     <RimChat_SelfieGenerateFailed>自拍生成失败：{0}</RimChat_SelfieGenerateFailed>
     <RimChat_SelfieConfigInvalid>图片 API 未配置或未启用。</RimChat_SelfieConfigInvalid>

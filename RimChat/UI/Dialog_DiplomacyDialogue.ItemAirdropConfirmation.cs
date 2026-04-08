@@ -149,7 +149,8 @@ namespace RimChat.UI
                 pendingCandidates = new List<PendingAirdropSelectionCandidate>();
             }
 
-            Log.Message($"[RimChat] AirdropConfirmOpen: def={preparedTrade.SelectedDefName},count={preparedTrade.Quantity},payment={preparedTrade.PaymentTotalSilver},candidateCount={pendingCandidates.Count}");
+            Log.Message(
+                $"[RimChat] AirdropConfirmOpen: def={preparedTrade.SelectedDefName},count={preparedTrade.Quantity},requested={preparedTrade.RequestedQuantity},hardMax={preparedTrade.HardMax},adjustment={preparedTrade.CountAdjustmentReason},payment={preparedTrade.PaymentTotalSilver},candidateCount={pendingCandidates.Count}");
             ShowAirdropTradeConfirmationDialog(currentSession, currentFaction, preparedTrade, baseParameters, pendingCandidates);
             outcome = ActionExecutionOutcome.Success(
                 action,

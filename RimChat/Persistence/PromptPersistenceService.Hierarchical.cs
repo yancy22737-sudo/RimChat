@@ -1403,7 +1403,7 @@ namespace RimChat.Persistence
             string personaSection = RimChatMod.Settings?.ResolvePromptSectionText(promptChannel, "character_persona");
             if (!string.IsNullOrWhiteSpace(personaSection))
             {
-                return ApplyPromptSourceTag(personaSection.Trim(), true);
+                return ApplyPromptSourceTag(AppendRpgIdentityGuidance(personaSection.Trim(), context, target), true);
             }
 
             Dictionary<string, object> variables = BuildSharedPromptTemplateVariables(context, string.Empty);
@@ -1420,7 +1420,212 @@ namespace RimChat.Persistence
                 channel,
                 requiredTemplate,
                 variables);
-            return ApplyPromptSourceTag(roleText, true);
+            return ApplyPromptSourceTag(AppendRpgIdentityGuidance(roleText, context, target), true);
+        }
+
+        private static string AppendRpgIdentityGuidance(string baseText, DialogueScenarioContext context, Pawn target)
+        {
+            string identityGuidance = BuildRpgIdentityGuidance(context, target);
+            if (string.IsNullOrWhiteSpace(identityGuidance))
+            {
+                return baseText;
+            }
+
+            if (string.IsNullOrWhiteSpace(baseText))
+            {
+                return identityGuidance;
+            }
+
+            return baseText.TrimEnd() + "\n" + identityGuidance;
+        }
+
+        private static string BuildRpgIdentityGuidance(DialogueScenarioContext context, Pawn target)
+        {
+            if (context?.IsRpg != true || target == null)
+            {
+                return string.Empty;
+            }
+
+            var identityParts = new List<string>();
+            string role = ResolveRpgPawnIdentityRole(target);
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                identityParts.Add($"IdentityRole: {role}");
+            }
+
+            string socialStatus = ResolveRpgPawnSocialStatus(target);
+            if (!string.IsNullOrWhiteSpace(socialStatus))
+            {
+                identityParts.Add($"SocialStatus: {socialStatus}");
+            }
+
+            string factionStatus = ResolveRpgPawnFactionStatus(target);
+            if (!string.IsNullOrWhiteSpace(factionStatus))
+            {
+                identityParts.Add($"FactionStatus: {factionStatus}");
+            }
+
+            string attitude = ResolveRpgAttitudeGuidance(context, target);
+            if (!string.IsNullOrWhiteSpace(attitude))
+            {
+                identityParts.Add($"AttitudeGuidance: {attitude}");
+            }
+
+            if (identityParts.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return "=== IDENTITY AND ATTITUDE (REQUIRED) ===\n" +
+                string.Join("\n", identityParts) +
+                "\nKeep the dialogue aligned with this identity and attitude, but still react to the current scene instead of repeating labels mechanically.";
+        }
+
+        private static string ResolveRpgPawnIdentityRole(Pawn pawn)
+        {
+            if (pawn == null)
+            {
+                return string.Empty;
+            }
+
+            if (pawn.IsPrisonerOfColony)
+            {
+                return "prisoner";
+            }
+
+            if (pawn.IsSlaveOfColony)
+            {
+                return "slave";
+            }
+
+            if (pawn.IsColonistPlayerControlled)
+            {
+                if (pawn.royalty?.AllTitlesForReading?.Count > 0)
+                {
+                    return "colonist noble";
+                }
+
+                return pawn.ageTracker?.CurLifeStage?.developmentalStage == DevelopmentalStage.Child
+                    ? "colony child"
+                    : "colonist";
+            }
+
+            if (pawn.IsQuestLodger())
+            {
+                return "quest lodger";
+            }
+
+            if (pawn.Faction != null)
+            {
+                if (pawn.Faction.HostileTo(Faction.OfPlayer))
+                {
+                    return "hostile outsider";
+                }
+
+                if (pawn.Faction != Faction.OfPlayer)
+                {
+                    return pawn.Faction.IsPlayer ? "player ally" : "visitor or outsider";
+                }
+            }
+
+            return pawn.RaceProps?.Humanlike == true ? "independent pawn" : "non-human pawn";
+        }
+
+        private static string ResolveRpgPawnSocialStatus(Pawn pawn)
+        {
+            if (pawn == null)
+            {
+                return string.Empty;
+            }
+
+            if (pawn.IsPrisonerOfColony)
+            {
+                return "under player custody";
+            }
+
+            if (pawn.IsSlaveOfColony)
+            {
+                return "owned by the colony and expected to obey";
+            }
+
+            if (pawn.IsColonistPlayerControlled)
+            {
+                return "member of the player's colony";
+            }
+
+            if (pawn.IsQuestLodger())
+            {
+                return "temporary guest under quest protection";
+            }
+
+            return pawn.HostFaction != null
+                ? $"linked to host faction {pawn.HostFaction.Name}"
+                : string.Empty;
+        }
+
+        private static string ResolveRpgPawnFactionStatus(Pawn pawn)
+        {
+            if (pawn?.Faction == null)
+            {
+                return string.Empty;
+            }
+
+            if (pawn.Faction == Faction.OfPlayer || pawn.Faction.IsPlayer)
+            {
+                return "player faction";
+            }
+
+            return pawn.Faction.HostileTo(Faction.OfPlayer)
+                ? "hostile to player faction"
+                : "not hostile to player faction";
+        }
+
+        private static string ResolveRpgAttitudeGuidance(DialogueScenarioContext context, Pawn target)
+        {
+            Pawn initiator = context?.Initiator;
+            string romanceState = initiator != null ? ResolvePairRomanceState(initiator, target) : string.Empty;
+
+            if (target.IsPrisonerOfColony)
+            {
+                return "Default to guarded, pressured, or pleading responses. If the player controls their life, food, or release, the tone should naturally lean toward begging, bargaining, fear, or cautious compliance.";
+            }
+
+            if (target.IsSlaveOfColony)
+            {
+                return "Default to obedient and restrained responses. The tone should show submission, deference, and learned caution unless the scene clearly justifies resistance or emotional leakage.";
+            }
+
+            if (romanceState == "spouse" || romanceState == "fiance" || romanceState == "lover")
+            {
+                return "Default to warm, intimate, and familiar responses. The tone should reflect trust, closeness, and emotional attachment unless the current conflict clearly overrides it.";
+            }
+
+            if (target.IsColonistPlayerControlled)
+            {
+                if (target.ageTracker?.CurLifeStage?.developmentalStage == DevelopmentalStage.Child)
+                {
+                    return "Default to age-appropriate child responses. Keep the tone more direct, dependent, and emotionally transparent instead of sounding like a mature strategist.";
+                }
+
+                return "Default to cooperative colony-member responses. Speak like someone sharing daily survival, work, and risk with the other person.";
+            }
+
+            if (target.IsQuestLodger())
+            {
+                return "Default to polite and cautious guest-like responses. Show restraint because the pawn is staying under temporary protection, not fully at home.";
+            }
+
+            if (target.Faction != null && target.Faction.HostileTo(Faction.OfPlayer))
+            {
+                return "Default to guarded, distrustful, or provocative responses. Do not sound like a friendly assistant; hostility or tension should remain visible unless the scene meaningfully softens it.";
+            }
+
+            if (target.HostFaction != null && target.HostFaction != Faction.OfPlayer)
+            {
+                return "Default to outsider-style responses: polite but reserved, with clear social distance and limited trust.";
+            }
+
+            return "Match the pawn's concrete social position first, then let mood, opinion, and scene details shape the exact tone.";
         }
 
         private string BuildRpgRelationshipProfileText(

@@ -43,18 +43,41 @@ namespace RimChat.DiplomacySystem
                 return syncBodyBuilder(request);
             }
 
-            ParseSize(request.Size, out int width, out int height);
-            string model = EscapeJson(request.Model);
-            string prompt = EscapeJson(request.Prompt);
+            string imageInput = ResolveSourceImageInput(request);
+            if (string.IsNullOrWhiteSpace(imageInput))
+            {
+                ParseSize(request.Size, out int width, out int height);
+                string model = EscapeJson(request.Model);
+                string prompt = EscapeJson(request.Prompt);
+                return "{"
+                    + "\"prompt\":{"
+                    + "\"3\":{\"class_type\":\"KSampler\",\"inputs\":{\"seed\":1,\"steps\":20,\"cfg\":7,\"sampler_name\":\"euler\",\"scheduler\":\"normal\",\"denoise\":1,\"model\":[\"4\",0],\"positive\":[\"6\",0],\"negative\":[\"7\",0],\"latent_image\":[\"5\",0]}},"
+                    + $"\"4\":{{\"class_type\":\"CheckpointLoaderSimple\",\"inputs\":{{\"ckpt_name\":\"{model}\"}}}},"
+                    + $"\"5\":{{\"class_type\":\"EmptyLatentImage\",\"inputs\":{{\"width\":{width},\"height\":{height},\"batch_size\":1}}}},"
+                    + $"\"6\":{{\"class_type\":\"CLIPTextEncode\",\"inputs\":{{\"text\":\"{prompt}\",\"clip\":[\"4\",1]}}}},"
+                    + "\"7\":{\"class_type\":\"CLIPTextEncode\",\"inputs\":{\"text\":\"\",\"clip\":[\"4\",1]}},"
+                    + "\"8\":{\"class_type\":\"VAEDecode\",\"inputs\":{\"samples\":[\"3\",0],\"vae\":[\"4\",2]}},"
+                    + "\"9\":{\"class_type\":\"SaveImage\",\"inputs\":{\"filename_prefix\":\"RimChat\",\"images\":[\"8\",0]}}"
+                    + "},"
+                    + "\"client_id\":\"rimchat\""
+                    + "}";
+            }
+
+            ParseSize(request.Size, out int imageWidth, out int imageHeight);
+            string imageModel = EscapeJson(request.Model);
+            string imagePrompt = EscapeJson(request.Prompt);
+            string imageSource = EscapeJson(imageInput);
+            string imageLoaderNode = EscapeJson(ResolveComfyUiImageLoaderNode(request));
             return "{"
                 + "\"prompt\":{"
-                + "\"3\":{\"class_type\":\"KSampler\",\"inputs\":{\"seed\":1,\"steps\":20,\"cfg\":7,\"sampler_name\":\"euler\",\"scheduler\":\"normal\",\"denoise\":1,\"model\":[\"4\",0],\"positive\":[\"6\",0],\"negative\":[\"7\",0],\"latent_image\":[\"5\",0]}},"
-                + $"\"4\":{{\"class_type\":\"CheckpointLoaderSimple\",\"inputs\":{{\"ckpt_name\":\"{model}\"}}}},"
-                + $"\"5\":{{\"class_type\":\"EmptyLatentImage\",\"inputs\":{{\"width\":{width},\"height\":{height},\"batch_size\":1}}}},"
-                + $"\"6\":{{\"class_type\":\"CLIPTextEncode\",\"inputs\":{{\"text\":\"{prompt}\",\"clip\":[\"4\",1]}}}},"
-                + "\"7\":{\"class_type\":\"CLIPTextEncode\",\"inputs\":{\"text\":\"\",\"clip\":[\"4\",1]}},"
-                + "\"8\":{\"class_type\":\"VAEDecode\",\"inputs\":{\"samples\":[\"3\",0],\"vae\":[\"4\",2]}},"
-                + "\"9\":{\"class_type\":\"SaveImage\",\"inputs\":{\"filename_prefix\":\"RimChat\",\"images\":[\"8\",0]}}"
+                + $"\"1\":{{\"class_type\":\"{imageLoaderNode}\",\"inputs\":{{\"image\":\"{imageSource}\"}}}},"
+                + $"\"2\":{{\"class_type\":\"CheckpointLoaderSimple\",\"inputs\":{{\"ckpt_name\":\"{imageModel}\"}}}},"
+                + $"\"3\":{{\"class_type\":\"CLIPTextEncode\",\"inputs\":{{\"text\":\"{imagePrompt}\",\"clip\":[\"2\",1]}}}},"
+                + "\"4\":{\"class_type\":\"CLIPTextEncode\",\"inputs\":{\"text\":\"\",\"clip\":[\"2\",1]}},"
+                + "\"5\":{\"class_type\":\"VAEEncode\",\"inputs\":{\"pixels\":[\"1\",0],\"vae\":[\"2\",2]}},"
+                + "\"6\":{\"class_type\":\"KSampler\",\"inputs\":{\"seed\":1,\"steps\":20,\"cfg\":7,\"sampler_name\":\"euler\",\"scheduler\":\"normal\",\"denoise\":0.65,\"model\":[\"2\",0],\"positive\":[\"3\",0],\"negative\":[\"4\",0],\"latent_image\":[\"5\",0]}},"
+                + "\"7\":{\"class_type\":\"VAEDecode\",\"inputs\":{\"samples\":[\"6\",0],\"vae\":[\"2\",2]}},"
+                + "\"8\":{\"class_type\":\"SaveImage\",\"inputs\":{\"filename_prefix\":\"RimChat\",\"images\":[\"7\",0]}}"
                 + "},"
                 + "\"client_id\":\"rimchat\""
                 + "}";
@@ -254,14 +277,41 @@ namespace RimChat.DiplomacySystem
 
         private static string BuildOpenAiImageToImageBlock(DiplomacyImageGenerationRequest request)
         {
-            if (request?.SourceImageBytes == null || request.SourceImageBytes.Length == 0 || !request.PreferImageToImage)
+            string imageInput = ResolveSourceImageInput(request);
+            if (string.IsNullOrWhiteSpace(imageInput))
             {
                 return string.Empty;
             }
 
-            string mimeType = string.IsNullOrWhiteSpace(request.SourceImageMimeType) ? "image/png" : EscapeJson(request.SourceImageMimeType);
+            return $"\"image\":\"{EscapeJson(imageInput)}\",";
+        }
+
+        private static string ResolveSourceImageInput(DiplomacyImageGenerationRequest request)
+        {
+            if (request == null || !request.PreferImageToImage)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.SourceImageInput))
+            {
+                return request.SourceImageInput.Trim();
+            }
+
+            if (request.SourceImageBytes == null || request.SourceImageBytes.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            string mimeType = string.IsNullOrWhiteSpace(request.SourceImageMimeType) ? "image/png" : request.SourceImageMimeType.Trim();
             string base64 = Convert.ToBase64String(request.SourceImageBytes);
-            return $"\"image\":\"data:{mimeType};base64,{base64}\",";
+            return $"data:{mimeType};base64,{base64}";
+        }
+
+        private static string ResolveComfyUiImageLoaderNode(DiplomacyImageGenerationRequest request)
+        {
+            string configured = request?.ComfyUiImageLoaderNode?.Trim();
+            return string.IsNullOrWhiteSpace(configured) ? "LoadImageBase64" : configured;
         }
 
         private static bool TryDecodeBase64Image(string raw, out byte[] bytes)

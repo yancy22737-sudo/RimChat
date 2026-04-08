@@ -256,7 +256,13 @@ namespace RimChat.DiplomacySystem
 
             enqueueResult.Triggered = true;
             Faction targetFaction = ResolveMentionedFaction($"{playerMessage} {aiResponse}", sourceFaction);
-            string summary = "RimChat_SocialPostSummaryFromDialogue".Translate();
+            string summary = SocialNewsSeedFactory.TryBuildFactionDialoguePublicClaim(
+                sourceFaction,
+                category,
+                sentiment,
+                aiResponse,
+                intentHint,
+                targetFaction);
             return EnqueuePublicPost(
                 sourceFaction,
                 targetFaction,

@@ -454,7 +454,11 @@ namespace RimChat.DiplomacySystem
                 defaultCountSource,
                 out ThingDefRecord selectedRecord,
                 out int validatedCount,
-                out string resolvedCountSource);
+                out string resolvedCountSource,
+                out int requestedOriginalCount,
+                out int maxByBudget,
+                out int maxBySystem,
+                out int hardMax);
             if (!validationResult.Success)
             {
                 return FailFastAirdrop(
@@ -505,6 +509,13 @@ namespace RimChat.DiplomacySystem
                 SelectedDefName = selectedRecord.DefName,
                 ResolvedLabel = selectedRecord.Label,
                 Quantity = validatedCount,
+                RequestedQuantity = requestedOriginalCount,
+                MaxByBudget = maxByBudget,
+                MaxBySystem = maxBySystem,
+                HardMax = hardMax,
+                CountAdjustmentReason = validatedCount < requestedOriginalCount
+                    ? $"clamped_to_hard_max({requestedOriginalCount}->{validatedCount})"
+                    : "none",
                 BudgetSilver = quotedNeedTotalSilver,
                 NeedQuotedUnitSilver = ResolveAirdropNeedQuotedUnitPrice(
                     selectedRecord,

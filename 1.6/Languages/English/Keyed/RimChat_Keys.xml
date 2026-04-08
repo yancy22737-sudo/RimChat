@@ -37,6 +37,28 @@
     <RimChat_VersionLogReadFailed>Failed to read version log: {0} ({1})</RimChat_VersionLogReadFailed>
     <RimChat_CloseButton>Close</RimChat_CloseButton>
 
+    <RimChat_HoverCardBio>Bio</RimChat_HoverCardBio>
+    <RimChat_HoverCardIdentity>Identity</RimChat_HoverCardIdentity>
+    <RimChat_HoverCardAge>Age</RimChat_HoverCardAge>
+    <RimChat_HoverCardGender>Gender</RimChat_HoverCardGender>
+    <RimChat_HoverCardRace>Race</RimChat_HoverCardRace>
+    <RimChat_HoverCardFaction>Faction</RimChat_HoverCardFaction>
+    <RimChat_HoverCardLeader>Leader</RimChat_HoverCardLeader>
+    <RimChat_HoverCardSettlement>Settlement</RimChat_HoverCardSettlement>
+    <RimChat_HoverCardRelation>Relation</RimChat_HoverCardRelation>
+    <RimChat_HoverCardGoodwill>Goodwill</RimChat_HoverCardGoodwill>
+    <RimChat_HoverCardUnknownMask>???</RimChat_HoverCardUnknownMask>
+    <RimChat_HoverCardUnknownValue>Unknown</RimChat_HoverCardUnknownValue>
+    <RimChat_HoverCardNoBio>No dossier has been assembled yet.</RimChat_HoverCardNoBio>
+    <RimChat_HoverCardNoSettlement>No known settlements</RimChat_HoverCardNoSettlement>
+    <RimChat_HoverCardSettlementSummary>{0} (+{1} total)</RimChat_HoverCardSettlementSummary>
+    <RimChat_HoverCardSettlementCountOnly>{0} settlements</RimChat_HoverCardSettlementCountOnly>
+    <RimChat_HoverCardRevealTier>Intel level: {0}</RimChat_HoverCardRevealTier>
+    <RimChat_HoverCardTierHostile>Obscured</RimChat_HoverCardTierHostile>
+    <RimChat_HoverCardTierLow>Limited</RimChat_HoverCardTierLow>
+    <RimChat_HoverCardTierMedium>Partial</RimChat_HoverCardTierMedium>
+    <RimChat_HoverCardTierHigh>Open</RimChat_HoverCardTierHigh>
+
     <!-- Cloud API Configuration -->
     <RimChat_CloudApiConfigurations>Cloud API Configurations</RimChat_CloudApiConfigurations>
     <RimChat_CloudApiConfigurationsDesc>Configure multiple API providers, the system will try to use available configs in order</RimChat_CloudApiConfigurationsDesc>
@@ -1066,7 +1088,7 @@
     <RimChat_SelfieCaption>Caption</RimChat_SelfieCaption>
     <RimChat_SelfieWatermark>Watermark</RimChat_SelfieWatermark>
     <RimChat_SelfieGenerate>Generate</RimChat_SelfieGenerate>
-    <RimChat_SelfieGenerating>Generating selfie...</RimChat_SelfieGenerating>
+    <RimChat_SelfieGenerating>Generating selfie</RimChat_SelfieGenerating>
     <RimChat_SelfieGenerateSuccess>Selfie generated successfully.</RimChat_SelfieGenerateSuccess>
     <RimChat_SelfieGenerateFailed>Selfie generation failed: {0}</RimChat_SelfieGenerateFailed>
     <RimChat_SelfieConfigInvalid>Image API is not configured or disabled.</RimChat_SelfieConfigInvalid>

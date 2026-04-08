@@ -280,16 +280,37 @@ namespace RimChat.DiplomacySystem
 
         private static string BuildImageToImageJsonField(DiplomacyImageGenerationRequest request)
         {
-            if (request?.SourceImageBytes == null || request.SourceImageBytes.Length == 0 || !request.PreferImageToImage)
+            string imageInput = ResolveSourceImageInput(request);
+            if (string.IsNullOrWhiteSpace(imageInput))
             {
                 return string.Empty;
             }
 
-            string mimeType = string.IsNullOrWhiteSpace(request.SourceImageMimeType) ? "image/png" : EscapeJson(request.SourceImageMimeType);
-            string base64 = Convert.ToBase64String(request.SourceImageBytes);
-            return $"\"image\":\"data:{mimeType};base64,{base64}\",";
+            return $"\"image\":\"{EscapeJson(imageInput)}\",";
         }
 
+
+        private static string ResolveSourceImageInput(DiplomacyImageGenerationRequest request)
+        {
+            if (request == null || !request.PreferImageToImage)
+            {
+                return string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.SourceImageInput))
+            {
+                return request.SourceImageInput.Trim();
+            }
+
+            if (request.SourceImageBytes == null || request.SourceImageBytes.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            string mimeType = string.IsNullOrWhiteSpace(request.SourceImageMimeType) ? "image/png" : request.SourceImageMimeType.Trim();
+            string base64 = Convert.ToBase64String(request.SourceImageBytes);
+            return $"data:{mimeType};base64,{base64}";
+        }
 
         private static string BuildRequestBodyPreview(string value)
         {
@@ -584,10 +605,12 @@ namespace RimChat.DiplomacySystem
         public string AsyncSubmitPath = "/prompt";
         public string AsyncStatusPathTemplate = "/history/{job_id}";
         public string AsyncImageFetchPath = "/view";
+        public string ComfyUiImageLoaderNode = "LoadImageBase64";
         public int PollIntervalMs = 1000;
         public int PollMaxAttempts = 180;
         public byte[] SourceImageBytes;
         public string SourceImageMimeType = "image/png";
+        public string SourceImageInput = string.Empty;
         public bool PreferImageToImage;
 
         public void Normalize()
@@ -608,6 +631,8 @@ namespace RimChat.DiplomacySystem
             AsyncSubmitPath = DiplomacyImageApiConfig.NormalizeText(AsyncSubmitPath);
             AsyncStatusPathTemplate = DiplomacyImageApiConfig.NormalizeText(AsyncStatusPathTemplate);
             AsyncImageFetchPath = DiplomacyImageApiConfig.NormalizeText(AsyncImageFetchPath);
+            ComfyUiImageLoaderNode = string.IsNullOrWhiteSpace(ComfyUiImageLoaderNode) ? "LoadImageBase64" : ComfyUiImageLoaderNode.Trim();
+            SourceImageInput = string.IsNullOrWhiteSpace(SourceImageInput) ? string.Empty : SourceImageInput.Trim();
             SourceImageMimeType = string.IsNullOrWhiteSpace(SourceImageMimeType) ? "image/png" : SourceImageMimeType.Trim();
 
             TimeoutSeconds = Math.Max(10, Math.Min(300, TimeoutSeconds));
