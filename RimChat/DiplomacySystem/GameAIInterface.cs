@@ -56,6 +56,28 @@ namespace RimChat.DiplomacySystem
             ExposeAirdropTradeTotals();
             Scribe_Values.Look(ref _lastSuccessfulAirdropFactionId, "lastSuccessfulAirdropFactionId", -1);
             Scribe_Values.Look(ref _lastSuccessfulCaravanFactionId, "lastSuccessfulCaravanFactionId", -1);
+
+            // 序列化派系特殊商品数据
+            ExposeFactionSpecialItems();
+        }
+
+        /// <summary>
+        /// 序列化派系特殊商品数据
+        /// </summary>
+        private void ExposeFactionSpecialItems()
+        {
+            if (Scribe.mode == LoadSaveMode.Saving)
+            {
+                Scribe_Deep.Look(ref FactionSpecialItemsManager._instance, "factionSpecialItemsManager");
+            }
+            else if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                Scribe_Deep.Look(ref FactionSpecialItemsManager._instance, "factionSpecialItemsManager");
+                if (FactionSpecialItemsManager._instance == null)
+                {
+                    FactionSpecialItemsManager._instance = new FactionSpecialItemsManager();
+                }
+            }
         }
 
         /// <summary>/// 序列化全局袭击冷却状态

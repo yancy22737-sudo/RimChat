@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -640,7 +640,7 @@ namespace RimChat.UI
                     }
 
                     Log.Warning($"[RimChat] Auto-reply request for prisoner info card failed: {error}");
-                    ShowDialogueRequestError(error);
+                    HandleSessionRequestError(currentSession, error);
                 },
                 onProgress: null,
                 onDropped: reason =>
@@ -650,7 +650,7 @@ namespace RimChat.UI
                         ArmRansomAutoReplyTimeoutCooldown(currentSession, timeoutClass, reason);
                     }
 
-                    HandleDroppedRequest(reason);
+                    HandleSessionDroppedRequest(currentSession, currentFaction, reason);
                 });
 
             if (!queued)
@@ -661,7 +661,7 @@ namespace RimChat.UI
                 }
 
                 Log.Warning("[RimChat] Failed to queue auto-reply request for prisoner info card.");
-                ShowDialogueRequestError(currentSession?.aiError);
+                HandleSessionRequestError(currentSession, currentSession?.aiError);
             }
         }
 

@@ -9,6 +9,21 @@ namespace RimChat.Dialogue
     /// </summary>
     internal static class PawnDialogueRoutingPolicy
     {
+        /// <summary>
+        /// Check if a pawn's race is eligible for RPG dialogue (Humanlike, ToolUser, or Mechanoid).
+        /// </summary>
+        internal static bool IsRpgDialogueEligibleRace(Pawn pawn)
+        {
+            if (pawn?.RaceProps == null)
+            {
+                return false;
+            }
+
+            return pawn.RaceProps.Humanlike
+                || pawn.RaceProps.ToolUser
+                || pawn.RaceProps.IsMechanoid;
+        }
+
         internal static bool ShouldUseRpgDialogue(Pawn initiator, Pawn target, out string reason)
         {
             reason = string.Empty;

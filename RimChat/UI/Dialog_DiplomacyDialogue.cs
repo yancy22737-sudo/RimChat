@@ -59,6 +59,9 @@ namespace RimChat.UI
         private int sessionMessageBaselineCount;
         private bool sessionCloseSummaryCommitted = false;
         private bool userIsScrolling = false;
+        private Vector2 lastWindowScreenPos = Vector2.zero;
+        private Rect lastMessagesViewRect = Rect.zero;
+        private Rect lastWindowContentRect = Rect.zero;
         private const int MAX_INPUT_LENGTH = 500;
         private const float FACTION_LIST_WIDTH = 220f;
         private const float INPUT_AREA_HEIGHT = 80f;
@@ -346,6 +349,7 @@ namespace RimChat.UI
             }
 
             conversationController.CloseLease(session);
+            CancelAllBackgroundDialogueRequests();
 
             if (this.sustainer != null)
             {
@@ -430,7 +434,6 @@ namespace RimChat.UI
             CancelPendingAirdropSelectionRequest();
             TryCommitDiplomacySessionSummaryOnClose();
             LockPresenceCacheOnDialogueClose();
-            conversationController.CloseLease(session);
 
             BindActiveFactionState(targetFaction);
             ResetWindowUiStateForFactionSwitch();
@@ -499,6 +502,13 @@ namespace RimChat.UI
         {
             PollDiplomacyMemoryRevision();
             ApplyPendingDiplomacyMemoryRefresh();
+            lastWindowScreenPos = new Vector2(inRect.x, inRect.y);
+            lastWindowContentRect = inRect;
+            speakerHoverRequestThisFrame = false;
+            if (lastWindowScreenPos.x == 0 && lastWindowScreenPos.y == 0)
+            {
+                Log.Warning("[RimChat] windowPos is 0,0 - inRect may not be screen coords");
+            }
             // 更新逐字output效果
             UpdateTypewriterEffect();
 
@@ -544,6 +554,9 @@ namespace RimChat.UI
 
             // 绘制goodwill变化动画 (在所有 UI 之上)
             GoodwillChangeAnimator.UpdateAndDrawAnimations();
+
+            // 绘制发言者悬浮卡 (在所有 UI 之上)
+            DrawSpeakerHoverCard();
         }
 
         private void DrawTitleBar(Rect inRect)
@@ -1245,6 +1258,7 @@ namespace RimChat.UI
         private void DrawMessages(Rect rect)
         {
             fallbackRetryRequestedThisFrame = false;
+            lastMessagesViewRect = rect;
             if (session == null || session.messages.Count == 0)
             {
                 GUI.color = new Color(0.4f, 0.4f, 0.45f);
@@ -1338,7 +1352,6 @@ namespace RimChat.UI
             }
 
             GUI.EndScrollView();
-            DrawHoverCardIfNeeded();
         }
 
         private bool ShouldShowTimeGap(int prevGameTick, int currentGameTick)
@@ -1771,8 +1784,10 @@ namespace RimChat.UI
         private void OpenSendInfoMenu()
         {
             ActionValidationResult airdropValidation = ValidateManualAirdropTradeEntry();
+            ActionValidationResult prisonerValidation = ValidateManualPrisonerInfoEntry();
             List<ManualQuestRequestOption> questOptions = BuildManualQuestRequestOptions();
             string airdropLabel = "RimChat_SendInfoMenuAirdropTrade".Translate().ToString();
+            string prisonerLabel = "RimChat_SendInfoMenuPrisoner".Translate().ToString();
             bool hasQuestOptions = questOptions.Count > 0;
             var options = new List<FloatMenuOption>
             {
@@ -1790,7 +1805,10 @@ namespace RimChat.UI
                     hasQuestOptions ? (Action)TryStartManualQuestRequestSend : null),
                 new FloatMenuOption(
                     BuildManualAirdropTradeMenuLabel(airdropLabel, airdropValidation),
-                    airdropValidation != null && !airdropValidation.Allowed ? null : (Action)TryStartManualAirdropTradeSend)
+                    airdropValidation != null && !airdropValidation.Allowed ? null : (Action)TryStartManualAirdropTradeSend),
+                new FloatMenuOption(
+                    BuildManualAirdropTradeMenuLabel(prisonerLabel, prisonerValidation),
+                    prisonerValidation != null && !prisonerValidation.Allowed ? null : (Action)TryStartManualPrisonerInfoSend)
             };
 
             Find.WindowStack.Add(new FloatMenu(options));
@@ -1822,6 +1840,12 @@ namespace RimChat.UI
         private ActionValidationResult ValidateManualAirdropTradeEntry()
         {
             return ApiActionEligibilityService.Instance?.ValidateActionExecution(faction, AIActionNames.RequestItemAirdrop, null)
+                ?? ActionValidationResult.AllowedResult();
+        }
+
+        private ActionValidationResult ValidateManualPrisonerInfoEntry()
+        {
+            return ApiActionEligibilityService.Instance?.ValidateActionExecution(faction, AIActionNames.RequestInfo, null)
                 ?? ActionValidationResult.AllowedResult();
         }
 
@@ -2508,12 +2532,12 @@ namespace RimChat.UI
                 onError: error =>
                 {
                     Log.Warning($"[RimChat] AI request failed: {error}");
-                    ShowDialogueRequestError(error);
+                    HandleSessionRequestError(currentSession, error);
                 },
                 onProgress: null,
                 onDropped: reason =>
                 {
-                    HandleDroppedRequest(reason);
+                    HandleSessionDroppedRequest(currentSession, currentFaction, reason);
                 });
 
             if (!queued)
@@ -3427,12 +3451,12 @@ namespace RimChat.UI
                 onError: error =>
                 {
                     Log.Warning($"[RimChat] Fallback retry request failed: {error}");
-                    ShowDialogueRequestError(error);
+                    HandleSessionRequestError(session, error);
                 },
                 onProgress: null,
                 onDropped: reason =>
                 {
-                    HandleDroppedRequest(reason);
+                    HandleSessionDroppedRequest(session, faction, reason);
                 });
 
             if (!queued)

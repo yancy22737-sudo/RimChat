@@ -58,6 +58,7 @@
     <RimChat_HoverCardTierLow>Limited</RimChat_HoverCardTierLow>
     <RimChat_HoverCardTierMedium>Partial</RimChat_HoverCardTierMedium>
     <RimChat_HoverCardTierHigh>Open</RimChat_HoverCardTierHigh>
+    <RimChat_HoverCardPlayerFaction>Your Faction</RimChat_HoverCardPlayerFaction>
 
     <!-- Cloud API Configuration -->
     <RimChat_CloudApiConfigurations>Cloud API Configurations</RimChat_CloudApiConfigurations>
@@ -1107,6 +1108,7 @@
     <RimChat_SelfiePreviewMissing>Preview unavailable (image file missing).</RimChat_SelfiePreviewMissing>
     <RimChat_DiplomacyInputLockedByTyping>Waiting for the other side to finish speaking...</RimChat_DiplomacyInputLockedByTyping>
     <RimChat_DiplomacyRequestQueued>Queued behind {0} request(s). Waiting for the local model slot...</RimChat_DiplomacyRequestQueued>
+    <RimChat_DiplomacyRequestQueuedHead>Next in queue. Waiting for the local model slot...</RimChat_DiplomacyRequestQueuedHead>
     <RimChat_ActionsHint_DiplomacyTitle>NPC Potential Actions (Diplomacy)</RimChat_ActionsHint_DiplomacyTitle>
     <RimChat_ActionsHint_RpgTitle>NPC Potential Actions (RPG)</RimChat_ActionsHint_RpgTitle>
     <RimChat_ActionsHint_None>No actions available</RimChat_ActionsHint_None>
@@ -1188,6 +1190,8 @@
     <RimChat_ItemAirdropPriceSemanticBuy>buy price</RimChat_ItemAirdropPriceSemanticBuy>
     <RimChat_ItemAirdropPriceSemanticMarket>market value</RimChat_ItemAirdropPriceSemanticMarket>
     <RimChat_ItemAirdropPriceSemanticSell>sell price</RimChat_ItemAirdropPriceSemanticSell>
+    <RimChat_ItemAirdropPriceSemanticDiscount>discount price (-60%)</RimChat_ItemAirdropPriceSemanticDiscount>
+    <RimChat_ItemAirdropPriceSemanticScarce>scarce price (+100%)</RimChat_ItemAirdropPriceSemanticScarce>
     <RimChat_ItemAirdropCancelledSystem>You cancelled this airdrop trade.</RimChat_ItemAirdropCancelledSystem>
     <RimChat_ItemAirdropCommitFailedSystem>Airdrop trade execution failed: {0}</RimChat_ItemAirdropCommitFailedSystem>
     <RimChat_ItemAirdropCommitSuccessSystem>Airdrop trade executed.</RimChat_ItemAirdropCommitSuccessSystem>
@@ -2294,4 +2298,18 @@ Selected prisoners: {1}
     <RimChat_EnableThoughtChainNodeDesc>Reduces hallucinations but increases response time</RimChat_EnableThoughtChainNodeDesc>
     <RimChat_ThoughtChainByChannelTitle>Thought Chain by Channel</RimChat_ThoughtChainByChannelTitle>
     <RimChat_ThoughtChainChannelToggleLabel>{0}</RimChat_ThoughtChainChannelToggleLabel>
+
+    <!-- Special Items (Discount/Scarce) for Hover Card -->
+    <RimChat_HoverCardDiscountItem>Discount Item</RimChat_HoverCardDiscountItem>
+    <RimChat_HoverCardScarceItem>Scarce Item</RimChat_HoverCardScarceItem>
+    <RimChat_SpecialItemAvailable>{0} {1}</RimChat_SpecialItemAvailable>
+    <RimChat_SpecialItemWithRefresh>{0} {1} ({2})</RimChat_SpecialItemWithRefresh>
+    <RimChat_SpecialItemCooldown>{0} ({1})</RimChat_SpecialItemCooldown>
+    <RimChat_SpecialItemCooldownWithTime>{0} (???) ({1})</RimChat_SpecialItemCooldownWithTime>
+    <RimChat_SpecialItemExpired>Refreshing...</RimChat_SpecialItemExpired>
+    <RimChat_SpecialItemNA>N/A</RimChat_SpecialItemNA>
+    <RimChat_SpecialItemDiscountTag>(-60%)</RimChat_SpecialItemDiscountTag>
+    <RimChat_SpecialItemScarceTag>(+100%)</RimChat_SpecialItemScarceTag>
+    <RimChat_SpecialItemRefreshTime>refresh in {0}d {1}h</RimChat_SpecialItemRefreshTime>
+    <RimChat_SpecialItemIntelInsufficient>??? (intel insufficient, {0})</RimChat_SpecialItemIntelInsufficient>
 </LanguageData>

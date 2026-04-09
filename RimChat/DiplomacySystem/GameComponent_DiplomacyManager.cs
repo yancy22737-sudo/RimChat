@@ -145,6 +145,11 @@ namespace RimChat.DiplomacySystem
             return dialogueSessions.FirstOrDefault(s => s.faction == faction);
         }
 
+        public List<FactionDialogueSession> GetAllDialogueSessions()
+        {
+            return dialogueSessions ?? new List<FactionDialogueSession>();
+        }
+
         public bool HandleInboundFactionMessage(
             Faction faction,
             string sender,
@@ -500,6 +505,9 @@ namespace RimChat.DiplomacySystem
                 DailyReset();
                 lastDailyResetTick = currentTick;
             }
+
+            // Tick faction special items (discount/scarce) refresh check
+            FactionSpecialItemsManager.Instance.Tick();
         }
 
         private void ProcessPeriodicDiplomacySnapshots()

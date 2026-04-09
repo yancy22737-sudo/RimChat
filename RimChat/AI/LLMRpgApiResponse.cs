@@ -203,7 +203,13 @@ namespace RimChat.AI
                 return null;
             }
 
-            Match match = Regex.Match(actionSegment, @"defName\s*=\s*([A-Za-z0-9_\.]+)", RegexOptions.IgnoreCase);
+            Match match = Regex.Match(actionSegment, @"questDefName\s*=\s*([A-Za-z0-9_\.]+)", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                return match.Groups[1].Value.Trim();
+            }
+
+            match = Regex.Match(actionSegment, @"defName\s*=\s*([A-Za-z0-9_\.]+)", RegexOptions.IgnoreCase);
             return match.Success ? match.Groups[1].Value.Trim() : null;
         }
 

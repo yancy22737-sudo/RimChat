@@ -1,3 +1,17 @@
+0.9.93
+- Fix: `FactionSpecialItemSlot` ID duplication error during save loading — each slot now gets a unique ID; old saves auto-migrate with new IDs, resolving "Id already used" errors.
+- Fix: social-circle world news parsing failure (claim_not_reflected) — improved Chinese anchor-word extraction logic, supporting Chinese punctuation separators; now checks full claim match before extracting anchor words.
+- Fix: character style differentiation compilation errors — fixed method name mismatch (`AppendNonVerbalPromptConstraint` → `ApplyNonVerbalSpeechFormatting`) and missing `using RimWorld;` reference.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.93`.
+
+0.9.92
+- Fix: queue status "0 requests ahead" was confusing — when a request is next in queue, it now shows "Next in queue. Waiting for the local model slot..." instead of the meaningless "0 requests ahead".
+- Fix: switching factions no longer cancels the previous faction's AI request — old requests continue running in the background; multiple factions' requests can queue in parallel. Switching back shows the completed AI reply.
+- Fix: all AI request callbacks are now session-safe, using captured session references instead of the window's current session, ensuring background request results update the correct faction's session.
+- Added: closing the diplomacy window now cancels all factions' pending requests, preventing background request leaks.
+- Added: localization key `RimChat_DiplomacyRequestQueuedHead` (EN/ZH) for the queue-head waiting status.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.92`.
+
 0.9.91
 - Root fix: reworked dialogue-triggered social-news fact packs into an explicit "public claim / background tension / observed reaction / gameplay implication" structure instead of feeding abstract metadata directly into generation.
 - Root fix: social-news headlines and quotes now must state a clear claim, demand, or stance; empty phrases like "stirred debate", "signal", or "new line" are no longer acceptable as the main payload.

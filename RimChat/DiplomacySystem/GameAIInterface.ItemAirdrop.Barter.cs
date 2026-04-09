@@ -115,6 +115,12 @@ namespace RimChat.DiplomacySystem
                 canRoofPunch: false);
 
             int deliveredCount = stacks.Sum(t => t.stackCount);
+            
+            // Calculate final quote including shipping cost for arrival message
+            int shippingCostForMessage = ResolveAirdropShippingPodCount(selectedRecord.Def, deliveredCount) * 
+                ItemAirdropTradePolicy.ResolveRuleSnapshot(faction, map.wealthWatcher?.WealthItems ?? 0f, GetAirdropFactionTradeTotal(faction)).ShippingCostPerPod;
+            int finalQuoteTotal = preparedData.BudgetSilver + shippingCostForMessage;
+            
             string stageText = $"def={selectedRecord.DefName},count={deliveredCount},budget={preparedData.BudgetSilver},reason={preparedData.SelectionReason},drop={dropCell},payment={preparedData.PaymentTotalSilver}";
             RecordStageAudit("execute", faction, preparedData.ParametersSnapshot, stageText);
             RecordAPICall("RequestItemAirdrop", true, stageText);
@@ -124,7 +130,7 @@ namespace RimChat.DiplomacySystem
                 faction.Name,
                 selectedRecord.Label.CapitalizeFirst(),
                 deliveredCount,
-                preparedData.BudgetSilver);
+                finalQuoteTotal);
             Find.LetterStack.ReceiveLetter(playerTitle, playerBody, LetterDefOf.PositiveEvent, new TargetInfo(dropCell, map), faction);
 
             var payload = new ItemAirdropResultData
@@ -148,6 +154,12 @@ namespace RimChat.DiplomacySystem
             RecordAirdropFactionTradeTotal(faction, preparedData.PaymentTotalSilver);
             SetCooldown(faction, "RequestItemAirdrop", offerPercentMultiplier);
             RecordSuccessfulAirdropFaction(faction);
+
+            // Check if this is a special item (discount/scarce) and mark as traded
+            if (FactionSpecialItemsManager.Instance.TryMatchSpecialItem(faction, preparedData.SelectedDefName, out SpecialItemType specialItemType))
+            {
+                FactionSpecialItemsManager.Instance.MarkTraded(faction, specialItemType);
+            }
 
             return APIResult.SuccessResult(
                 $"Airdrop delivered: {selectedRecord.DefName} x{deliveredCount} (budget {preparedData.BudgetSilver})",
@@ -443,9 +455,10 @@ namespace RimChat.DiplomacySystem
             Faction faction,
             Pawn playerNegotiator,
             Map map,
-            ItemAirdropCandidatePack candidatePack)
+            ItemAirdropCandidatePack candidatePack,
+            SpecialItemType? specialItemType = null)
         {
-            float unitPrice = ResolveAirdropNeedQuotedUnitPrice(selectedRecord, faction, playerNegotiator, map, candidatePack);
+            float unitPrice = ResolveAirdropNeedQuotedUnitPrice(selectedRecord, faction, playerNegotiator, map, candidatePack, specialItemType);
             float total = Math.Max(0f, unitPrice) * Math.Max(0, quantity);
             return Mathf.Max(0, Mathf.RoundToInt(total));
         }
@@ -455,12 +468,24 @@ namespace RimChat.DiplomacySystem
             Faction faction,
             Pawn playerNegotiator,
             Map map,
-            ItemAirdropCandidatePack candidatePack)
+            ItemAirdropCandidatePack candidatePack,
+            SpecialItemType? specialItemType = null)
         {
             _ = faction;
             _ = playerNegotiator;
             _ = map;
             ThingDef def = selectedRecord?.Def;
+            
+            // Check if this is a special item and apply special pricing
+            if (def != null && specialItemType.HasValue)
+            {
+                if (ItemAirdropTradePolicy.TryResolveSpecialItemPrice(def, specialItemType.Value, out float specialPrice, out _))
+                {
+                    return specialPrice;
+                }
+            }
+            
+            // Fallback to standard pricing
             if (def != null && ItemAirdropTradePolicy.TryResolvePlayerBuyPrice(def, faction, playerNegotiator, map, out float unitPrice, out _))
             {
                 return unitPrice;
@@ -957,6 +982,7 @@ namespace RimChat.DiplomacySystem
         public string NeedPriceSemantic { get; set; } = "market_value_x1.8";
         public string PaymentPriceSemantic { get; set; } = "market_value_x0.6";
         public int MapUniqueId { get; set; }
+        public SpecialItemType? SpecialItemType { get; set; }
         public List<ItemAirdropPreparedPaymentLine> PaymentLines { get; set; } = new List<ItemAirdropPreparedPaymentLine>();
         public List<ItemAirdropDeductionPlanLine> DeductionPlan { get; set; } = new List<ItemAirdropDeductionPlanLine>();
         public Dictionary<string, object> ParametersSnapshot { get; set; } = new Dictionary<string, object>();

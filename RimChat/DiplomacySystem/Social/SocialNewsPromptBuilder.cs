@@ -153,9 +153,19 @@ namespace RimChat.DiplomacySystem
         private static string BuildQuoteGuardrails(SocialNewsSeed seed)
         {
             string sourceLabel = SocialCircleService.ResolveDisplayLabel(seed?.SourceLabel);
-            return string.IsNullOrWhiteSpace(sourceLabel)
-                ? "Quote must sound like an in-world speaker. Never paste source labels, channel names, metadata tags, or attribution boilerplate into quote text."
-                : "Quote must sound like an in-world speaker. Never paste source labels, channel names, metadata tags, or attribution boilerplate into quote text. Keep source metadata separate from the quote. Current source label: " + sourceLabel;
+            string baseRule = "Quote must sound like an in-world speaker. "
+                + "The quote MUST contain an explicit claim using action verbs such as: saw, witnessed, heard, reported, confirmed, spotted, observed, claimed, stated, discovered, found, noted, announced, declared. "
+                + "The quote MUST express a specific event, action, or situation rather than general atmosphere or mood. "
+                + "Examples of GOOD quotes: 'I saw three raiders approach the eastern gate at dawn', 'Scouts reported enemy camps near the river crossing', 'Witnesses confirmed the caravan was ambushed by mechanoids'. "
+                + "Examples of BAD quotes: 'The air was tense', 'Whispers filled the wind', 'Shadows moved ominously'. "
+                + "Never paste source labels, channel names, metadata tags, or attribution boilerplate into quote text.";
+            
+            if (string.IsNullOrWhiteSpace(sourceLabel))
+            {
+                return baseRule;
+            }
+            
+            return baseRule + " Keep source metadata separate from the quote. Current source label: " + sourceLabel;
         }
 
         private static string BuildFactionPromptDescriptor(Faction faction, string fallback)

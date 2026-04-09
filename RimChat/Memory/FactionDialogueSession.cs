@@ -390,7 +390,22 @@ namespace RimChat.Memory
                 ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail(needDefName);
                 if (def != null)
                 {
-                    if (ItemAirdropTradePolicy.TryResolveNeedUnitPrice(def, out float resolvedNeedUnit, out _))
+                    // Check special item pricing first (discount/scarce) to match actual trade execution
+                    SpecialItemType? detectedSpecialType = null;
+                    if (faction != null && FactionSpecialItemsManager.Instance.TryMatchSpecialItem(faction, needDefName, out SpecialItemType sType))
+                    {
+                        detectedSpecialType = sType;
+                    }
+
+                    if (detectedSpecialType.HasValue &&
+                        ItemAirdropTradePolicy.TryResolveSpecialItemPrice(def, detectedSpecialType.Value, out float specialPrice, out _))
+                    {
+                        needUnitValue = specialPrice;
+                        needValueSemantic = detectedSpecialType.Value == SpecialItemType.Discount
+                            ? "special_item_discount"
+                            : "special_item_scarce";
+                    }
+                    else if (ItemAirdropTradePolicy.TryResolveNeedUnitPrice(def, out float resolvedNeedUnit, out _))
                     {
                         needUnitValue = resolvedNeedUnit;
                         needValueSemantic = ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(def)

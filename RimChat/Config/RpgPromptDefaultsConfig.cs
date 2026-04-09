@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using RimChat.Core;
@@ -17,6 +17,7 @@ namespace RimChat.Config
         public string DialogueStyle;
         public string FormatConstraint;
         public string NonVerbalOutputConstraintTemplate;
+        public string CharacterStyleTemplate;
         public string RoleSettingFallbackTemplate;
         public string FormatConstraintHeader;
         public string CompactFormatFallback;
@@ -58,6 +59,14 @@ namespace RimChat.Config
                     "Category defaults: animal={{ pawn.speaker.animal_sound }}, baby={{ pawn.speaker.baby_sound }}, mechanoid={{ pawn.speaker.mechanoid_sound }}.\n" +
                     "If your original line is not in the required structure, rewrite it to this style while preserving intent.\n" +
                     "Keep gameplay-effect JSON rules unchanged: return exactly one top-level JSON object, and include actions only inside that same object when needed.",
+                CharacterStyleTemplate =
+                    "=== CHARACTER STYLE CONSTRAINT (REQUIRED) ===\n" +
+                    "RacialType: {{ pawn.speaker.racial_type }}\n" +
+                    "SocialIdentity: {{ pawn.speaker.social_identity }}\n" +
+                    "RelationshipStatus: {{ pawn.speaker.relationship_status }}\n" +
+                    "PersonalityTraits: {{ pawn.speaker.personality_traits }}\n\n" +
+                    "StyleGuidelines:\n" +
+                    "{{ pawn.speaker.style_guidelines }}",
                 RoleSettingFallbackTemplate = "Roleplay as {{ pawn.target.name }} in the current RimWorld context.",
                 FormatConstraintHeader = "=== FORMAT CONSTRAINT (REQUIRED) ===",
                 CompactFormatFallback = "Return one JSON object with visible_dialogue and optional actions. Keep visible_dialogue as one short in-character sentence. Omit actions when there are no gameplay effects. Do not use legacy wrappers like action/content/text.",

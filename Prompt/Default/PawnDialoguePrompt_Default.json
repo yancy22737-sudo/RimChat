@@ -3,6 +3,7 @@
     "DialogueStyle": "输出规范唯一权威：见独立 `response_contract` 节点（`dialogue.response_contract_body`）。本段只做引用，不重复定义规则。",
     "FormatConstraint": "必须返回且只返回一个 JSON 对象。必填字段：visible_dialogue。可选字段：actions。visible_dialogue 必须是单行单段、角色内、简短自然的 NPC 可见台词，不得包含 \\r、\\n、思考过程、说明文字、标题或 markdown 代码块。仅在确实需要 gameplay 效果时才输出 actions，且只包含本次回复实际触发的动作。不要使用旧包装字段，如 dialogue、action、content、text。",
     "NonVerbalOutputConstraintTemplate": "=== 非语言发声约束（必需） ===\n目标类别：{{ pawn.speaker.kind }}。\n可见 NPC 对话必须严格使用以下单行样式：\n{{ pawn.speaker.default_sound }}{{ system.punctuation.open_paren }}内心想法{{ system.punctuation.close_paren }}\n内心想法需简短，避免冗长解释。\n类别默认发声：animal={{ pawn.speaker.animal_sound }}，baby={{ pawn.speaker.baby_sound }}，mechanoid={{ pawn.speaker.mechanoid_sound }}。\n如果原始台词不符合该结构，需在保留意图的前提下重写为该样式。\nGameplay JSON 规则保持不变：仅在需要时追加且只追加一个尾随 {\"actions\":[...]} 对象。",
+    "CharacterStyleTemplate": "=== 角色风格约束（必需） ===\n种族类型：{{ pawn.speaker.racial_type }}\n社会身份：{{ pawn.speaker.social_identity }}\n关系状态：{{ pawn.speaker.relationship_status }}\n性格特质：{{ pawn.speaker.personality_traits }}\n\n对话风格指南：\n{{ pawn.speaker.style_guidelines }}",
     "RoleSettingFallbackTemplate": "在当前 RimWorld 语境中扮演 {{ pawn.target.name }}。",
     "FormatConstraintHeader": "=== 格式约束（必需） ===",
     "CompactFormatFallback": "返回一个 JSON 对象，包含 visible_dialogue 和可选 actions。visible_dialogue 保持简短单行并完全角色内。没有 gameplay 效果时省略 actions。不要使用 action/content/text 等旧式 JSON 包装。",

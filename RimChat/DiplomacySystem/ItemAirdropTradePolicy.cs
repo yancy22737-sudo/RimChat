@@ -222,6 +222,42 @@ namespace RimChat.DiplomacySystem
             return string.Equals(defName, "Silver", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(defName, "Gold", StringComparison.OrdinalIgnoreCase);
         }
+
+        /// <summary>
+        /// Resolve price for special items (discount/scarce).
+        /// Discount: 0.4x multiplier, Scarce: 2.0x multiplier.
+        /// Both are applied on top of the base need price multiplier.
+        /// </summary>
+        internal static bool TryResolveSpecialItemPrice(
+            ThingDef def,
+            SpecialItemType itemType,
+            out float unitPrice,
+            out string failureCode)
+        {
+            unitPrice = 0f;
+            if (def == null)
+            {
+                failureCode = "special_item_def_missing";
+                return false;
+            }
+
+            float needMultiplier = ResolveNeedPriceMultiplier(def);
+            float specialMultiplier = itemType == SpecialItemType.Discount ? 0.4f : 2.0f;
+            float basePrice = Math.Max(0.01f, def.BaseMarketValue);
+            
+            // Precious metals use fixed 1.0x base, but still apply special multiplier
+            if (IsPreciousMetalFixedPrice(def))
+            {
+                unitPrice = Math.Max(0.01f, basePrice * specialMultiplier);
+            }
+            else
+            {
+                unitPrice = Math.Max(0.01f, basePrice * needMultiplier * specialMultiplier);
+            }
+            
+            failureCode = "ok";
+            return true;
+        }
     }
 
     internal readonly struct AirdropTradeRuleSnapshot

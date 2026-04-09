@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using RimChat.Config;
 using RimChat.Core;
+using RimChat.Dialogue;
 using RimChat.Memory;
 using RimChat.Prompting;
 using RimWorld;
@@ -261,7 +262,14 @@ namespace RimChat.Persistence
                 AddTextNodeIfNotEmpty(node, "faction_settlement_summary", BuildFactionSettlementSummaryForPrompt(faction));
             }
 
+            AddTextNodeIfNotEmpty(node, "faction_special_items", BuildFactionSpecialItemsPromptBlock(faction));
+
             return node.Children.Count > 0 ? node : null;
+        }
+
+        private string BuildFactionSpecialItemsPromptBlock(Faction faction)
+        {
+            return DiplomacySystem.FactionSpecialItemsManager.Instance?.BuildSpecialItemsPromptBlock(faction) ?? string.Empty;
         }
 
         private PromptHierarchyNode BuildRpgActorStateNode(
@@ -1528,7 +1536,7 @@ namespace RimChat.Persistence
                 }
             }
 
-            return pawn.RaceProps?.Humanlike == true ? "independent pawn" : "non-human pawn";
+            return PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(pawn) ? "independent pawn" : "non-dialogue-eligible pawn";
         }
 
         private static string ResolveRpgPawnSocialStatus(Pawn pawn)

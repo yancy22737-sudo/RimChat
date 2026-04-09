@@ -219,7 +219,8 @@ if (Test-Path "$sourceRoot\README.md") {
 # Copy Prompt folder (Required for AI logic)
 Write-Info "Copying Prompt folder..."
 if (Test-Path "$sourceRoot\Prompt") {
-    Copy-Item "$sourceRoot\Prompt" "$destRoot" -Recurse -Force
+    # Use robocopy to avoid copying Windows reserved device names like 'nul'
+    robocopy "$sourceRoot\Prompt" "$destRoot\Prompt" /MIR /XF nul /NJH /NJS /NDL /NC /NS /NP | Out-Null
 }
 
 # Always start from a clean custom prompt folder to avoid stale prompt overlays.

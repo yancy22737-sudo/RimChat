@@ -37,10 +37,13 @@ namespace RimChat.Core
             var harmony = new Harmony("RimChat.AIDriven");
             RimChat.Patches.HarmonyPatchStartupSelfCheck.Run();
             harmony.PatchAll();
-            
+
             // Initialize custom patches that require dynamic method lookup
             RimChat.Patches.CommsConsolePatch.Initialize(harmony);
             RimChat.Patches.QuestGenPatch.Initialize(harmony);
+
+            // Inject CompPawnDialogue to all eligible pawn ThingDefs after all defs are loaded
+            LongEventHandler.ExecuteWhenFinished(PawnDialogueCompDefInjector.EnsureInjected);
 
             DLCCompatibility.LogDLCStatus();
             Log.Message("[RimChat] Mod initialized successfully.");

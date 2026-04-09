@@ -231,7 +231,15 @@ namespace RimChat.UI
 
             if (TryGetPendingAirdropRequestStatus(out AIRequestResult status) && IsQueuedRequestState(status))
             {
-                statusText = "RimChat_DiplomacyRequestQueued".Translate(GetQueuedRequestsAhead(status)).ToString();
+                int requestsAhead = GetQueuedRequestsAhead(status);
+                if (requestsAhead == 0)
+                {
+                    statusText = "RimChat_DiplomacyRequestQueuedHead".Translate().ToString();
+                }
+                else
+                {
+                    statusText = "RimChat_DiplomacyRequestQueued".Translate(requestsAhead).ToString();
+                }
                 return true;
             }
 

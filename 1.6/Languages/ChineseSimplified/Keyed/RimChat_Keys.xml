@@ -132,6 +132,7 @@
     <RimChat_HoverCardTierLow>有限公开</RimChat_HoverCardTierLow>
     <RimChat_HoverCardTierMedium>部分公开</RimChat_HoverCardTierMedium>
     <RimChat_HoverCardTierHigh>充分公开</RimChat_HoverCardTierHigh>
+    <RimChat_HoverCardPlayerFaction>我方派系</RimChat_HoverCardPlayerFaction>
 
     <!-- 云端 API 配置 -->
     <RimChat_CloudApiConfigurations>云端 API 配置</RimChat_CloudApiConfigurations>
@@ -777,6 +778,7 @@
     <RimChat_SelfiePreviewMissing>预览不可用（图片文件缺失）。</RimChat_SelfiePreviewMissing>
     <RimChat_DiplomacyInputLockedByTyping>对方仍在回复中，请稍候...</RimChat_DiplomacyInputLockedByTyping>
     <RimChat_DiplomacyRequestQueued>当前已进入队列，前方还有 {0} 个请求，正在等待本地模型空位...</RimChat_DiplomacyRequestQueued>
+    <RimChat_DiplomacyRequestQueuedHead>已排到队首，正在等待本地模型空位...</RimChat_DiplomacyRequestQueuedHead>
     <RimChat_ActionsHint_DiplomacyTitle>NPC潜在行动（外交）</RimChat_ActionsHint_DiplomacyTitle>
     <RimChat_ActionsHint_RpgTitle>NPC潜在行动（RPG）</RimChat_ActionsHint_RpgTitle>
     <RimChat_ActionsHint_None>暂无可显示行动</RimChat_ActionsHint_None>
@@ -858,6 +860,8 @@
     <RimChat_ItemAirdropPriceSemanticBuy>买价</RimChat_ItemAirdropPriceSemanticBuy>
     <RimChat_ItemAirdropPriceSemanticMarket>市场价</RimChat_ItemAirdropPriceSemanticMarket>
     <RimChat_ItemAirdropPriceSemanticSell>卖价</RimChat_ItemAirdropPriceSemanticSell>
+    <RimChat_ItemAirdropPriceSemanticDiscount>折扣价 (-60%)</RimChat_ItemAirdropPriceSemanticDiscount>
+    <RimChat_ItemAirdropPriceSemanticScarce>稀缺价 (+100%)</RimChat_ItemAirdropPriceSemanticScarce>
     <RimChat_ItemAirdropCancelledSystem>你取消了本次空投交易。</RimChat_ItemAirdropCancelledSystem>
     <RimChat_ItemAirdropCommitFailedSystem>空投交易执行失败：{0}</RimChat_ItemAirdropCommitFailedSystem>
     <RimChat_ItemAirdropCommitSuccessSystem>空投交易已执行。</RimChat_ItemAirdropCommitSuccessSystem>
@@ -2386,4 +2390,18 @@ ID：{5}
     <RimChat_EnableThoughtChainNodeDesc>减少幻觉，但会延长响应时间</RimChat_EnableThoughtChainNodeDesc>
     <RimChat_ThoughtChainByChannelTitle>按通道启用思维链</RimChat_ThoughtChainByChannelTitle>
     <RimChat_ThoughtChainChannelToggleLabel>{0}</RimChat_ThoughtChainChannelToggleLabel>
+
+    <!-- 悬停卡特殊商品（折扣/稀缺） -->
+    <RimChat_HoverCardDiscountItem>折扣商品</RimChat_HoverCardDiscountItem>
+    <RimChat_HoverCardScarceItem>稀缺商品</RimChat_HoverCardScarceItem>
+    <RimChat_SpecialItemAvailable>{0} {1}</RimChat_SpecialItemAvailable>
+    <RimChat_SpecialItemWithRefresh>{0} {1}（{2}）</RimChat_SpecialItemWithRefresh>
+    <RimChat_SpecialItemCooldown>{0}（{1}）</RimChat_SpecialItemCooldown>
+    <RimChat_SpecialItemCooldownWithTime>{0}（???）（{1}）</RimChat_SpecialItemCooldownWithTime>
+    <RimChat_SpecialItemExpired>刷新中...</RimChat_SpecialItemExpired>
+    <RimChat_SpecialItemNA>暂无</RimChat_SpecialItemNA>
+    <RimChat_SpecialItemDiscountTag>（-60%）</RimChat_SpecialItemDiscountTag>
+    <RimChat_SpecialItemScarceTag>（+100%）</RimChat_SpecialItemScarceTag>
+    <RimChat_SpecialItemRefreshTime>{0}天{1}小时后刷新</RimChat_SpecialItemRefreshTime>
+    <RimChat_SpecialItemIntelInsufficient>???（情报不足，{0}）</RimChat_SpecialItemIntelInsufficient>
 </LanguageData>

@@ -151,7 +151,7 @@ namespace RimChat.DiplomacySystem
                 return string.Empty;
             }
 
-            string trimmed = text.Trim().Trim('"', '“', '”');
+            string trimmed = text.Trim().Trim('"', '"', '"');
             return trimmed.Length <= 48 ? trimmed : trimmed.Substring(0, 48).Trim();
         }
 
@@ -264,7 +264,7 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            return text.Contains("：") || text.Contains(":") || text.Contains("“") || text.Contains("”") || text.Contains("将") || text.Contains("会");
+            return text.Contains("：") || text.Contains(":") || text.Contains("\u201C") || text.Contains("\u201D") || text.Contains("将") || text.Contains("会");
         }
 
         private static bool ContainsClaimAnchor(string text, string primaryClaim)
@@ -276,17 +276,61 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            string[] anchors = normalizedClaim
-                .Split(new[] { ' ', '，', ',', '。', '.', '：', ':', '；', ';', '、', '"', '“', '”' }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(part => part.Length >= 2)
-                .Take(6)
-                .ToArray();
+            if (normalizedText.Contains(normalizedClaim))
+            {
+                return true;
+            }
+
+            string[] anchors = ExtractAnchors(normalizedClaim);
             if (anchors.Length == 0)
             {
-                return normalizedText.Contains(normalizedClaim);
+                return false;
             }
 
             return anchors.Any(anchor => normalizedText.Contains(anchor));
+        }
+
+        private static string[] ExtractAnchors(string claim)
+        {
+            if (string.IsNullOrWhiteSpace(claim))
+            {
+                return Array.Empty<string>();
+            }
+
+            var anchors = new System.Collections.Generic.List<string>();
+            var current = new System.Text.StringBuilder();
+            foreach (char c in claim)
+            {
+                if (IsAnchorSeparator(c))
+                {
+                    if (current.Length >= 2)
+                    {
+                        anchors.Add(current.ToString());
+                    }
+                    current.Clear();
+                }
+                else
+                {
+                    current.Append(c);
+                }
+            }
+
+            if (current.Length >= 2)
+            {
+                anchors.Add(current.ToString());
+            }
+
+            return anchors.Take(6).ToArray();
+        }
+
+        private static bool IsAnchorSeparator(char c)
+        {
+            return c == ' ' || c == '，' || c == ',' || c == '。' || c == '.' ||
+                   c == '：' || c == ':' || c == '；' || c == ';' || c == '、' ||
+                   c == '"' || c == '"' || c == '"' || c == '\'' ||
+                   c == '！' || c == '!' || c == '？' || c == '?' ||
+                   c == '（' || c == '）' || c == '(' || c == ')' ||
+                   c == '/' || c == '—' || c == '-';
         }
 
         private static string NormalizeAnchorText(string value)
@@ -294,8 +338,8 @@ namespace RimChat.DiplomacySystem
             return NormalizeField(value)
                 .ToLowerInvariant()
                 .Replace("\"", string.Empty)
-                .Replace("“", string.Empty)
-                .Replace("”", string.Empty)
+                .Replace("\u201C", string.Empty)
+                .Replace("\u201D", string.Empty)
                 .Replace("'", string.Empty)
                 .Trim();
         }
@@ -345,7 +389,7 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            return value.Trim().Trim('"', '“', '”');
+            return value.Trim().Trim('"', '"', '"');
         }
 
         private static string SanitizeAttribution(string attribution, string quote)
@@ -358,12 +402,12 @@ namespace RimChat.DiplomacySystem
 
             return string.IsNullOrWhiteSpace(value)
                 ? string.Empty
-                : value.Trim().Trim('"', '“', '”');
+                : value.Trim().Trim('"', '"', '"');
         }
 
         private static string SanitizeLocationName(string locationName)
         {
-            return NormalizeField(locationName).Trim('"', '“', '”');
+            return NormalizeField(locationName).Trim('"', '"', '"');
         }
 
         private static string NormalizeField(string value)

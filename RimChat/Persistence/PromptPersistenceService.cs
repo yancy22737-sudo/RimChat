@@ -9,6 +9,7 @@ using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
 using RimChat.Config;
+using RimChat.Dialogue;
 using RimChat.Memory;
 using RimChat.DiplomacySystem;
 using RimChat.Core;
@@ -3991,7 +3992,7 @@ namespace RimChat.Persistence
         {
             return pawn != null
                 && pawn.Faction == Faction.OfPlayer
-                && pawn.RaceProps?.Humanlike == true
+                && PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(pawn)
                 && !pawn.Dead
                 && !pawn.Destroyed;
         }
@@ -4494,8 +4495,50 @@ namespace RimChat.Persistence
             sb.AppendLine("- 需求物资与支付物资都按市场价计算（ThingDef.BaseMarketValue，最低按 0.01）。");
             sb.AppendLine("- 需求物资倍率规则：tradeTags 包含 ExoticMisc 时 x3.0，其余物资 x1.8；金银仍按市场价固定计算。");
             sb.AppendLine("- 支付物资倍率规则：除金银外统一按市场价 x0.6 计算；金银仍按市场价固定计算。");
+            sb.AppendLine("- 特殊商品倍率覆盖：若交易卡标记为 special_item_discount，该商品按 x0.4 倍率计价（折扣优惠）；若标记为 special_item_scarce，按 x2.0 倍率计价（稀缺加价）。特殊倍率优先于通用倍率。");
+            AppendFactionSpecialItemInventory(sb, faction);
             sb.AppendLine("- 允许在市场价基础上溢价（紧急以物易物场景）。若玩家出价低于参考价，应拒绝或还价。");
             sb.AppendLine();
+        }
+
+        private static void AppendFactionSpecialItemInventory(StringBuilder sb, Faction faction)
+        {
+            if (faction == null) return;
+
+            FactionSpecialItemSet itemSet = FactionSpecialItemsManager.Instance.GetOrCreate(faction);
+            if (itemSet == null) return;
+
+            bool hasAny = false;
+            if (itemSet.DiscountItem != null && itemSet.DiscountItem.IsAvailable && !string.IsNullOrEmpty(itemSet.DiscountItem.DefName))
+            {
+                ThingDef discountDef = DefDatabase<ThingDef>.GetNamedSilentFail(itemSet.DiscountItem.DefName);
+                if (discountDef != null && ItemAirdropTradePolicy.TryResolveSpecialItemPrice(discountDef, SpecialItemType.Discount, out float discountPrice, out _))
+                {
+                    sb.AppendLine($"- 当前折扣商品：{itemSet.DiscountItem.Label}（参考单价 {discountPrice:F1}，special_item_discount）");
+                }
+                else
+                {
+                    sb.AppendLine($"- 当前折扣商品：{itemSet.DiscountItem.Label}（special_item_discount）");
+                }
+                hasAny = true;
+            }
+            if (itemSet.ScarceItem != null && itemSet.ScarceItem.IsAvailable && !string.IsNullOrEmpty(itemSet.ScarceItem.DefName))
+            {
+                ThingDef scarceDef = DefDatabase<ThingDef>.GetNamedSilentFail(itemSet.ScarceItem.DefName);
+                if (scarceDef != null && ItemAirdropTradePolicy.TryResolveSpecialItemPrice(scarceDef, SpecialItemType.Scarce, out float scarcePrice, out _))
+                {
+                    sb.AppendLine($"- 当前稀缺商品：{itemSet.ScarceItem.Label}（参考单价 {scarcePrice:F1}，special_item_scarce）");
+                }
+                else
+                {
+                    sb.AppendLine($"- 当前稀缺商品：{itemSet.ScarceItem.Label}（special_item_scarce）");
+                }
+                hasAny = true;
+            }
+            if (!hasAny)
+            {
+                sb.AppendLine("- 当前无可用特殊商品。");
+            }
         }
 
         /// <summary>/// Build dynamic quest availability from centralized eligibility service.

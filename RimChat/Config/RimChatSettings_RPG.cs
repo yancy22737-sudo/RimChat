@@ -6,6 +6,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using RimChat.UI;
+using RimChat.Dialogue;
 using RimChat.DiplomacySystem;
 using RimChat.PawnRpgPush;
 using RimChat.Prompting;
@@ -353,8 +354,7 @@ namespace RimChat.Config
         {
             return pawn != null
                 && pawn.Faction == Faction.OfPlayer
-                && pawn.RaceProps != null
-                && pawn.RaceProps.Humanlike
+                && PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(pawn)
                 && !pawn.Dead
                 && !pawn.Destroyed;
         }
@@ -585,13 +585,13 @@ namespace RimChat.Config
                 Pawn initiator = PawnsFinder.AllMapsWorldAndTemporary_Alive.FirstOrDefault(p =>
                     p != null &&
                     p.Faction == Faction.OfPlayer &&
-                    p.RaceProps?.Humanlike == true &&
+                    PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(p) &&
                     !p.Dead &&
                     !p.Destroyed);
                 Pawn target = PawnsFinder.AllMapsWorldAndTemporary_Alive.FirstOrDefault(p =>
                     p != null &&
                     p != initiator &&
-                    p.RaceProps?.Humanlike == true &&
+                    PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(p) &&
                     p.Faction != null &&
                     p.Faction != Faction.OfPlayer &&
                     !p.Dead &&
@@ -601,7 +601,7 @@ namespace RimChat.Config
                     target = PawnsFinder.AllMapsWorldAndTemporary_Alive.FirstOrDefault(p =>
                         p != null &&
                         p != initiator &&
-                        p.RaceProps?.Humanlike == true &&
+                        PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(p) &&
                         !p.Dead &&
                         !p.Destroyed);
                 }

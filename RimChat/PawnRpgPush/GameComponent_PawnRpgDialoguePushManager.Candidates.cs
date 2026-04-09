@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.Core;
+using RimChat.Dialogue;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -68,7 +69,7 @@ namespace RimChat.PawnRpgPush
         {
             return pawn != null &&
                    pawn.Spawned &&
-                   pawn.RaceProps?.Humanlike == true &&
+                   PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(pawn) &&
                    pawn.Faction != null &&
                    !pawn.Dead &&
                    !pawn.Destroyed;

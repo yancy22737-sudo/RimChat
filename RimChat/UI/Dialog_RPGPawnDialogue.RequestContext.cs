@@ -9,6 +9,7 @@ using RimChat.Core;
 using RimChat.Dialogue;
 using RimChat.Persistence;
 using RimChat.Prompting;
+using RimWorld;
 using Verse;
 
 namespace RimChat.UI
@@ -238,7 +239,235 @@ namespace RimChat.UI
                 return "mechanoid";
             }
 
-            return "nonverbal";
+            return "human";
+        }
+
+        private static string ResolveRacialType(Pawn pawn)
+        {
+            if (pawn == null || pawn.RaceProps == null)
+            {
+                return "unknown";
+            }
+
+            if (IsAnimalPawn(pawn))
+            {
+                return "animal";
+            }
+
+            if (IsMechanoidPawn(pawn))
+            {
+                return "mechanoid";
+            }
+
+            if (IsBabyPawn(pawn))
+            {
+                return "baby";
+            }
+
+            if (pawn.RaceProps.intelligence == Intelligence.Humanlike)
+            {
+                return "human";
+            }
+
+            if (pawn.RaceProps.ToolUser)
+            {
+                return "tool_user";
+            }
+
+            return "other";
+        }
+
+        private static string ResolveSocialIdentity(Pawn pawn)
+        {
+            if (pawn == null)
+            {
+                return "unknown";
+            }
+
+            if (pawn.IsPrisonerOfColony)
+            {
+                return "prisoner";
+            }
+
+            if (pawn.guest != null)
+            {
+                return "guest";
+            }
+
+            if (pawn.IsSlave)
+            {
+                return "slave";
+            }
+
+            if (pawn.Faction == null || pawn.Faction.IsPlayer)
+            {
+                return "colonist";
+            }
+
+            if (pawn.Faction != null && pawn.Faction.PlayerRelationKind == FactionRelationKind.Ally)
+            {
+                return "ally";
+            }
+
+            if (pawn.Faction != null && pawn.Faction.PlayerRelationKind == FactionRelationKind.Hostile)
+            {
+                return "hostile";
+            }
+
+            return "visitor";
+        }
+
+        private static string ResolveRelationshipStatus(Pawn pawn)
+        {
+            if (pawn == null)
+            {
+                return "unknown";
+            }
+
+            if (pawn.Faction == null)
+            {
+                return "neutral";
+            }
+
+            if (pawn.Faction != null && pawn.Faction.PlayerRelationKind == FactionRelationKind.Ally)
+            {
+                return "friendly";
+            }
+
+            if (pawn.Faction != null && pawn.Faction.PlayerRelationKind == FactionRelationKind.Hostile)
+            {
+                return "hostile";
+            }
+
+            return "neutral";
+        }
+
+        private static string ResolvePersonalityTraits(Pawn pawn)
+        {
+            if (pawn == null || pawn.story == null)
+            {
+                return "none";
+            }
+
+            var traits = pawn.story.traits;
+            if (traits == null || traits.allTraits == null || traits.allTraits.Count == 0)
+            {
+                return "none";
+            }
+
+            List<string> traitNames = new List<string>();
+            foreach (var trait in traits.allTraits)
+            {
+                if (trait != null && trait.def != null)
+                {
+                    traitNames.Add(trait.def.defName);
+                }
+            }
+
+            return traitNames.Count > 0 ? string.Join(", ", traitNames) : "none";
+        }
+
+        private static string BuildStyleGuidelines(Pawn pawn)
+        {
+            string racialType = ResolveRacialType(pawn);
+            string socialIdentity = ResolveSocialIdentity(pawn);
+            string relationshipStatus = ResolveRelationshipStatus(pawn);
+            string personalityTraits = ResolvePersonalityTraits(pawn);
+
+            var guidelines = new List<string>();
+
+            switch (racialType)
+            {
+                case "human":
+                    guidelines.Add("- Use normal human language, can express complex emotions and thoughts");
+                    guidelines.Add("- Maintain appropriate tone based on relationship and context");
+                    break;
+                case "animal":
+                    guidelines.Add("- Use non-verbal expression (sounds + inner thoughts)");
+                    guidelines.Add("- Cannot understand complex language or concepts");
+                    guidelines.Add("- React primarily to immediate needs and instincts");
+                    break;
+                case "baby":
+                    guidelines.Add("- Use baby-like sounds and simple words");
+                    guidelines.Add("- Express basic needs and emotions");
+                    guidelines.Add("- Cannot engage in complex discussions");
+                    break;
+                case "mechanoid":
+                    guidelines.Add("- Use concise, mechanical language");
+                    guidelines.Add("- Focus on efficiency and function");
+                    guidelines.Add("- May use technical terms or data");
+                    guidelines.Add("- Maintain neutral, emotionless tone");
+                    break;
+                case "tool_user":
+                    guidelines.Add("- Use simple, practical language");
+                    guidelines.Add("- Focus on immediate needs and survival");
+                    guidelines.Add("- May have limited vocabulary");
+                    break;
+                default:
+                    guidelines.Add("- Use appropriate language for the racial type");
+                    break;
+            }
+
+            switch (socialIdentity)
+            {
+                case "prisoner":
+                    guidelines.Add("- As a prisoner, express desire for freedom or better conditions");
+                    guidelines.Add("- May be desperate or willing to negotiate");
+                    guidelines.Add("- Limited access to information and resources");
+                    break;
+                case "slave":
+                    guidelines.Add("- As a slave, must obey orders and show submission");
+                    guidelines.Add("- May express fear or hope for better treatment");
+                    guidelines.Add("- Limited ability to refuse or negotiate");
+                    break;
+                case "guest":
+                    guidelines.Add("- As a guest, be polite and respectful");
+                    guidelines.Add("- May express gratitude for hospitality");
+                    guidelines.Add("- Avoid controversial topics");
+                    break;
+                case "hostile":
+                    guidelines.Add("- As an enemy, maintain hostile or defensive posture");
+                    guidelines.Add("- Refuse cooperation and may threaten or attack");
+                    guidelines.Add("- Show no willingness to negotiate");
+                    break;
+                case "colonist":
+                    guidelines.Add("- As a colonist, show loyalty and belonging to the community");
+                    guidelines.Add("- Express willingness to help and contribute");
+                    guidelines.Add("- Maintain positive, cooperative attitude");
+                    break;
+                case "trader":
+                    guidelines.Add("- As a trader, focus on commerce and fair exchange");
+                    guidelines.Add("- Be willing to negotiate prices and deals");
+                    guidelines.Add("- Maintain professional but neutral demeanor");
+                    break;
+                default:
+                    guidelines.Add("- Behave according to social identity");
+                    break;
+            }
+
+            switch (relationshipStatus)
+            {
+                case "friendly":
+                    guidelines.Add("- Be warm, open, and helpful");
+                    guidelines.Add("- Share information willingly");
+                    guidelines.Add("- Offer assistance when possible");
+                    break;
+                case "hostile":
+                    guidelines.Add("- Be cold, defensive, and uncooperative");
+                    guidelines.Add("- Refuse to share information");
+                    guidelines.Add("- May threaten or attack");
+                    break;
+                case "neutral":
+                    guidelines.Add("- Be cautious but reserved");
+                    guidelines.Add("- Provide only necessary information");
+                    guidelines.Add("- Avoid taking sides in conflicts");
+                    break;
+                default:
+                    guidelines.Add("- Adjust tone based on relationship status");
+                    break;
+            }
+
+            return string.Join("\n", guidelines);
         }
 
         private static string ResolveDefaultNonVerbalSound(Pawn pawn)
@@ -261,13 +490,22 @@ namespace RimChat.UI
             return "RimChat_RPGNonVerbalSound_Animal".Translate().ToString();
         }
 
-        private string AppendNonVerbalPromptConstraint(string basePrompt)
+        private string ApplyNonVerbalSpeechFormatting(string basePrompt)
         {
-            if (!ShouldApplyNonVerbalSpeechFormatting())
+            string result = basePrompt ?? string.Empty;
+
+            if (ShouldApplyNonVerbalSpeechFormatting())
             {
-                return basePrompt ?? string.Empty;
+                result = ApplyNonVerbalSpeechConstraintTemplate(result);
             }
 
+            result = ApplyCharacterStyleConstraint(result);
+
+            return result;
+        }
+
+        private string ApplyNonVerbalSpeechConstraintTemplate(string basePrompt)
+        {
             RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
             string template = defaults?.NonVerbalOutputConstraintTemplate;
             if (string.IsNullOrWhiteSpace(template))
@@ -285,6 +523,36 @@ namespace RimChat.UI
             context.SetValue("pawn.speaker.mechanoid_sound", "RimChat_RPGNonVerbalSound_Mechanoid".Translate().ToString());
             context.SetValue("system.punctuation.open_paren", useFullWidth ? "（" : "(");
             context.SetValue("system.punctuation.close_paren", useFullWidth ? "）" : ")");
+            string rendered = PromptTemplateRenderer.RenderOrThrow(templateId, "rpg", template, context);
+            if (string.IsNullOrWhiteSpace(rendered))
+            {
+                return basePrompt ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(basePrompt))
+            {
+                return rendered;
+            }
+
+            return $"{basePrompt}\n\n{rendered}";
+        }
+
+        private string ApplyCharacterStyleConstraint(string basePrompt)
+        {
+            RpgPromptDefaultsConfig defaults = RpgPromptDefaultsProvider.GetDefaults();
+            string template = defaults?.CharacterStyleTemplate;
+            if (string.IsNullOrWhiteSpace(template))
+            {
+                return basePrompt ?? string.Empty;
+            }
+
+            const string templateId = "prompt_templates.rpg_character_style_constraint";
+            PromptRenderContext context = PromptRenderContext.Create(templateId, "rpg");
+            context.SetValue("pawn.speaker.racial_type", ResolveRacialType(target));
+            context.SetValue("pawn.speaker.social_identity", ResolveSocialIdentity(target));
+            context.SetValue("pawn.speaker.relationship_status", ResolveRelationshipStatus(target));
+            context.SetValue("pawn.speaker.personality_traits", ResolvePersonalityTraits(target));
+            context.SetValue("pawn.speaker.style_guidelines", BuildStyleGuidelines(target));
             string rendered = PromptTemplateRenderer.RenderOrThrow(templateId, "rpg", template, context);
             if (string.IsNullOrWhiteSpace(rendered))
             {
@@ -374,7 +642,7 @@ namespace RimChat.UI
                     allowMemoryColdLoad: !openingTurn);
             }
 
-            prompt = AppendNonVerbalPromptConstraint(prompt);
+            prompt = ApplyNonVerbalSpeechFormatting(prompt);
             UpdateRpgActionContractGuard(prompt, settings?.EnableRPGAPI == true);
             return prompt;
         }

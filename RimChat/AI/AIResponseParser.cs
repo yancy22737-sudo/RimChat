@@ -598,6 +598,24 @@ namespace RimChat.AI
                     ? new Dictionary<string, object>()
                     : ParseParameters(parametersJson);
 
+                string normalizedAction = NormalizeActionName(actionType);
+                if (string.Equals(normalizedAction, AIActionNames.CreateQuest, StringComparison.Ordinal))
+                {
+                    string questDefName = ExtractJsonString(actionObj, "questDefName");
+                    if (string.IsNullOrEmpty(questDefName))
+                    {
+                        questDefName = ExtractJsonString(actionObj, "defName");
+                    }
+                    if (!string.IsNullOrEmpty(questDefName) && !parameters.ContainsKey("questDefName"))
+                    {
+                        parameters["questDefName"] = questDefName;
+                    }
+                    if (!parameters.ContainsKey("questDefName"))
+                    {
+                        Log.Warning($"[RimChat] create_quest action missing questDefName. Raw actionObj: {actionObj}");
+                    }
+                }
+
                 AddActionIfValid(
                     actions,
                     actionType,

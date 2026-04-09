@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using RimChat.AI;
 using RimChat.Config;
 using RimChat.Core;
+using RimChat.Dialogue;
 using RimChat.Persistence;
 using RimChat.Prompting;
 using RimChat.Util;
@@ -267,7 +268,7 @@ namespace RimChat.DiplomacySystem
         private static bool IsEligibleNpcPersonaTarget(Pawn pawn)
         {
             return pawn != null &&
-                   pawn.RaceProps?.Humanlike == true &&
+                   PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(pawn) &&
                    !pawn.Dead &&
                    !pawn.Destroyed;
         }

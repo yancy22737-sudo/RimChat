@@ -23,10 +23,10 @@ namespace RimChat.Memory
         {
             saveKey = string.Empty;
             reason = string.Empty;
-            if (TryResolveFromPersistentSlot(out saveKey) ||
-                TryResolveFromCurrentGameInfo(out saveKey) ||
+            if (TryResolveFromCurrentGameInfo(out saveKey) ||
                 TryResolveFromMetaHeader(out saveKey) ||
-                TryResolveFromTrackedSaveName(out saveKey))
+                TryResolveFromTrackedSaveName(out saveKey) ||
+                TryResolveFromPersistentSlot(out saveKey))
             {
                 return true;
             }

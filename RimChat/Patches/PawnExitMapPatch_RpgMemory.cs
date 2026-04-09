@@ -1,4 +1,5 @@
 using HarmonyLib;
+using RimChat.Dialogue;
 using RimChat.DiplomacySystem;
 using RimChat.Memory;
 using RimChat.WorldState;
@@ -32,7 +33,7 @@ namespace RimChat.Patches
                 return;
             }
 
-            if (!(__instance.RaceProps?.Humanlike ?? false))
+            if (!PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(__instance))
             {
                 return;
             }

@@ -456,73 +456,28 @@ namespace RimChat.UI
 
             Pawn hoverPawn = speakerPawn;
             Faction hoverFaction = speakerPawn?.Faction ?? faction;
-            if (hoverPawn == null && IsPlayerVisualMessage(message))
+            if (IsPlayerVisualMessage(message))
             {
-                hoverPawn = ResolvePlayerSpeakerPawn();
+                if (hoverPawn == null)
+                {
+                    hoverPawn = ResolvePlayerSpeakerPawn();
+                }
                 hoverFaction = hoverPawn?.Faction ?? Faction.OfPlayer;
             }
 
-            if (hoverPawn == null && hoverFaction == null)
+            if (hoverFaction == null)
             {
-                hoverPawn = ResolvePlayerSpeakerPawn();
-                hoverFaction = hoverPawn?.Faction ?? Faction.OfPlayer;
+                hoverFaction = faction ?? Faction.OfPlayer;
             }
 
-            string key = hoverPawn != null
-                ? $"speaker:{hoverPawn.thingIDNumber}"
-                : $"speaker-faction:{hoverFaction?.loadID ?? -1}";
-
-            bool isHovered = Mouse.IsOver(avatarRect);
-
-            if (isHovered)
+            Vector2 mousePos = Event.current?.mousePosition ?? Vector2.zero;
+            if (avatarRect.Contains(mousePos) && hoverFaction != null)
             {
-                lastHoveredAvatarKey = key;
-                lastHoveredAvatarRect = avatarRect;
-                lastHoveredAvatarFaction = hoverFaction;
-                lastHoveredAvatarPawn = hoverPawn;
-                isCurrentlyHovered = true;
-                UpdateHoverCardAlpha(key, true);
+                float windowX = lastMessagesViewRect.x + avatarRect.xMax - messageScrollPosition.x;
+                float windowY = lastMessagesViewRect.y + avatarRect.center.y - messageScrollPosition.y;
+                Vector2 screenPos = new Vector2(windowX, windowY);
+                RequestSpeakerHoverCard(hoverPawn, hoverFaction, screenPos);
             }
-            else
-            {
-                isCurrentlyHovered = false;
-                UpdateHoverCardAlpha(key, false);
-            }
-        }
-
-        public void DrawHoverCardIfNeeded()
-        {
-            if (string.IsNullOrEmpty(lastHoveredAvatarKey))
-            {
-                return;
-            }
-
-            float alpha = GetHoverCardAlpha(lastHoveredAvatarKey);
-
-            if (alpha <= 0.01f)
-            {
-                isCurrentlyHovered = false;
-                lastHoveredAvatarKey = null;
-                return;
-            }
-
-            if (lastHoveredAvatarFaction != null)
-            {
-                DrawHoverCardForFaction(lastHoveredAvatarFaction, lastHoveredAvatarPawn, lastHoveredAvatarRect, alpha);
-            }
-
-            UpdateHoverCardAlpha(lastHoveredAvatarKey, isCurrentlyHovered);
-        }
-
-        private float GetHoverCardAlpha(string key)
-        {
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                return 0f;
-            }
-
-            float current = hoverCardAlphaByKey.TryGetValue(key, out float value) ? value : 0f;
-            return current;
         }
 
         private Rect BuildAvatarRect(DialogueMessageData message, Rect bubbleRect)

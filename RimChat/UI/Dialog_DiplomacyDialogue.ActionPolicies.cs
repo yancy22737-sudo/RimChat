@@ -54,6 +54,7 @@ namespace RimChat.UI
             public string ActionType;
             public int? Waves;
             public bool ExplicitChallengeRequest;
+            public string QuestDefName;
         }
 
         private static readonly Regex AirdropSingleAmountShorthandPattern = new Regex(
@@ -128,6 +129,11 @@ namespace RimChat.UI
                 parameters["explicit_challenge_request"] = true;
             }
 
+            if (!string.IsNullOrWhiteSpace(directive.QuestDefName))
+            {
+                parameters["questDefName"] = directive.QuestDefName;
+            }
+
             response.Actions.Add(new AIAction
             {
                 ActionType = directive.ActionType,
@@ -180,7 +186,8 @@ namespace RimChat.UI
             directive = new SendInfoForcedActionDirective
             {
                 ActionType = actionType.Trim(),
-                ExplicitChallengeRequest = string.Equals(ReadDirectiveValue(block, "explicit_challenge_request"), "true", StringComparison.OrdinalIgnoreCase)
+                ExplicitChallengeRequest = string.Equals(ReadDirectiveValue(block, "explicit_challenge_request"), "true", StringComparison.OrdinalIgnoreCase),
+                QuestDefName = ReadDirectiveValue(block, "questDefName")
             };
 
             if (int.TryParse(ReadDirectiveValue(block, "waves"), NumberStyles.Integer, CultureInfo.InvariantCulture, out int waves))

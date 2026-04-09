@@ -484,13 +484,21 @@ namespace RimChat.DiplomacySystem
                 explicitHardMax);
             RecordStageAudit("selection", null, null, selectionDetails);
 
+            // Detect if this is a special item (discount/scarce)
+            SpecialItemType? detectedSpecialItemType = null;
+            if (context.Faction != null && FactionSpecialItemsManager.Instance.TryMatchSpecialItem(context.Faction, selectedRecord.DefName, out SpecialItemType specialItemType))
+            {
+                detectedSpecialItemType = specialItemType;
+            }
+
             int quotedNeedTotalSilver = ResolveAirdropNeedQuotedTotalSilver(
                 selectedRecord,
                 validatedCount,
                 context.Faction,
                 context.PlayerNegotiator,
                 context.Map,
-                context.CandidatePack);
+                context.CandidatePack,
+                detectedSpecialItemType);
             AirdropTradeRuleSnapshot quotedTradeRule = ItemAirdropTradePolicy.ResolveRuleSnapshot(
                 context.Faction,
                 context.Map?.wealthWatcher?.WealthItems ?? 0f,
@@ -522,7 +530,8 @@ namespace RimChat.DiplomacySystem
                     context.Faction,
                     context.PlayerNegotiator,
                     context.Map,
-                    context.CandidatePack),
+                    context.CandidatePack,
+                    detectedSpecialItemType),
                 PaymentTotalSilver = context.PaymentTotalSilver,
                 PaymentItemTotalSilver = context.PaymentTotalSilver,
                 ShippingPodCount = shippingPodCount,
@@ -536,6 +545,7 @@ namespace RimChat.DiplomacySystem
                     ? "market_value_x3.0"
                     : "market_value_x1.8",
                 PaymentPriceSemantic = "market_value_x0.6",
+                SpecialItemType = detectedSpecialItemType,
                 PaymentLines = context.PaymentLines,
                 DeductionPlan = context.DeductionPlan,
                 ParametersSnapshot = CloneParameterDictionary(context.Parameters)

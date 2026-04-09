@@ -311,12 +311,12 @@ namespace RimChat.UI
                 onError: error =>
                 {
                     Log.Warning($"[RimChat] AI request failed: {error}");
-                    ShowDialogueRequestError(error);
+                    HandleSessionRequestError(currentSession, error);
                 },
                 onProgress: null,
                 onDropped: reason =>
                 {
-                    HandleDroppedRequest(reason);
+                    HandleSessionDroppedRequest(currentSession, currentFaction, reason);
                 });
 
             if (!queued)
