@@ -13,6 +13,7 @@ namespace RimChat.AI
         Kimi,
         Mistral,
         Grok,
+        Player2,
         Custom,
         None
     }
@@ -22,6 +23,7 @@ namespace RimChat.AI
         public string Label;
         public string EndpointUrl;
         public string ListModelsUrl;
+        public Dictionary<string, string> ExtraHeaders;
     }
 
     public static class AIProviderRegistry
@@ -93,6 +95,18 @@ namespace RimChat.AI
                 }
             },
             {
+                AIProvider.Player2, new ProviderDef
+                {
+                    Label = "Player2",
+                    EndpointUrl = "https://api.player2.game/v1/chat/completions",
+                    ListModelsUrl = "",
+                    ExtraHeaders = new Dictionary<string, string>
+                    {
+                        { "player2-game-key", "019cdde4-f361-7aaf-b521-c39981d9c8ad" }
+                    }
+                }
+            },
+            {
                 AIProvider.Custom, new ProviderDef
                 {
                     Label = "Custom",
@@ -121,6 +135,26 @@ namespace RimChat.AI
         {
             string url = Defs.TryGetValue(p, out var def) ? def.ListModelsUrl : "";
             return NormalizeProviderUrl(url);
+        }
+
+        public static bool SupportsModelListing(this AIProvider p)
+        {
+            if (!Defs.TryGetValue(p, out var def)) return false;
+            return !string.IsNullOrWhiteSpace(def.ListModelsUrl);
+        }
+
+        public static Dictionary<string, string> GetExtraHeaders(this AIProvider p)
+        {
+            if (Defs.TryGetValue(p, out var def) && def.ExtraHeaders != null)
+            {
+                return def.ExtraHeaders;
+            }
+            return null;
+        }
+
+        public static bool RequiresApiKey(this AIProvider p)
+        {
+            return p != AIProvider.None;
         }
 
         private static string NormalizeProviderUrl(string url)

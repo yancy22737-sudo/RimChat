@@ -144,6 +144,7 @@
     <RimChat_EnableDisableTooltip>启用/禁用此配置</RimChat_EnableDisableTooltip>
     <RimChat_ChooseModel>选择模型...</RimChat_ChooseModel>
     <RimChat_Placeholder_ApiKey>粘贴 API 密钥...</RimChat_Placeholder_ApiKey>
+    <RimChat_Player2RedirectMessage>Player2 需要通过桌面客户端在本地运行。\n\n1. 从 player2.game 下载 Player2 客户端\n2. 安装并登录\n3. 启动边缘世界 — localhost:4315 本地连接将自动生效\n\n已为您切换到本地提供商模式。</RimChat_Player2RedirectMessage>
     <RimChat_BaseUrlTooltip>自定义 API 的基础 URL</RimChat_BaseUrlTooltip>
     <RimChat_ApiProviderFieldTooltip>功能：选择当前配置使用的 API 提供商。作用域：该行配置发起的请求路由。</RimChat_ApiProviderFieldTooltip>
     <RimChat_ApiKeyFieldTooltip>功能：填写提供商密钥。作用域：仅当前 API 配置行。</RimChat_ApiKeyFieldTooltip>
@@ -1309,6 +1310,17 @@ ID：{5}
     <RimChat_RPGInjectPawnInfo>注入 Pawn 状态信息</RimChat_RPGInjectPawnInfo>
     <RimChat_RPGInjectFactionInfo>注入所属派系信息</RimChat_RPGInjectFactionInfo>
     <RimChat_RPGDialogue_Dialogue>对话</RimChat_RPGDialogue_Dialogue>
+    <RimChat_Converse>对话</RimChat_Converse>
+    <RimChat_Converse_Disabled>无法对话：（{0}）</RimChat_Converse_Disabled>
+    <RimChat_Converse_Disabled_NoRace>无种族数据</RimChat_Converse_Disabled_NoRace>
+    <RimChat_Converse_Disabled_IncompatibleRace>不兼容种族</RimChat_Converse_Disabled_IncompatibleRace>
+    <RimChat_Converse_Disabled_RpgOff>RPG对话已关闭</RimChat_Converse_Disabled_RpgOff>
+    <RimChat_Converse_Disabled_Unreachable>无法到达</RimChat_Converse_Disabled_Unreachable>
+    <RimChat_Converse_Disabled_Drafted>征召中</RimChat_Converse_Disabled_Drafted>
+    <RimChat_Converse_Disabled_Downed>目标处于倒地状态</RimChat_Converse_Disabled_Downed>
+    <RimChat_Converse_Disabled_Asleep>目标处于睡眠状态</RimChat_Converse_Disabled_Asleep>
+    <RimChat_Converse_Disabled_DownedAsleep>目标处于倒地/睡眠状态</RimChat_Converse_Disabled_DownedAsleep>
+    <RimChat_Converse_Disabled_Cooldown>冷却中（{0}小时）</RimChat_Converse_Disabled_Cooldown>
     <RimChat_RPGDialogue_CooldownRejected>对方暂时拒绝继续交谈，请稍后再试。</RimChat_RPGDialogue_CooldownRejected>
     <RimChat_RPGDialogue_CooldownRejectedWithHours>对方暂时拒绝继续交谈（剩余约 {0} 小时）。</RimChat_RPGDialogue_CooldownRejectedWithHours>
     <RimChat_RPGDialogue_CooldownBlocked>对方当前不接受交谈。</RimChat_RPGDialogue_CooldownBlocked>

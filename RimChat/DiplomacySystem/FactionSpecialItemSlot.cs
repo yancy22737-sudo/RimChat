@@ -17,8 +17,9 @@ namespace RimChat.DiplomacySystem
     /// <summary>
     /// Represents a special item slot (discount or scarce) for a faction.
     /// Persists per-faction, supports IExposable for save/load.
+    /// Note: Does NOT implement ILoadReferenceable to avoid save/load crashes with old saves.
     /// </summary>
-    public class FactionSpecialItemSlot : IExposable, ILoadReferenceable
+    public class FactionSpecialItemSlot : IExposable
     {
         public SpecialItemType ItemType;
         public string DefName = string.Empty;
@@ -49,6 +50,26 @@ namespace RimChat.DiplomacySystem
             {
                 uniqueId = nextUniqueId++;
             }
+        }
+
+        internal int GetUniqueIdForFix()
+        {
+            return uniqueId;
+        }
+
+        internal void SetUniqueId(int id)
+        {
+            uniqueId = id;
+        }
+
+        internal static int GetNextUniqueId()
+        {
+            return nextUniqueId;
+        }
+
+        internal static void SetNextUniqueId(int value)
+        {
+            nextUniqueId = value;
         }
 
         public bool IsOnCooldown
@@ -157,11 +178,6 @@ namespace RimChat.DiplomacySystem
                     nextUniqueId = uniqueId + 1;
                 }
             }
-        }
-
-        public string GetUniqueLoadID()
-        {
-            return $"FactionSpecialItemSlot_{uniqueId}";
         }
     }
 }

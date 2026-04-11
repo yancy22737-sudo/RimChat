@@ -135,21 +135,20 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Step 3: Verify DLL (project outputs directly to 1.6\Assemblies\net48)
-$dllSource = "$sourceRoot\1.6\Assemblies\net48\RimChat.dll"
-$dllDest = "$sourceRoot\1.6\Assemblies"
+# Step 3: Verify DLL
+$dllPath = "$sourceRoot\1.6\Assemblies\RimChat.dll"
 
-if (-not (Test-Path $dllSource)) {
-    Write-Err "DLL not found at $dllSource"
+if (-not (Test-Path $dllPath)) {
+    Write-Err "DLL not found at $dllPath"
     exit 1
 }
 
-# Step 4: Copy DLL from net48 subfolder to Assemblies root
-Write-Status "Copying DLL to 1.6/Assemblies..."
-if (-not (Test-Path $dllDest)) {
-    New-Item -ItemType Directory -Path $dllDest -Force | Out-Null
+# Step 4: Clean up any stale net48 subdirectory from previous builds
+$staleNet48 = "$sourceRoot\1.6\Assemblies\net48"
+if (Test-Path $staleNet48) {
+    Write-Info "Removing stale net48 subdirectory..."
+    Remove-Item -Path $staleNet48 -Recurse -Force
 }
-Copy-Item $dllSource $dllDest -Force
 
 # Step 5: Deploy to Game Mod Folder
 Write-Status "Deploying to Game Mod Folder: $destRoot"

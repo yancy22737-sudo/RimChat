@@ -183,7 +183,7 @@ namespace RimChat.Dialogue
 
         public static bool IsPawnValid(Pawn pawn)
         {
-            return pawn != null && !pawn.Destroyed && !pawn.Dead;
+            return pawn != null && !pawn.Destroyed && !pawn.Dead && !pawn.Downed;
         }
     }
 }

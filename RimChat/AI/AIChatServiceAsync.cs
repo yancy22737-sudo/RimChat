@@ -568,7 +568,7 @@ namespace RimChat.AI
                     string jsonBody;
                     try
                     {
-                        jsonBody = BuildChatCompletionJson(model, attemptMessages);
+                        jsonBody = BuildChatCompletionJson(model, attemptMessages, config.Provider);
                     }
                     catch (Exception)
                     {
@@ -600,6 +600,16 @@ namespace RimChat.AI
                             else
                             {
                                 request.SetRequestHeader("Authorization", $"Bearer {trimmedApiKey}");
+                            }
+                        }
+
+                        // Add provider-specific extra headers (e.g. player2-game-key for Player2)
+                        var extraHeaders = config.Provider.GetExtraHeaders();
+                        if (extraHeaders != null)
+                        {
+                            foreach (var header in extraHeaders)
+                            {
+                                request.SetRequestHeader(header.Key, header.Value);
                             }
                         }
                         request.timeout = requestTimeoutSeconds;
@@ -2228,13 +2238,15 @@ namespace RimChat.AI
                 if (localConfig != null && localConfig.IsValid())
                 {
                     string localBaseUrl = localConfig.GetNormalizedBaseUrl();
+                    // Player2 local: use Player2 provider so extra headers and no-model logic apply
+                    bool isPlayer2Local = localConfig.IsPlayer2Local();
                     return new ApiConfig
                     {
                         IsEnabled = true,
-                        Provider = AIProvider.Custom,
-                        BaseUrl = ApiConfig.EnsureChatCompletionsEndpoint(localBaseUrl),
+                        Provider = isPlayer2Local ? AIProvider.Player2 : AIProvider.Custom,
+                        BaseUrl = isPlayer2Local ? localBaseUrl.TrimEnd('/') + "/v1/chat/completions" : ApiConfig.EnsureChatCompletionsEndpoint(localBaseUrl),
                         ApiKey = "",
-                        SelectedModel = localConfig.ModelName
+                        SelectedModel = isPlayer2Local ? "Default" : localConfig.ModelName
                     };
                 }
             }
@@ -2242,11 +2254,17 @@ namespace RimChat.AI
             return null;
         }
 
-        private string BuildChatCompletionJson(string model, List<ChatMessageData> messages)
+        private string BuildChatCompletionJson(string model, List<ChatMessageData> messages, AIProvider provider)
         {
             var sb = new StringBuilder();
             sb.Append("{");
-            sb.Append($"\"model\":\"{EscapeJson(model)}\",");
+
+            // Player2 does not accept a model field; it selects the model server-side
+            if (provider != AIProvider.Player2)
+            {
+                sb.Append($"\"model\":\"{EscapeJson(model)}\",");
+            }
+
             sb.Append("\"messages\":[");
 
             for (int i = 0; i < messages.Count; i++)
@@ -2268,12 +2286,7 @@ namespace RimChat.AI
 
         private string EscapeJson(string str)
         {
-            if (string.IsNullOrEmpty(str)) return "";
-            return str.Replace("\\", "\\\\")
-                      .Replace("\"", "\\\"")
-                      .Replace("\n", "\\n")
-                      .Replace("\r", "\\r")
-                      .Replace("\t", "\\t");
+            return RimChat.Util.JsonEscapeHelper.EscapeString(str);
         }
 
         public bool IsConfigured()

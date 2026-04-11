@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using RimChat.Util;
 using RimWorld;
 using Verse;
 
@@ -199,14 +200,25 @@ namespace RimChat.DiplomacySystem
 
         public void ExposeData()
         {
-            Scribe_References.Look(ref Faction, "faction");
+            string factionId = Faction?.GetUniqueLoadID() ?? string.Empty;
+            Scribe_Values.Look(ref factionId, "factionId", string.Empty);
+            // Remove legacy <faction> reference node from old saves without registering
+            // in CrossRefHandler — prevents "Not all loadIDs consumed" on dead factions.
+            LegacyScribeHelper.RemoveLegacyReferenceNode("faction");
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                if (!string.IsNullOrEmpty(factionId))
+                {
+                    Faction = Find.FactionManager.AllFactions.FirstOrDefault(f => f.GetUniqueLoadID() == factionId);
+                }
+            }
             Scribe_Values.Look(ref NextActionAllowedTick, "nextActionAllowedTick", 0);
         }
     }
 
     /// <summary>/// Dependencies: Verse Scribe.
- /// Responsibility: persist processed social-news origins to prevent duplicate reporting.
- ///</summary>
+    /// Responsibility: persist processed social-news origins to prevent duplicate reporting.
+    ///</summary>
     public class SocialProcessedOrigin : IExposable
     {
         public SocialNewsOriginType OriginType = SocialNewsOriginType.Unknown;
@@ -255,8 +267,21 @@ namespace RimChat.DiplomacySystem
             Scribe_Values.Look(ref EventType, "eventType", ScheduledSocialEventType.Unknown);
             Scribe_Values.Look(ref SourceKey, "sourceKey", string.Empty);
             Scribe_Values.Look(ref OccurredTick, "occurredTick", 0);
-            Scribe_References.Look(ref SourceFaction, "sourceFaction");
-            Scribe_References.Look(ref TargetFaction, "targetFaction");
+            string sourceFactionId = SourceFaction?.GetUniqueLoadID() ?? string.Empty;
+            Scribe_Values.Look(ref sourceFactionId, "sourceFactionId", string.Empty);
+            string targetFactionId = TargetFaction?.GetUniqueLoadID() ?? string.Empty;
+            Scribe_Values.Look(ref targetFactionId, "targetFactionId", string.Empty);
+            // Remove legacy reference nodes from old saves without registering
+            // in CrossRefHandler — prevents "Not all loadIDs consumed" on dead factions.
+            LegacyScribeHelper.RemoveLegacyReferenceNodes("sourceFaction", "targetFaction");
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                if (!string.IsNullOrEmpty(sourceFactionId))
+                    SourceFaction = Find.FactionManager.AllFactions.FirstOrDefault(f => f.GetUniqueLoadID() == sourceFactionId);
+                if (!string.IsNullOrEmpty(targetFactionId))
+                    TargetFaction = Find.FactionManager.AllFactions.FirstOrDefault(f => f.GetUniqueLoadID() == targetFactionId);
+                // If factionId is empty, faction remains null and will be cleaned up.
+            }
             Scribe_Values.Look(ref Summary, "summary", string.Empty);
             Scribe_Values.Look(ref Detail, "detail", string.Empty);
             Scribe_Values.Look(ref Value, "value", 0);

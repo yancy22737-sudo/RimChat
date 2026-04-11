@@ -94,9 +94,18 @@ namespace RimChat.NpcDialogue
         {
             base.ExposeData();
 
-            Scribe_Collections.Look(ref factionPushStates, "npcPushFactionStates", LookMode.Deep);
-            Scribe_Collections.Look(ref queuedTriggers, "npcPushQueuedTriggers", LookMode.Deep);
-            Scribe_Values.Look(ref lastGlobalDeliveredTick, "npcPushLastGlobalDeliveredTick", -DefaultGlobalDeliveryCooldownTicks);
+            try
+            {
+                Scribe_Collections.Look(ref factionPushStates, "npcPushFactionStates", LookMode.Deep);
+                Scribe_Collections.Look(ref queuedTriggers, "npcPushQueuedTriggers", LookMode.Deep);
+                Scribe_Values.Look(ref lastGlobalDeliveredTick, "npcPushLastGlobalDeliveredTick", -DefaultGlobalDeliveryCooldownTicks);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error loading NpcDialogue data from save: {ex.Message}\n{ex.StackTrace}");
+                factionPushStates ??= new List<FactionNpcPushState>();
+                queuedTriggers ??= new List<QueuedNpcDialogueTrigger>();
+            }
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {

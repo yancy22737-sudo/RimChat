@@ -1,3 +1,60 @@
+﻿0.9.999
+- Optimize: Float menu dialogue button vanilla-style improvements — hide button when in combat (following vanilla interaction logic), show disabled button when drafted.
+- Optimize: Fine‑grained vanilla‑style reason messages for unavailable dialogue — "Cannot converse: (Target is downed)", "Cannot converse: (Target is asleep)", "Cannot converse: (Target is downed/asleep)".
+- Optimize: Separate combat vs. drafted state detection logic (PawnCombatStateUtility.IsEitherPawnInCombat and IsEitherPawnDrafted).
+- Version: bumped About/About.xml modVersion to 0.9.999.
+
+0.9.998
+- Fix: Animals (Animal race) cannot converse — v0.9.997 whitelist omitted race.Animal, causing Animal ThingDefs to not receive CompPawnDialogue injection, thus no right-click dialogue button. Fix: added race.Animal support to both IsEligiblePawnDef and IsRpgDialogueEligibleRace.
+- Improvement: Show greyed-out disabled button with reason when dialogue is unavailable (incompatible race / RPG dialogue off / unreachable / in combat / asleep/downed / on cooldown), instead of hiding the button entirely. Target dead/destroyed, different map, trade caravan, and self-to-self remain hidden.
+- Improvement: English dialogue button text changed from "Dialogue" to "Converse".
+- Added: 9 new localization keys (Converse series disabled-state hints).
+- Version: bumped About/About.xml modVersion to 0.9.998.
+
+0.9.997
+- Root fix: VehiclePawn (Vehicles Framework) inheriting Pawn causes RimTalk PersonaService.GetPersonality → AddHediff native crash — VehiclePawn inherits Pawn but lacks story/skills/health subsystems; when misidentified as RPG dialogue target, RimTalk's Hediff_Persona.GetOrAddNew calls AddHediff on it, triggering Unity engine-level crash (C# try-catch cannot capture). Fix: capability-based whitelist hybrid strategy that excludes Pawn subclasses lacking RPG dialogue capability at the entry point — ① PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace now fast-paths Humanlike/Mechanoid, and requires pawn.story!=null && pawn.skills!=null for ToolUser ② PawnDialogueCompDefInjector.IsEligiblePawnDef adds race.Humanlike/race.IsMechanoid/race.ToolUser whitelist filter. This automatically defends against any future Pawn subclass lacking story/skills (e.g. drones, vehicles) without per-type-name blacklisting.
+- Version: bumped About/About.xml modVersion to 0.9.997.
+
+0.9.996
+- Root fix: "Letter_0" duplicate key crashes when loading old saves — legacy save ChoiceLetter subclasses had loadID=0, causing LoadedObjectDirectory.RegisterLoaded to throw "An item with the same key has already been added. Key: Letter_0". Fix: create Harmony Prefix patch LoadedObjectDirectoryPatch_FixLegacyLetterLoadID that checks loadID of the two ChoiceLetter subclasses before RegisterLoaded; if ≤0, uses new static AssignNextUniqueLoadID() method to allocate unique IDs; removes internal ExposeData fix logic from ChoiceLetters to prevent lagging repair.
+- Fix: RPG archive compression channel output_specification self-contradicting repair infinite loop — add expectedText.Length == 0 check, preventing sections that correctly inherit from parent "any" channel from being flagged for repair, stopping infinite fix-save-reload cycles.
+- Build: clean up Build.ps1 script, remove stale net48 subdirectory output, unify DLL output path.
+- Tools: add Windows reserved device name "nul" to .gitignore, preventing normal file operations from failing.
+- Version: bumped About/About.xml modVersion to 0.9.996.
+
+0.9.995
+- Root fix: Chatting with sleeping/downed pawns causes native crash — RestUtility.Awake(target) only checks whether the pawn's current Job is a sleep Job, not target.Downed. A downed but non-sleeping pawn (e.g., just incapacitated in combat) bypasses the check, and PawnCacheRenderer.RenderPawn crashes Unity when rendering a pawn in lying-down pose. Fix: 5-layer defense — ①CompPawnDialogue.CanShowRpgDialogueOption adds target.Downed check to block right-click menu ②JobDriver_RPGPawnDialogue FailOn adds target.Downed to immediately fail the Job ③JobDriver_RPGPawnDialogue openDialogue adds target.Downed check before opening ④DialogueContextResolver.IsPawnValid adds !pawn.Downed to global validation layer ⑤ChoiceLetter_PawnRpgInitiatedDialogue.TryOpenDialogue adds Downed+Awake check for NPC push path.
+- Fix: Airdrop trade error "MakeThing error: Apparel_Broadwrap is madeFromStuff but stuff=null" — BuildStacks method passed stuff=null for MadeFromStuff=true ThingDefs, causing ThingMaker.MakeThing to error. Fix: when def.MadeFromStuff, use def.defaultStuff as the default material.
+- Version: bumped About/About.xml modVersion to 0.9.995.
+
+0.9.994
+- Root fix: Archive compression channel output_specification self-contradicting repair loop causing game crash — added currentText == expectedText short-circuit, skipping repair when value already equals canonical default.
+- Version: bumped About/About.xml modVersion to 0.9.994.
+
+0.9.993
+- Root fix: Definitive fix for "Not all loadIDs which were read were consumed" errors on old save loading — uses LegacyScribeHelper.RemoveLegacyReferenceNode to directly remove legacy XML nodes without registering CrossRefHandler.
+- New: LegacyScribeHelper utility class.
+- Version: bumped About/About.xml modVersion to 0.9.993.
+
+0.9.992
+- Root fix: Old save loading Faction/Pawn reference node not consumed errors — Saving phase no longer writes legacy reference nodes.
+- Fix: DialogueMessageData.speakerPawn and PawnRpgPushState.pawn old-save loading errors.
+- Fix: Social circle news parsing false rejection issues.
+- Version: bumped About/About.xml modVersion to 0.9.992.
+
+0.9.991
+- Version: bumped `About/About.xml` `modVersion` to `0.9.991`.
+
+0.9.99
+
+0.9.98
+- Fix: Old saves loading crash (root cause fix) — changed all `Scribe_References.Look` direct Faction/Pawn references to "ID storage + PostLoadInit deferred resolution" pattern, affecting `FactionPresenceState`, `FactionDialogueSession`, `GameAIInterface.ItemAirdrop`, `DelayedDiplomacyEvent`, `PublicSocialPost`, `SocialCircleState`/`ScheduledSocialEventEntry`, `SocialActionIntent`, `NpcDialogueModels`/`FactionNpcPushState`, `QuestPart_AICallback`, `PawnRpgPushModels`. This prevents crashes from failed reference resolution during load, completely resolving old save crashes.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.98`.
+
+0.9.97
+- Critical Fix: Old saves from 0.9.93 failing to load (crash during "Generating all creatures") — `FactionSpecialItemSlot` class removed `ILoadReferenceable` interface, as it caused RimWorld to crash at low level due to unique ID conflicts when loading old saves. Changed to pure `IExposable` implementation; old saves' slots automatically get new IDs assigned, completely resolving the save load crash issue.
+- Version: bumped `About/About.xml` `modVersion` to `0.9.97`.
+
 0.9.93
 - Fix: `FactionSpecialItemSlot` ID duplication error during save loading — each slot now gets a unique ID; old saves auto-migrate with new IDs, resolving "Id already used" errors.
 - Fix: social-circle world news parsing failure (claim_not_reflected) — improved Chinese anchor-word extraction logic, supporting Chinese punctuation separators; now checks full claim match before extracting anchor words.
@@ -36,7 +93,7 @@
 - Root fix: `request_item_airdrop` now performs runtime trade-limit fail-fast validation and blocks over-limit offers with explicit code `trade_limit_exceeded`.
 - Root fix: airdrop pricing moved from `MarketValue/BaseMarketValue` to trade buy-price resolution (affected by player negotiator Social skill, sourced from caravan/orbital trading price context); missing negotiator/trade context now fail-fast.
 - Changed: airdrop trade-card formula and shipping display are now dynamic (no hardcoded 500/pod), with a dedicated front-end blocking message for unavailable trade-price context.
-- Changed: default diplomacy action prompt text and runtime injected airdrop rules now use the same “trade buy price + tiered shipping/limit” contract.
+- Changed: default diplomacy action prompt text and runtime injected airdrop rules now use the same "trade buy price + tiered shipping/limit" contract.
 - Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, `doc/VersionLog_en.txt`, and EN/ZH localization keys.
 - Version: bumped `About/About.xml` `modVersion` to `0.9.87`.
 
@@ -386,7 +443,7 @@
 
 0.9.39
 - Changed: prompt dedupe for runtime assembly. `<environment>` remains the single authority block for full environment/event details, while `world.environment_params` and `world.recent_world_events` now render compact snapshot/digest views to avoid duplicate full expansion in main-chain sections.
-- Changed: diplomacy runtime node dedupe. When `instruction_stack.faction_characteristics` is injected, runtime suppresses duplicate `diplomacy_fallback_role` output to remove repeated “leader identity” lines.
+- Changed: diplomacy runtime node dedupe. When `instruction_stack.faction_characteristics` is injected, runtime suppresses duplicate `diplomacy_fallback_role` output to remove repeated "leader identity" lines.
 - Added: mandatory runtime `mandatory_race_profile` supplement block for diplomacy/RPG/proactive channels, and strict runtime validation; missing block now fail-fast throws `PromptRenderException`.
 - Added: dual-layer event intel output. `AppendRecentWorldEventIntel(...)` now keeps latest raw lines and appends `EventDigest` summaries (type distribution, topic clustering, temporal trend) when item/char budget overflows.
 - Added: `BuildRecentWorldEventIntelCompactDigest(...)` for compact `world.recent_world_events` variable output with explicit reference to `<environment>` for full details.
@@ -544,7 +601,7 @@
 - Version: bumped `About/About.xml` `modVersion` to `0.9.19`.
 
 0.9.18
-- Changed: airdrop trade-card turns no longer append the visible “ignored / no trade executed” system message when the AI replies without `request_item_airdrop`.
+- Changed: airdrop trade-card turns no longer append the visible "ignored / no trade executed" system message when the AI replies without `request_item_airdrop`.
 - Improved: the in-chat airdrop card was restyled into an immersive terminal receipt layout with stronger title hierarchy, dual item panels, and clearer price segmentation.
 - Fixed: `set_dnd` now uses its own expiry state for 3 in-game days, then returns to scheduled presence evaluation instead of piggybacking on the generic presence cache.
 - Improved: airdrop cooldown hints now render as remaining in-game time rather than interpreting `RemainingSeconds` as real-world hours and minutes.
@@ -586,7 +643,7 @@
 - Version: bumped `About/About.xml` `modVersion` to `0.9.13`.
 
 0.9.12
-- Refactored: the item-airdrop request card is now a bold “exact search + dual item cards + reference price” layout; submission requires an exact bound need item.
+- Refactored: the item-airdrop request card is now a bold "exact search + dual item cards + reference price" layout; submission requires an exact bound need item.
 - Added: reference price is always computed as `need unit price x requested count`, and the value is now rendered inside the chat bubble too.
 - Fixed: reopening the card no longer restores need item, need search text, or need quantity; only offer-side defaults are preserved.
 - Fixed: `selection_timeout/queue_timeout` in the airdrop second phase now auto-picks Top1 and enters the final confirmation dialog without prompting the player or sending a timeout-stage system message.
@@ -666,7 +723,7 @@
 
 0.9.3
 - Root fix: removed second-pass AI selection requests for item airdrop; candidates are now produced locally and routed directly to confirmation, eliminating deterministic no-first-byte timeout stalls.
-- Added: confirmation flow now auto-picks top-1 candidate by default and shows a low-visibility “This is not what I want” button to manually switch among top-5 candidates before execute.
+- Added: confirmation flow now auto-picks top-1 candidate by default and shows a low-visibility "This is not what I want" button to manually switch among top-5 candidates before execute.
 - Fixed: airdrop quantity parsing now accepts `quantity` (while keeping `count` compatibility) and merges with explicit quantity in `need`, fixing the `quantity=500` fallback-to-`5` regression.
 - Changed: pending candidate surface and follow-up mapping now consistently support top-5 candidates (index/Chinese index/defName/label).
 - Localization: added ZH/EN key `RimChat_ItemAirdropAlternativeLowVisibility` and updated pending selection prompt to `1/2/3/4/5`.
@@ -682,7 +739,7 @@
 - Version bump: updated `modVersion` in `About/About.xml` from `0.9.1` to `0.9.2`.
 
 0.9.1
-- Fixed: adjusted airdrop action execution policy to “accept the first successful airdrop in the same dialogue turn”; subsequent same-turn airdrop actions are rejected instead of causing all airdrops to fail.
+- Fixed: adjusted airdrop action execution policy to "accept the first successful airdrop in the same dialogue turn"; subsequent same-turn airdrop actions are rejected instead of causing all airdrops to fail.
 - Fixed: added pre-send local routing for pending airdrop candidate replies; when player input matches `1/2/3/defName/label`, `selected_def` is mapped and executed directly without issuing another second-pass AI selection request.
 - Fixed: airdrop quantity resolution now merges `parameters.count`; when both `need` explicit quantity and `parameters.count` exist, the larger value is used, then auto-clamped to `hardMax` with audit trace.
 - Added: second-pass async diagnostics (`dispatch/success/timeout/parse_failed/error`) including requestId, queueMs, processingMs, endToEndMs, and failureReason to distinguish queue timeout vs request timeout vs parse failure.
@@ -825,7 +882,7 @@
 - Rule: negotiation window bounds (0.6x~1.4x) are unchanged; no auto-clamp and no widening. Out-of-window offers remain fail-fast denied.
 - Prompt contract: default prompt, runtime migration rules, and compact action catalog now explicitly require `offer_silver` to stay within the current offer window.
 - Added: a plain-text send-area entry `+Send Info` in diplomacy chat; clicking it opens a lightweight menu with `Send Prisoner Info`.
-- Refactor: manual prisoner-info entry now reuses the existing prisoner selector popup and skips the extra “select prisoner first” system line.
+- Refactor: manual prisoner-info entry now reuses the existing prisoner selector popup and skips the extra "select prisoner first" system line.
 - UI behavior: prisoner info cards keep system semantics but render with player-side visuals (right-side bubble, player negotiator avatar, player bubble color).
 - UI layout: prisoner info cards now use a compact horizontal layout with cropped thumbnail fill, reducing blank space and bubble height.
 - Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/VersionLog.txt`.
@@ -1292,7 +1349,7 @@
 - Fixed: runtime prompt composition now injects a style-priority directive (default: natural concise) and deduplicates repeated authority lines around `response_contract/output_specification`.
 - Fixed: proactive diplomacy push and PawnRPG proactive push no longer hard-truncate at 260 chars; truncation is now configurable via `ProactiveMessageHardLimit` (default `0` = no hard cutoff).
 - Fixed: action failure logging now distinguishes expected denials vs unexpected failures; cooldown/blocked/validation denials default to Info to avoid false error perception when tasks succeed.
-- Fixed: when a turn has successful actions, expected-denial outcomes no longer append extra system failure messages, preventing “success + failure” double-state noise.
+- Fixed: when a turn has successful actions, expected-denial outcomes no longer append extra system failure messages, preventing "success + failure" double-state noise.
 - Fixed: dialogue bubble width estimation now aligns with wrapped-height layout logic; input footer status text width is now adaptive to reduce misalignment on narrow windows.
 - Added: one-shot UI assertion log for bubble track overflow diagnostics.
 - Added settings: `DialogueStyleMode`, `ProactiveMessageHardLimit`, `ExpectedActionDenyLogLevel`.
@@ -1321,7 +1378,7 @@
 - Fixed: diplomacy dialogue input is no longer hard-locked during `waiting for response`; players can re-initiate messages to avoid dead-end reply states.
 - Fixed: same-faction diplomacy now uses request supersession (new request replaces old one). The previous `pendingRequestId` is cancelled/cleared before queuing the new request.
 - Added: short per-session debounce for diplomacy re-send (2 seconds in game ticks) to prevent rapid repeat clicks against the same target.
-- Fixed: when queueing fails due debounce or active waiting state, the flow no longer injects local fallback replies, avoiding “fallback without a real AI request” drift.
+- Fixed: when queueing fails due debounce or active waiting state, the flow no longer injects local fallback replies, avoiding "fallback without a real AI request" drift.
 - Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
 - Version: bumped `About/About.xml` to `0.7.56`.
 
@@ -1337,7 +1394,7 @@
 - Changed: per request, Prompt Workbench header `Import/Export` is restored to preset import/export (`PromptPreset` protocol). Bundle import/export remains available on the prompt-config page flow.
 - Refactor: Prompt Workbench now uses `PromptUnifiedCatalog` as the single editable source; section/node edits no longer route through `SetPromptSectionCatalog(...)` back-write paths.
 - Refactor: `SetPromptSectionCatalog(...)` is downgraded to migration-only fail-fast entry; added one-way import API `ImportLegacySectionCatalogToUnifiedCatalog(...)`.
-- Changed: workbench flow is now “in-memory edits + explicit save-to-disk”; section/node/channel/preset switching no longer auto-writes prompt files.
+- Changed: workbench flow is now "in-memory edits + explicit save-to-disk"; section/node/channel/preset switching no longer auto-writes prompt files.
 - Changed: preset payload dropped `PromptSectionCatalog` as a live field; activation applies only `UnifiedPromptCatalog`, while legacy section payloads are import-only.
 - Changed: `Prompt/Custom/PawnDialoguePrompt_Custom.json` no longer persists `PromptSectionCatalog`; legacy section data is read once for migration only.
 - Added: `PromptPersistenceService.LoadConfigReadOnly()` and `RepairAndRewritePromptDomains()`; workbench preview/UI refresh now use read-only loading to avoid read-path writebacks.
@@ -1382,7 +1439,7 @@
 - Fixed: `GetAllCustomVariables()` parsing now supports dual payload shapes (`Item1..Item4` + named properties), preventing all-empty parse outcomes across different return contracts.
 - Fixed: Prompt Workbench `mod_variables` auto-fill now forces a RimTalk snapshot refresh before generation, closing load-order timing gaps.
 - Fixed: Variable browser refresh now syncs RimTalk custom variables before rebuilding display entries, keeping UI and section data sources consistent.
-- Added: bridge snapshot telemetry logs (`raw_count / parsed_count / duplicate_count / force`) for fast diagnosis of “enumeration succeeded but parsing failed”.
+- Added: bridge snapshot telemetry logs (`raw_count / parsed_count / duplicate_count / force`) for fast diagnosis of "enumeration succeeded but parsing failed".
 - Added: fail-fast bridge block when RimTalk returns non-empty raw variables but parsing yields zero entries (blocks bridge chain only).
 - Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
 - Version: bumped `About/About.xml` to `0.7.51`.
@@ -1554,7 +1611,7 @@
 - Version: bumped `About/About.xml` to `0.7.29`.
 
 0.7.28
-- Refactor: restored three node defaults to “multi-line node template + Scriban runtime body variables”; `ApiLimitsNodeTemplate/QuestGuidanceNodeTemplate/ResponseContractNodeTemplate` now bind to `{{ dialogue.api_limits_body }}`, `{{ dialogue.quest_guidance_body }}`, and `{{ dialogue.response_contract_body }}`.
+- Refactor: restored three node defaults to "multi-line node template + Scriban runtime body variables"; `ApiLimitsNodeTemplate/QuestGuidanceNodeTemplate/ResponseContractNodeTemplate` now bind to `{{ dialogue.api_limits_body }}`, `{{ dialogue.quest_guidance_body }}`, and `{{ dialogue.response_contract_body }}`.
 - Kept: runtime value sources unchanged; bodies are still generated live by `AppendApiLimits(...)`, `AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`, and `AppendAdvancedConfig(...) / AppendSimpleConfig(...)`.
 - Fixed: `RenderPromptNodeTemplate(...)` now enforces fail-fast for these node bodies; empty body throws `PromptRenderException(TemplateMissing)` instead of silently outputting an empty section.
 - Migration: added one-shot auto-migration in `EnsurePromptTemplateDefaults(...)`; when legacy hard-text templates are detected, they are rewritten to Scriban node templates with migration logs.
@@ -1562,7 +1619,7 @@
 - Version: bumped `About/About.xml` to `0.7.28`.
 
 0.7.27
-- Fixed: aligned `social_circle_post` social-news node contracts in `PromptUnifiedCatalog_Default.json` by replacing weak “JSON-only” text with full structured templates for `social_news_style/social_news_json_contract/social_news_fact`.
+- Fixed: aligned `social_circle_post` social-news node contracts in `PromptUnifiedCatalog_Default.json` by replacing weak "JSON-only" text with full structured templates for `social_news_style/social_news_json_contract/social_news_fact`.
 - Fixed: switched `PromptUnifiedDefaults.ApplyFallbackNodes(...)` social-news fallback nodes to `PromptTextConstants` social defaults, preventing drift between default assets and code fallback text.
 - Result: social-news generation contract now matches `SocialNewsJsonParser` required fields (`headline/lead/cause/process/outlook`), preventing `missing_required_fields` parse failures.
 - Validation: `build.ps1` completed with deploy (`0 errors`, `1 warning`).
@@ -1672,12 +1729,12 @@
 - Version: bumped `About/About.xml` to `0.7.17`.
 
 0.7.16
-- Refactor: `system.custom.*` has been upgraded from “default template + faction override” to “default template + conditional rule set”, with unified `Faction Rule / Pawn Rule` models while keeping legacy `FactionScopedPromptVariableOverrides` as load-only migration input.
+- Refactor: `system.custom.*` has been upgraded from "default template + faction override" to "default template + conditional rule set", with unified `Faction Rule / Pawn Rule` models while keeping legacy `FactionScopedPromptVariableOverrides` as load-only migration input.
 - Added: runtime rule resolution now follows a fixed chain of `pawn exact -> pawn conditional -> faction -> default -> empty`, with deterministic `Priority -> Specificity -> Order` tie-breaking.
 - Added: `UserDefinedPromptVariableRuleMatcher` and the split `UserDefinedPromptVariableService` partials now centralize rule matching, scoring, migration, validation, reference scanning, and runtime rendering.
 - Added: a safe `pawn.personality` export chain through `system.custom.pawn_personality_override` and `system.custom.pawn_personality_append`; only prompt-exported values change, not underlying game data.
 - Changed: the RimTalk persona-copy render path now also routes through the unified custom-variable service so effective personality behavior matches the main prompt pipeline.
-- Changed: the user-variable editor is now structured as “base info / default template / rule list”, with separate `Faction Rules` and `Pawn Rules` tabs; the shared variable browser now exposes both blank and official example creation entries.
+- Changed: the user-variable editor is now structured as "base info / default template / rule list", with separate `Faction Rules` and `Pawn Rules` tabs; the shared variable browser now exposes both blank and official example creation entries.
 - Validation: added whitelist validation for `RaceDefName / XenotypeDefName / TraitDefName / AgeStage / Gender / PlayerControlled`, while keeping Scriban, unknown-variable, and dependency-cycle validation.
 - Docs: synchronized `About/About.xml`, `Api.md`, `config.md`, `spec/Index.md`, `VersionLog.txt`, and `VersionLog_en.txt`.
 - Validation: `build.ps1` completed successfully with build and deploy (`1 warning`, `0 errors`).
@@ -1740,7 +1797,7 @@
 0.7.8
 - Changed: variable hover details now use the structure `Name / Data Type / Description / Typical Values (3)` instead of the old `scope + single example` layout.
 - Fixed: prompt variable tooltip metadata now includes dedicated description keys for `dialogue.summary/guidance/intent_hint/template_line/example_line/examples/action_names`, so the variable browser and workbench chip hover no longer fall back to generic English placeholder text.
-- Fixed: `ctx.channel` and `ctx.mode` now use per-variable typical values; variables with fewer than three representative values show only the real count, and empty samples now display a localized “no typical values” message instead of three fake `n/a` rows.
+- Fixed: `ctx.channel` and `ctx.mode` now use per-variable typical values; variables with fewer than three representative values show only the real count, and empty samples now display a localized "no typical values" message instead of three fake `n/a` rows.
 - Improved: `PromptVariableTooltipCatalog` now prefers per-variable descriptions and infers data types plus three representative typical values for variables that still lack dedicated metadata.
 - Unified: the RimTalk variable browser and Prompt Workbench chip hovers now share the same richer tooltip metadata.
 - Localization: added EN/CN tooltip labels for `Data Type` and `Typical Values`.
@@ -1807,7 +1864,7 @@
 - Added: `LegacyPromptMigrationReport` / `LegacyPromptMigrationEntry` plus overwrite-style report output at `Prompt/Reports/LegacyPromptMigrationReport.json`; settings, preset, bundle, and custom-store legacy imports now share the same report + Player.log summary path.
 - Changed: the Prompt tab is now the stable section-driven workspace with fixed `root channel -> prompt channel -> sectionId` navigation and preview from the current canonical aggregate; entry/compat/workbench editing paths are no longer part of the stable flow.
 - Changed: the RimTalk page is now limited to `Bridge / Variables / Summary & Persona`; the variable browser now uses one neutral shared model (`path / scope / sourceId / sourceLabel / availability / description`) across Prompt and RimTalk UIs.
-- Cleanup: removed the standalone `Dialog_PromptWorkbench` path. Old “Prompt Workbench” naming remains only as compatibility shell text keys, not as a separate entry-driven editor.
+- Cleanup: removed the standalone `Dialog_PromptWorkbench` path. Old "Prompt Workbench" naming remains only as compatibility shell text keys, not as a separate entry-driven editor.
 - Validation: `build.ps1` completed successfully and stayed on the baseline (`1 warning`, `0 errors`).
 - Version: bumped `About/About.xml` to `0.7.0`.
 
@@ -1908,7 +1965,7 @@
 - Validation: build succeeded on RimWorld 1.6 / .NET Framework 4.8 (`0 errors`), and docs were synchronized in `spec/Index.md`.
 
 0.6.18
-- Fixed: Prompt Workbench RimTalk entry editing now uses a stable editor buffer path, resolving the “red-box area clickable but edits do not persist / roll back” issue.
+- Fixed: Prompt Workbench RimTalk entry editing now uses a stable editor buffer path, resolving the "red-box area clickable but edits do not persist / roll back" issue.
 - Fixed: `Enable RimTalk compatibility layer` is now wired into live runtime prompt assembly; OFF falls back to standard hierarchical prompts, ON injects only enabled entries that match the current prompt channel.
 - Added: RimTalk prompt entries now include `PromptChannel` with a centralized channel catalog, covering diplomacy strategy / proactive diplomacy / proactive RPG / social-circle post / persona bootstrap / summary generation / RPG archive compression / image generation.
 - Migration: legacy entries are auto-normalized to valid channels, and missing default channel entries are auto-seeded (with per-seed default enabled state) while preserving old-save compatibility.
@@ -2357,7 +2414,7 @@
 - Validation: `build.ps1` build/deploy passed.
 
 0.3.157
-- Fixed: local-model `ConnectionError` handling now distinguishes timeout from hard disconnect; timeout-like failures map to `RimChat_ErrorTimeout` instead of always reporting “cannot connect to local service”.
+- Fixed: local-model `ConnectionError` handling now distinguishes timeout from hard disconnect; timeout-like failures map to `RimChat_ErrorTimeout` instead of always reporting "cannot connect to local service".
 - Added: bounded local connection retry path (2 attempts with short jittered backoff) for transient timeout/reset-style connection failures.
 - Changed: local request timeout increased from `60s` to `180s` (cloud remains `60s`) to reduce false disconnects under long context or busy-model conditions.
 - Validation: endpoint health checks confirmed `127.0.0.1:4315` with reachable `/v1/models` and `/v1/chat/completions`; `build.ps1` build/deploy passed (`1` warning, `0` errors).
@@ -2512,7 +2569,7 @@
 - Fixed: fixed goodwill cost for `request_aid` now resolves from the action `type` parameter (military/medical/resource) instead of always assuming military aid.
 
 0.3.132
-- Fixed: on startup/load of `system_prompt_config.json`, if `GlobalSystemPrompt` is still the placeholder text “请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。”, RimChat now logs an explicit error and rebuilds from `Prompt/Default/SystemPrompt_Default.json`.
+- Fixed: on startup/load of `system_prompt_config.json`, if `GlobalSystemPrompt` is still the placeholder text "请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。", RimChat now logs an explicit error and rebuilds from `Prompt/Default/SystemPrompt_Default.json`.
 - Fixed: custom system-prompt saves now refuse to write that placeholder text into `system_prompt_config.json`; if possible, the config is self-healed before save.
 
 0.3.131
@@ -2558,7 +2615,7 @@
 - Changed: persona normalization and fallback text were updated for the new template and now emit consistent `He/She/They` pronouns based on pawn gender.
 
 0.3.122
-- Fixed: added required default `description` and `label` fields to the new visible RPG memory defs (`RimChat_PleasantChatMemory`, `RimChat_DeepConversationMemory`, `RimChat_SlightedMemory`), removing the RimWorld config error “affects mood but doesn't have a description” so the memories load and appear correctly on the pawn card.
+- Fixed: added required default `description` and `label` fields to the new visible RPG memory defs (`RimChat_PleasantChatMemory`, `RimChat_DeepConversationMemory`, `RimChat_SlightedMemory`), removing the RimWorld config error "affects mood but doesn't have a description" so the memories load and appear correctly on the pawn card.
 - Fixed: RPG `TryGainMemory` no longer incorrectly requires `thoughtClass` to be explicitly populated; both explicit `Thought_Memory` defs and vanilla mood memories that rely on the default thought class now pass validation.
 - Fixed: the first RPG reply no longer appears blank when the model returns pure JSON such as `{ \"text\": \"...\", \"actions\": [...] }`; the parser now reads `text` / `response` fields from the JSON body.
 - Fixed: the visible RPG memory DefInjected localization keys now target `stages.0.label/description`, resolving missing-language-key text on the pawn card.
@@ -2571,7 +2628,7 @@
 - Fixed: `TryGainMemory` previously defaulted to social-opinion thoughts such as `Chitchat`, `DeepTalk`, and `Slighted`, which usually do not appear in the pawn mood memory card. Those legacy tokens now remap to visible RPG memory defs (plus `KindWordsMood` / `InsultedMood`), and the default RPG prompt examples were updated accordingly.
 
 0.3.120
-- Changed: diplomacy default prompts now use a single “in-character dialogue + one raw `{\"actions\":[...]}` JSON object” contract instead of the legacy single `action/parameters/response` template.
+- Changed: diplomacy default prompts now use a single "in-character dialogue + one raw `{\"actions\":[...]}` JSON object" contract instead of the legacy single `action/parameters/response` template.
 - Changed: `SystemPrompt_Default.json` now keeps diplomacy-only templates; RPG role-setting, format-constraint, action-reliability, and opening-objective defaults are sourced from `Prompt/Default/RpgPrompts_Default.json` to avoid diplomacy/RPG rule bleed.
 - Changed: diplomacy exit handling now uses a graded policy; low-information input gets a short reply first, while repeated low-information or clear harassment escalates to `exit_dialogue`, `go_offline`, or `set_dnd`.
 - Changed: diplomacy prompts now explicitly allow parser-facing structured JSON while keeping natural-language dialogue free of AI-identity and game-mechanics mentions, and unavailable features are declined with in-world reasons.
@@ -2731,7 +2788,7 @@
 - Changed: under proactive + personal-memory scenarios, an explicit carry-over cue is appended to bias the opening toward prior-turn continuity instead of template reset.
 
 0.3.92
-- Fixed: strengthened `NPC PERSONAL MEMORY` continuity rules with explicit “no relationship reset”, “latest player-intent anchor”, and hostility keyword flagging for cross-session tone carry-over.
+- Fixed: strengthened `NPC PERSONAL MEMORY` continuity rules with explicit "no relationship reset", "latest player-intent anchor", and hostility keyword flagging for cross-session tone carry-over.
 - Changed: RPG memory injection now includes concise latest player/NPC turn anchors to bias opening lines toward prior emotional context.
 
 0.3.91
@@ -2785,7 +2842,7 @@
 
 0.3.82
 - Strategy parser hardening: added compatibility aliases for non-standard suggestion payloads (`task`, `plan`, `reasoning`, `risk_assessment`, `macro_advice`, etc.) so malformed but meaningful outputs are less likely to be dropped.
-- Diagnostics: follow-up strategy logs now distinguish strict-schema success vs narrative fallback priming to avoid false-positive “success” interpretation.
+- Diagnostics: follow-up strategy logs now distinguish strict-schema success vs narrative fallback priming to avoid false-positive "success" interpretation.
 - Log review: no new runtime crash stack in latest `out.log`; remaining warnings are one translation-error summary and one historical typed-config fallback warning.
 
 0.3.81
@@ -2819,7 +2876,7 @@
 0.3.77
 - Fixed: Diplomacy main chat now injects strategy-context system prompt only when strategy uses are actually available (`remaining_uses > 0` path), reducing cross-role identity drift.
 - Fixed: Strategy context wording now explicitly marks negotiator data as player-side metadata (`not your identity`) and forbids self-identifying as negotiator/colony assistant.
-- Debug hardening: Reduced diplomacy response tendency to impersonate player colony pawns (e.g., “I am Lyle”) under mixed-context sessions.
+- Debug hardening: Reduced diplomacy response tendency to impersonate player colony pawns (e.g., "I am Lyle") under mixed-context sessions.
 
 0.3.76
 - Fixed: Strengthened typed JSON structural acceptance; when `ApiActions`/`DecisionRules` are empty or `ResponseFormat.JsonTemplate`/`ImportantRules` are blank, parser now falls back instead of accepting incomplete data.
@@ -3406,7 +3463,7 @@ Version Update Log
 0.6.4
 - Refactor: Prompt Workbench `Diplomacy` and `RPG` channels now use the same entry workflow as RimTalk (`list + entry editor` with Name/Role/Position/InChatDepth/Enabled/Content).
 - Runtime: diplomacy/RPG final system prompt is now assembled by concatenating only enabled entries in order, rendered through the RimTalk Scriban path.
-- Compatibility: added a “new entries -> legacy fields” backfill layer; save/export now auto-syncs legacy fields in `SystemPrompt_Custom.json` and `PawnDialoguePrompt_Custom.json` so old saves/prompt files remain readable.
+- Compatibility: added a "new entries -> legacy fields" backfill layer; save/export now auto-syncs legacy fields in `SystemPrompt_Custom.json` and `PawnDialoguePrompt_Custom.json` so old saves/prompt files remain readable.
 - Migration: when only legacy prompt fields exist (without meaningful entries), initial diplomacy/RPG entries are auto-seeded to avoid prompt loss after upgrade.
 
 0.6.6
@@ -3450,7 +3507,7 @@ Version Update Log
 - Added: request-layer violation-aware retry in `AIChatServiceAsync.ProcessRequestCoroutine(...)`; on immersion violation, append a violation reason tag and retry once only, then return a local in-character fallback line if the second response still violates.
 - Changed: hardened diplomacy/RPG response contract text and `dialogue.response_contract_body` fallback instruction with explicit immersion constraints (no parenthetical metadata, no mechanic-value leakage, no status-panel numeric phrasing).
 - Changed: tightened `ImmersionOutputGuard` mechanic leakage detection from broad keyword-contains matching to context-aware regex matching, reducing false positive replacements for normal in-character dialogue.
-- Changed: added a hard contract line to `dialogue.response_contract_body`: “Do not imitate meta-annotation style from history; history provides plot facts only, not output style,” to suppress replay of history pollution like “(no gameplay effect)”.
+- Changed: added a hard contract line to `dialogue.response_contract_body`: "Do not imitate meta-annotation style from history; history provides plot facts only, not output style," to suppress replay of history pollution like "(no gameplay effect)".
 - Added: localized fallback keys `RimChat_ImmersionFallback_Diplomacy` and `RimChat_ImmersionFallback_Rpg` for second-failure local fallback lines.
 - Version: bumped `About/About.xml` to `0.7.37`.
 

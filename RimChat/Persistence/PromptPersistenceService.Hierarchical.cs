@@ -262,14 +262,7 @@ namespace RimChat.Persistence
                 AddTextNodeIfNotEmpty(node, "faction_settlement_summary", BuildFactionSettlementSummaryForPrompt(faction));
             }
 
-            AddTextNodeIfNotEmpty(node, "faction_special_items", BuildFactionSpecialItemsPromptBlock(faction));
-
             return node.Children.Count > 0 ? node : null;
-        }
-
-        private string BuildFactionSpecialItemsPromptBlock(Faction faction)
-        {
-            return DiplomacySystem.FactionSpecialItemsManager.Instance?.BuildSpecialItemsPromptBlock(faction) ?? string.Empty;
         }
 
         private PromptHierarchyNode BuildRpgActorStateNode(

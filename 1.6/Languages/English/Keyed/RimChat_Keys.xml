@@ -70,6 +70,7 @@
     <RimChat_EnableDisableTooltip>Enable/Disable this configuration</RimChat_EnableDisableTooltip>
     <RimChat_ChooseModel>Choose Model...</RimChat_ChooseModel>
     <RimChat_Placeholder_ApiKey>Paste API Key...</RimChat_Placeholder_ApiKey>
+    <RimChat_Player2RedirectMessage>Player2 requires the desktop app to run locally.\n\n1. Download Player2 from player2.game\n2. Install and log in\n3. Start RimWorld — the local connection at localhost:4315 will work automatically.\n\nSwitched to Local Provider mode.</RimChat_Player2RedirectMessage>
     <RimChat_BaseUrlTooltip>Base URL for custom API</RimChat_BaseUrlTooltip>
     <RimChat_ApiProviderFieldTooltip>Function: select API provider for this row. Scope: routing of requests sent by the current API config row.</RimChat_ApiProviderFieldTooltip>
     <RimChat_ApiKeyFieldTooltip>Function: provide provider key/token. Scope: current API config row only.</RimChat_ApiKeyFieldTooltip>
@@ -932,7 +933,18 @@
     <RimChat_RPGDialoguePromptDesc>Defines context structure in RPG dialogue mode</RimChat_RPGDialoguePromptDesc>
     <RimChat_RPGPromptSaved>RPG Prompts Saved</RimChat_RPGPromptSaved>
     <RimChat_SaveRPGPrompt>Save RPG Prompts</RimChat_SaveRPGPrompt>
-    <RimChat_RPGDialogue_Dialogue>Dialogue</RimChat_RPGDialogue_Dialogue>
+    <RimChat_RPGDialogue_Dialogue>Converse</RimChat_RPGDialogue_Dialogue>
+    <RimChat_Converse>Converse</RimChat_Converse>
+    <RimChat_Converse_Disabled>Cannot converse: ({0})</RimChat_Converse_Disabled>
+    <RimChat_Converse_Disabled_NoRace>No race data</RimChat_Converse_Disabled_NoRace>
+    <RimChat_Converse_Disabled_IncompatibleRace>Incompatible race</RimChat_Converse_Disabled_IncompatibleRace>
+    <RimChat_Converse_Disabled_RpgOff>RPG dialogue disabled</RimChat_Converse_Disabled_RpgOff>
+    <RimChat_Converse_Disabled_Unreachable>Unreachable</RimChat_Converse_Disabled_Unreachable>
+    <RimChat_Converse_Disabled_Drafted>Drafted</RimChat_Converse_Disabled_Drafted>
+    <RimChat_Converse_Disabled_Downed>Target is downed</RimChat_Converse_Disabled_Downed>
+    <RimChat_Converse_Disabled_Asleep>Target is asleep</RimChat_Converse_Disabled_Asleep>
+    <RimChat_Converse_Disabled_DownedAsleep>Target is downed/asleep</RimChat_Converse_Disabled_DownedAsleep>
+    <RimChat_Converse_Disabled_Cooldown>Cooldown ({0}h)</RimChat_Converse_Disabled_Cooldown>
     <RimChat_Unreachable>Unreachable</RimChat_Unreachable>
     <RimChat_SystemPromptPlaceholder>Enter system prompt here to define AI's base behavior...</RimChat_SystemPromptPlaceholder>
     <RimChat_DialoguePromptPlaceholder>Enter dialogue prompt template here...</RimChat_DialoguePromptPlaceholder>

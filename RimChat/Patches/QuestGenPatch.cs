@@ -155,46 +155,51 @@ namespace RimChat.Patches
  ///</summary>
         public static bool Prefix_ForceGiverFaction(QuestNode __instance)
         {
-            var slate = QuestGen.slate;
-            if (slate.Exists("faction"))
+            try
             {
-                Faction f = slate.Get<Faction>("faction");
-                if (f != null)
+                var slate = QuestGen.slate;
+                if (slate.Exists("faction"))
                 {
-                    // 尝试直接修改节点的字段 (如果支持)
-                    // 检查所有可能的faction引用字段
-                    string[] fieldNames = { "giverFaction", "faction", "askerFaction" };
-                    
-                    foreach (var fieldName in fieldNames)
+                    Faction f = slate.Get<Faction>("faction");
+                    if (f != null)
                     {
-                        var field = AccessTools.Field(__instance.GetType(), fieldName);
-                        if (field != null)
+                        string[] fieldNames = { "giverFaction", "faction", "askerFaction" };
+
+                        foreach (var fieldName in fieldNames)
                         {
-                            object slateRef = field.GetValue(__instance);
-                            if (slateRef != null)
+                            try
                             {
-                                // 尝试settings SlateRef 内部的变量名
+                                var field = AccessTools.Field(__instance.GetType(), fieldName);
+                                if (field == null) continue;
+
+                                object slateRef = field.GetValue(__instance);
+                                if (slateRef == null) continue;
+
                                 var sliField = AccessTools.Field(slateRef.GetType(), "sli");
-                                if (sliField != null)
+                                if (sliField == null) continue;
+
+                                string currentSli = sliField.GetValue(slateRef) as string;
+                                if (string.IsNullOrEmpty(currentSli) || (!currentSli.Contains("faction") && !currentSli.Contains("giverFaction")))
                                 {
-                                    string currentSli = sliField.GetValue(slateRef) as string;
-                                    // 如果没有settings或settings为别的, 强制设为 $faction 或 $giverFaction
-                                    if (string.IsNullOrEmpty(currentSli) || (!currentSli.Contains("faction") && !currentSli.Contains("giverFaction")))
-                                    {
-                                        sliField.SetValue(slateRef, "$faction");
-                                        // Log.Message($"[RimChat] Patched {fieldName} in {__instance.GetType().Name} to use $faction");
-                                    }
+                                    sliField.SetValue(slateRef, "$faction");
                                 }
                             }
+                            catch (Exception ex)
+                            {
+                                Log.Warning($"[RimChat] QuestGenPatch: failed to patch field '{fieldName}' on {__instance.GetType().Name}: {ex.Message}");
+                            }
+                        }
+
+                        if (!slate.Exists("giverFaction"))
+                        {
+                            slate.Set("giverFaction", f);
                         }
                     }
-
-                    // 2. 核心逻辑: 确保 Slate 中presence giverFaction 变量, 因为原版节点会优先从这里读取
-                    if (!slate.Exists("giverFaction"))
-                    {
-                        slate.Set("giverFaction", f);
-                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] QuestGenPatch.Prefix_ForceGiverFaction failed: {ex.Message}");
             }
             return true;
         }
@@ -203,39 +208,53 @@ namespace RimChat.Patches
  ///</summary>
         public static bool Prefix_PreventOverwrite(QuestNode __instance)
         {
-            var slate = QuestGen.slate;
-            string[] protectedVars = { "asker", "faction", "askerFaction", "settlement", "giverFaction", "enemyFaction", "siteFaction" };
-            string[] storageFields = { "storeAs", "storeFactionAs", "storeFactionLeaderAs", "storeSettlementAs" };
-
-            foreach (var fieldName in storageFields)
+            try
             {
-                var field = AccessTools.Field(__instance.GetType(), fieldName);
-                if (field == null) continue;
+                var slate = QuestGen.slate;
+                string[] protectedVars = { "asker", "faction", "askerFaction", "settlement", "giverFaction", "enemyFaction", "siteFaction" };
+                string[] storageFields = { "storeAs", "storeFactionAs", "storeFactionLeaderAs", "storeSettlementAs" };
 
-                object fieldValue = field.GetValue(__instance);
-                if (fieldValue == null) continue;
-
-                string varName = null;
-                if (fieldValue is string s)
+                foreach (var fieldName in storageFields)
                 {
-                    varName = s;
-                }
-                else
-                {
-                    var getter = AccessTools.Method(fieldValue.GetType(), "GetValue", new[] { typeof(Slate) });
-                    if (getter != null)
+                    try
                     {
-                        varName = getter.Invoke(fieldValue, new object[] { slate }) as string;
+                        var field = AccessTools.Field(__instance.GetType(), fieldName);
+                        if (field == null) continue;
+
+                        object fieldValue = field.GetValue(__instance);
+                        if (fieldValue == null) continue;
+
+                        string varName = null;
+                        if (fieldValue is string s)
+                        {
+                            varName = s;
+                        }
+                        else
+                        {
+                            var getter = AccessTools.Method(fieldValue.GetType(), "GetValue", new[] { typeof(Slate) });
+                            if (getter != null)
+                            {
+                                varName = getter.Invoke(fieldValue, new object[] { slate }) as string;
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(varName) && protectedVars.Contains(varName))
+                        {
+                            if (slate.Exists(varName))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"[RimChat] QuestGenPatch.Prefix_PreventOverwrite: failed on field '{fieldName}' of {__instance.GetType().Name}: {ex.Message}");
                     }
                 }
-
-                if (!string.IsNullOrEmpty(varName) && protectedVars.Contains(varName))
-                {
-                    if (slate.Exists(varName))
-                    {
-                        return false;
-                    }
-                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] QuestGenPatch.Prefix_PreventOverwrite failed: {ex.Message}");
             }
             return true;
         }
@@ -293,44 +312,49 @@ namespace RimChat.Patches
  ///</summary>
         public static bool Prefix_HasRoyalTitleInCurrentFaction(QuestNode __instance)
         {
-            var slate = QuestGen.slate;
-            if (!slate.Exists("faction"))
+            try
             {
+                var slate = QuestGen.slate;
+                if (!slate.Exists("faction"))
+                {
+                    return true;
+                }
+
+                Faction faction = slate.Get<Faction>("faction");
+                if (faction == null)
+                {
+                    return true;
+                }
+
+                bool isEmpire = faction.def == FactionDefOf.Empire;
+                if (isEmpire)
+                {
+                    return true;
+                }
+
+                var nodeField = AccessTools.Field(__instance.GetType(), "node");
+                if (nodeField == null)
+                {
+                    return true;
+                }
+
+                QuestNode node = nodeField.GetValue(__instance) as QuestNode;
+                if (node == null)
+                {
+                    return true;
+                }
+
+                PatchGiveRewardsNodeForNonEmpireFaction(node, faction);
+
+                node.Run();
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] QuestGenPatch.Prefix_HasRoyalTitleInCurrentFaction failed: {ex.Message}");
                 return true;
             }
-
-            Faction faction = slate.Get<Faction>("faction");
-            if (faction == null)
-            {
-                return true;
-            }
-
-            bool isEmpire = faction.def == FactionDefOf.Empire;
-            if (isEmpire)
-            {
-                return true;
-            }
-
-            var pawnField = AccessTools.Field(__instance.GetType(), "pawn");
-            var nodeField = AccessTools.Field(__instance.GetType(), "node");
-            var elseNodeField = AccessTools.Field(__instance.GetType(), "elseNode");
-
-            if (nodeField == null)
-            {
-                return true;
-            }
-
-            QuestNode node = nodeField.GetValue(__instance) as QuestNode;
-            if (node == null)
-            {
-                return true;
-            }
-
-            PatchGiveRewardsNodeForNonEmpireFaction(node, faction);
-
-            node.Run();
-
-            return false;
         }
 
         /// <summary>/// 修改 QuestNode_GiveRewards 节点, 禁用 allowRoyalFavor 但保留 allowGoodwill
@@ -339,38 +363,45 @@ namespace RimChat.Patches
         {
             if (node == null) return;
 
-            var nodeType = node.GetType();
-            if (nodeType.Name != "QuestNode_GiveRewards") return;
-
-            var parmsField = AccessTools.Field(nodeType, "parms");
-            if (parmsField == null) return;
-
-            object parms = parmsField.GetValue(node);
-            if (parms == null) return;
-
-            var parmsType = parms.GetType();
-
-            var allowRoyalFavorField = AccessTools.Field(parmsType, "allowRoyalFavor");
-            if (allowRoyalFavorField != null)
+            try
             {
-                allowRoyalFavorField.SetValue(parms, false);
+                var nodeType = node.GetType();
+                if (nodeType.Name != "QuestNode_GiveRewards") return;
+
+                var parmsField = AccessTools.Field(nodeType, "parms");
+                if (parmsField == null) return;
+
+                object parms = parmsField.GetValue(node);
+                if (parms == null) return;
+
+                var parmsType = parms.GetType();
+
+                var allowRoyalFavorField = AccessTools.Field(parmsType, "allowRoyalFavor");
+                if (allowRoyalFavorField != null)
+                {
+                    allowRoyalFavorField.SetValue(parms, false);
+                }
+
+                var allowGoodwillField = AccessTools.Field(parmsType, "allowGoodwill");
+                if (allowGoodwillField != null)
+                {
+                    allowGoodwillField.SetValue(parms, true);
+                }
+
+                var thingRewardItemsOnlyField = AccessTools.Field(parmsType, "thingRewardItemsOnly");
+                if (thingRewardItemsOnlyField != null)
+                {
+                    thingRewardItemsOnlyField.SetValue(parms, false);
+                }
+
+                if (!QuestGen.slate.Exists("giverFaction"))
+                {
+                    QuestGen.slate.Set("giverFaction", faction);
+                }
             }
-
-            var allowGoodwillField = AccessTools.Field(parmsType, "allowGoodwill");
-            if (allowGoodwillField != null)
+            catch (Exception ex)
             {
-                allowGoodwillField.SetValue(parms, true);
-            }
-
-            var thingRewardItemsOnlyField = AccessTools.Field(parmsType, "thingRewardItemsOnly");
-            if (thingRewardItemsOnlyField != null)
-            {
-                thingRewardItemsOnlyField.SetValue(parms, false);
-            }
-
-            if (!QuestGen.slate.Exists("giverFaction"))
-            {
-                QuestGen.slate.Set("giverFaction", faction);
+                Log.Warning($"[RimChat] QuestGenPatch.PatchGiveRewardsNodeForNonEmpireFaction failed on {node.GetType().Name}: {ex.Message}");
             }
         }
 
@@ -380,25 +411,29 @@ namespace RimChat.Patches
  ///</summary>
         public static bool Prefix_Mission_BanditCamp(QuestNode __instance)
         {
-            var slate = QuestGen.slate;
-            // 检查whether已经通过我们注入了 asker 和 faction
-            if (slate.Exists("asker") && slate.Exists("faction"))
+            try
             {
-                // 使用reflection访问 factionsToDrawLeaderFrom 字段, 因为我们已经把类型传参改为 QuestNode
-                var field = AccessTools.Field(__instance.GetType(), "factionsToDrawLeaderFrom");
-                if (field != null)
+                var slate = QuestGen.slate;
+                if (slate.Exists("asker") && slate.Exists("faction"))
                 {
-                    var list = field.GetValue(__instance) as List<FactionDef>;
-                    if (list != null)
+                    var field = AccessTools.Field(__instance.GetType(), "factionsToDrawLeaderFrom");
+                    if (field != null)
                     {
-                        Faction f = slate.Get<Faction>("faction");
-                        if (f != null && !list.Contains(f.def))
+                        var list = field.GetValue(__instance) as List<FactionDef>;
+                        if (list != null)
                         {
-                            // Dynamic添加当前faction定义, 允许其通过过滤
-                            list.Add(f.def);
+                            Faction f = slate.Get<Faction>("faction");
+                            if (f != null && !list.Contains(f.def))
+                            {
+                                list.Add(f.def);
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] QuestGenPatch.Prefix_Mission_BanditCamp failed: {ex.Message}");
             }
             return true;
         }

@@ -758,9 +758,17 @@ namespace RimChat.DiplomacySystem
             var result = new List<Thing>();
             int stackLimit = Math.Max(1, def.stackLimit);
             int remaining = Math.Max(0, totalCount);
+
+            // Resolve stuff for MadeFromStuff defs (e.g., apparel, weapons)
+            ThingDef stuff = null;
+            if (def.MadeFromStuff)
+            {
+                stuff = def.defaultStuff;
+            }
+
             while (remaining > 0 && result.Count < maxStacks)
             {
-                Thing thing = ThingMaker.MakeThing(def);
+                Thing thing = ThingMaker.MakeThing(def, stuff);
                 int stack = Math.Min(stackLimit, remaining);
                 thing.stackCount = stack;
                 result.Add(thing);

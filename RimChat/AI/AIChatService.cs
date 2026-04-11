@@ -18,6 +18,7 @@ namespace RimChat.AI
         public string content;
     }
 
+    [Obsolete("Use AIChatServiceAsync instead. This synchronous service uses Thread.Sleep which blocks the main thread and can freeze the game on network errors.")]
     public class AIChatService
     {
         private static AIChatService _instance;
@@ -246,6 +247,16 @@ namespace RimChat.AI
                     request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
                 }
 
+                // Add provider-specific extra headers (e.g. player2-game-key for Player2)
+                var extraHeaders = provider.GetExtraHeaders();
+                if (extraHeaders != null)
+                {
+                    foreach (var header in extraHeaders)
+                    {
+                        request.SetRequestHeader(header.Key, header.Value);
+                    }
+                }
+
                 request.timeout = 60;
 
                 UnityWebRequestAsyncOperation operation;
@@ -395,14 +406,15 @@ namespace RimChat.AI
                 if (localConfig != null && localConfig.IsValid())
                 {
                     string localBaseUrl = localConfig.GetNormalizedBaseUrl();
-                    DebugLogger.LogInternal("AIChatService", $"Using local model at {localBaseUrl} with model {localConfig.ModelName}");
+                    bool isPlayer2Local = localConfig.IsPlayer2Local();
+                    DebugLogger.LogInternal("AIChatService", $"Using local model at {localBaseUrl} with model {(isPlayer2Local ? "Default(Player2)" : localConfig.ModelName)}");
                     return new ApiConfig
                     {
                         IsEnabled = true,
-                        Provider = AIProvider.Custom,
-                        BaseUrl = ApiConfig.EnsureChatCompletionsEndpoint(localBaseUrl),
+                        Provider = isPlayer2Local ? AIProvider.Player2 : AIProvider.Custom,
+                        BaseUrl = isPlayer2Local ? localBaseUrl.TrimEnd('/') + "/v1/chat/completions" : ApiConfig.EnsureChatCompletionsEndpoint(localBaseUrl),
                         ApiKey = "",
-                        SelectedModel = localConfig.ModelName
+                        SelectedModel = isPlayer2Local ? "Default" : localConfig.ModelName
                     };
                 }
                 else
@@ -442,12 +454,7 @@ namespace RimChat.AI
 
         private string EscapeJson(string str)
         {
-            if (string.IsNullOrEmpty(str)) return "";
-            return str.Replace("\\", "\\\\")
-                      .Replace("\"", "\\\"")
-                      .Replace("\n", "\\n")
-                      .Replace("\r", "\\r")
-                      .Replace("\t", "\\t");
+            return RimChat.Util.JsonEscapeHelper.EscapeString(str);
         }
 
         public bool IsConfigured()

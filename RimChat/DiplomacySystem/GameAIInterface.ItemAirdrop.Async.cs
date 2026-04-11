@@ -23,6 +23,8 @@ namespace RimChat.DiplomacySystem
             Action<APIResult> onCompleted,
             Action<string, int> onRequestQueued)
         {
+            Log.Message($"[RimChat] BeginPrepareItemAirdropTradeAsync: faction={faction?.Name}, defName={faction?.def?.defName}, need={parameters?["need"] ?? "null"}");
+            
             APIResult contextResult = TryBuildAirdropAsyncContext(
                 faction,
                 parameters,
@@ -30,6 +32,7 @@ namespace RimChat.DiplomacySystem
                 out ItemAirdropAsyncPrepareContext context);
             if (!contextResult.Success)
             {
+                Log.Warning($"[RimChat] BeginPrepareItemAirdropTradeAsync context build failed: {contextResult.Message}");
                 return contextResult;
             }
 
@@ -348,6 +351,8 @@ namespace RimChat.DiplomacySystem
             Action<APIResult> onCompleted,
             Action<string, int> onRequestQueued)
         {
+            Log.Message($"[RimChat] ContinueAirdropSelectionStageAsync: need={context.Need}, def={context.ForcedSelectedDef}, candidates={context.CandidatePack?.Candidates?.Count ?? 0}");
+            
             RequestedCountExtraction requestedCount = ExtractRequestedCount(context.Intent?.NeedText);
             requestedCount = MergeRequestedCountWithParameters(requestedCount, context.Parameters);
             if (requestedCount.HasMultipleCounts)
@@ -415,8 +420,6 @@ namespace RimChat.DiplomacySystem
                     forcedHardMax);
             }
 
-            _ = onCompleted;
-            _ = onRequestQueued;
             RecordStageAudit(
                 "selection_manual_dispatch",
                 context.Faction,
@@ -434,6 +437,7 @@ namespace RimChat.DiplomacySystem
                 RecordStageAudit("selection", null, null, BuildPendingSelectionAuditDetails(pendingData));
             }
 
+            onCompleted?.Invoke(pendingResult);
             return pendingResult;
         }
 

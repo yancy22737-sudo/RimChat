@@ -118,6 +118,7 @@ namespace RimChat.UI
         // 逐字output效果
         private Dictionary<DialogueMessageData, TypewriterState> typewriterStates = new Dictionary<DialogueMessageData, TypewriterState>();
         private float lastTypewriterUpdate = 0f;
+        private bool _typewriterDirty = true;
         private bool fallbackRetryRequestedThisFrame;
 
         private const float PendingAirdropDialogDelaySeconds = 1f;
@@ -384,6 +385,9 @@ namespace RimChat.UI
                 session.MarkAsRead();
                 EnsureSessionMessageSpeakers(session);
             }
+            _typewriterDirty = true;
+            InvalidateLayoutCache();
+            PreFillTypewriterStatesForExistingMessages();
 
             lastObservedDiplomacyMemoryRevision = LeaderMemoryManager.Instance?.GetFactionMemoryRevision(targetFaction) ?? 0;
             pendingDialogueMemoryRefresh = true;
@@ -400,6 +404,10 @@ namespace RimChat.UI
             userIsScrolling = false;
             typewriterStates.Clear();
             lastTypewriterUpdate = 0f;
+            _typewriterDirty = true;
+            _layoutCache.Clear();
+            _layoutCacheDirty = true;
+            PreFillTypewriterStatesForExistingMessages();
             ClearInlineImageTextureCache();
             ResetBlockedReasonAutoScroll(true);
             sessionFallbackFactionSpeaker = null;
@@ -746,8 +754,17 @@ namespace RimChat.UI
             GoodwillChangeAnimator.CheckGoodwillChanges(allFactions);
         }
 
+        private List<Faction> _cachedFactionList;
+        private int _cachedFactionListTick = -1;
+
         private List<Faction> GetAvailableFactions(bool refreshPresence = false)
         {
+            int currentTick = Find.TickManager.TicksGame;
+            if (_cachedFactionList != null && _cachedFactionListTick == currentTick && !refreshPresence)
+            {
+                return _cachedFactionList;
+            }
+
             var list = new List<Faction>();
             var manager = GameComponent_DiplomacyManager.Instance;
             var manuallyVisibleHiddenFactions = manager?.GetManuallyVisibleHiddenFactions() ?? new List<Faction>();
@@ -770,10 +787,12 @@ namespace RimChat.UI
             {
                 GameComponent_DiplomacyManager.Instance?.RefreshPresenceForFactions(list);
             }
-            return list
+            _cachedFactionList = list
                 .OrderBy(GetPresenceSortWeight)
                 .ThenByDescending(f => f.PlayerGoodwill)
                 .ToList();
+            _cachedFactionListTick = currentTick;
+            return _cachedFactionList;
         }
 
         private static bool IsFactionEligibleForDialogueList(Faction factionEntry)
@@ -1270,66 +1289,62 @@ namespace RimChat.UI
                 return;
             }
 
-            float contentHeight = 10f;
             float viewportWidth = rect.width - 16f;
-            
-            DialogueMessageData prevMsg = null;
-            foreach (var msg in session.messages)
-            {
-                if (prevMsg != null && ShouldShowTimeGap(prevMsg.GetGameTick(), msg.GetGameTick()))
-                {
-                    contentHeight += 35f;
-                }
-                float maxSystemWidth = GetMaxSystemMessageWidth(viewportWidth);
-                float maxBubbleWidth = GetMaxBubbleWidth(viewportWidth);
-                float estBubbleWidth = msg.IsSystemMessage() ? CalculateBubbleWidth(msg, maxSystemWidth) : CalculateBubbleWidth(msg, maxBubbleWidth);
-                float msgHeight = CalculateMessageHeight(msg, estBubbleWidth);
-                contentHeight += msgHeight + 12f;
-                prevMsg = msg;
-            }
-            contentHeight += 10f;
+            EnsureLayoutCache(viewportWidth);
+            float contentHeight = _cachedTotalContentHeight;
 
             float viewHeight = Mathf.Max(contentHeight, rect.height);
-            Rect viewRect = new Rect(0f, 0f, rect.width - 16f, viewHeight);
-            
+            Rect viewRect = new Rect(0f, 0f, viewportWidth, viewHeight);
+
             bool hasNewMessage = session.messages.Count > lastMessageCount;
             float maxScroll = Mathf.Max(0f, contentHeight - rect.height);
-            
+
             Vector2 beforeScroll = messageScrollPosition;
-            
+
             if (hasNewMessage && !userIsScrolling)
             {
                 messageScrollPosition.y = maxScroll;
             }
             lastMessageCount = session.messages.Count;
-            
+
             messageScrollPosition = GUI.BeginScrollView(rect, messageScrollPosition, viewRect);
 
-            if (Event.current.type == EventType.ScrollWheel || 
+            if (Event.current.type == EventType.ScrollWheel ||
                 (Event.current.type == EventType.MouseDrag && Mouse.IsOver(rect)))
             {
                 userIsScrolling = true;
             }
 
             float curY = 10f;
-            prevMsg = null;
-            
-            foreach (var msg in session.messages)
+            DialogueMessageData prevMsg = null;
+
+            for (int i = 0; i < session.messages.Count; i++)
             {
+                var msg = session.messages[i];
                 if (prevMsg != null && ShouldShowTimeGap(prevMsg.GetGameTick(), msg.GetGameTick()))
                 {
                     DrawTimeGapLine(prevMsg.GetGameTick(), msg.GetGameTick(), viewRect.width, curY);
                     curY += 35f;
                 }
-                
-                float maxSystemWidth = GetMaxSystemMessageWidth(viewRect.width);
-                float maxBubbleWidth = GetMaxBubbleWidth(viewRect.width);
-                float bubbleWidth = msg.IsSystemMessage() ? CalculateBubbleWidth(msg, maxSystemWidth) : CalculateBubbleWidth(msg, maxBubbleWidth);
-                float msgHeight = CalculateMessageHeight(msg, bubbleWidth);
-                
+
+                float bubbleWidth;
+                float msgHeight;
+                if (TryGetCachedLayout(msg, out MessageLayoutEntry entry))
+                {
+                    bubbleWidth = entry.BubbleWidth;
+                    msgHeight = entry.MessageHeight;
+                }
+                else
+                {
+                    float maxSystemWidth = GetMaxSystemMessageWidth(viewRect.width);
+                    float maxBubbleWidth = GetMaxBubbleWidth(viewRect.width);
+                    bubbleWidth = msg.IsSystemMessage() ? CalculateBubbleWidth(msg, maxSystemWidth) : CalculateBubbleWidth(msg, maxBubbleWidth);
+                    msgHeight = CalculateMessageHeight(msg, bubbleWidth);
+                    InvalidateLayoutCache();
+                }
+
                 if (msg.IsSystemMessage())
                 {
-                    // Systemmessage: 左对齐, 使用完整宽度
                     Rect msgRect = new Rect(20f, curY, bubbleWidth, msgHeight);
                     DrawRoundedMessageBubble(msg, msgRect);
                 }
@@ -2403,6 +2418,8 @@ namespace RimChat.UI
                 return;
 
             inputText = "";
+            InvalidateLayoutCache();
+            _typewriterDirty = true;
             SendPreparedMessage(playerMessage, true);
         }
 
@@ -3200,10 +3217,17 @@ namespace RimChat.UI
 
             float deltaTime = Time.realtimeSinceStartup - lastTypewriterUpdate;
             lastTypewriterUpdate = Time.realtimeSinceStartup;
-            RemoveStaleTypewriterStates(session);
 
-            foreach (var msg in session.messages)
+            if (_typewriterDirty)
             {
+                RemoveStaleTypewriterStates(session);
+                _typewriterDirty = false;
+            }
+
+            _typewriterActiveMsg = null;
+            for (int i = session.messages.Count - 1; i >= 0; i--)
+            {
+                var msg = session.messages[i];
                 if (msg.isPlayer || msg.IsSystemMessage()) continue;
 
                 if (!typewriterStates.TryGetValue(msg, out TypewriterState state))
@@ -3217,18 +3241,18 @@ namespace RimChat.UI
                         DisplayText = string.Empty
                     };
                     typewriterStates[msg] = state;
+                    InvalidateLayoutCache();
                 }
 
                 SyncTypewriterStateText(msg, state);
 
                 if (!state.IsComplete)
                 {
+                    _typewriterActiveMsg = msg;
                     state.AccumulatedTime += deltaTime;
-                    // 每秒 30 个字符
                     int targetCount = Mathf.FloorToInt(state.AccumulatedTime * 30f);
                     if (targetCount > state.VisibleCharCount)
                     {
-                        // 播放打字音效
                         if (targetCount % 3 == 0)
                         {
                             SoundDefOf.Tick_Tiny.PlayOneShotOnCamera();
@@ -3240,8 +3264,10 @@ namespace RimChat.UI
                         if (state.VisibleCharCount >= state.FullText.Length)
                         {
                             state.IsComplete = true;
+                            _typewriterActiveMsg = null;
                         }
                     }
+                    break;
                 }
             }
 

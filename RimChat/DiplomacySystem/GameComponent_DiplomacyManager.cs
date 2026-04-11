@@ -674,24 +674,39 @@ namespace RimChat.DiplomacySystem
         {
             base.ExposeData();
 
-            // 游戏save时save所有leadermemory到file
+            // Save all leader memory to file before saving game
             if (Scribe.mode == LoadSaveMode.Saving)
             {
                 LeaderMemoryManager.Instance.OnBeforeGameSave();
             }
 
-            Scribe_Collections.Look(ref aiControlledFactions, "aiControlledFactions", LookMode.Reference);
-            
-            Scribe_Collections.Look(ref dialogueSessions, "dialogueSessions", LookMode.Deep);
-            Scribe_Collections.Look(ref presenceStates, "presenceStates", LookMode.Deep);
-            Scribe_Collections.Look(ref delayedEvents, "delayedEvents", LookMode.Deep);
-            Scribe_Collections.Look(ref manuallyVisibleHiddenFactions, "manuallyVisibleHiddenFactions", LookMode.Reference);
-            Scribe_Collections.Look(ref albumEntries, "albumEntries", LookMode.Deep);
-            Scribe_Deep.Look(ref socialCircleState, "socialCircleState");
-            Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
+            try
+            {
+                Scribe_Collections.Look(ref aiControlledFactions, "aiControlledFactions", LookMode.Reference);
+                
+                Scribe_Collections.Look(ref dialogueSessions, "dialogueSessions", LookMode.Deep);
+                Scribe_Collections.Look(ref presenceStates, "presenceStates", LookMode.Deep);
+                Scribe_Collections.Look(ref delayedEvents, "delayedEvents", LookMode.Deep);
+                Scribe_Collections.Look(ref manuallyVisibleHiddenFactions, "manuallyVisibleHiddenFactions", LookMode.Reference);
+                Scribe_Collections.Look(ref albumEntries, "albumEntries", LookMode.Deep);
+                Scribe_Deep.Look(ref socialCircleState, "socialCircleState");
+                Scribe_Values.Look(ref lastDailyResetTick, "lastDailyResetTick", 0);
 
-            // Save/load GameAIInterface 数据
-            GameAIInterface.Instance?.ExposeData();
+                // Save/load GameAIInterface data
+                GameAIInterface.Instance?.ExposeData();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error loading DiplomacyManager data from save: {ex.Message}\n{ex.StackTrace}");
+                // Ensure collections are non-null to prevent NullReferenceException later
+                aiControlledFactions ??= new HashSet<Faction>();
+                dialogueSessions ??= new List<FactionDialogueSession>();
+                presenceStates ??= new List<FactionPresenceState>();
+                delayedEvents ??= new List<DelayedDiplomacyEvent>();
+                manuallyVisibleHiddenFactions ??= new HashSet<Faction>();
+                albumEntries ??= new List<AlbumImageEntry>();
+                socialCircleState ??= new SocialCircleState();
+            }
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {

@@ -18,42 +18,87 @@ namespace RimChat.Comp
 
             Pawn targetPawn = this.parent as Pawn;
 
+            // Hide: self-to-self
             if (targetPawn == null || targetPawn == selPawn)
                 yield break;
 
             RimChatTrackedEntityRegistry.TrackPawn(selPawn);
             RimChatTrackedEntityRegistry.TrackPawn(targetPawn);
 
-            if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(selPawn, targetPawn, out _))
+            // Hide: trade caravan should use vanilla trade
+            if (PawnDialogueRoutingPolicy.IsTradeCaravanPawn(targetPawn))
                 yield break;
 
-            if (!selPawn.CanReach(targetPawn, PathEndMode.InteractionCell, Danger.Deadly))
+            // Hide: target dead/destroyed or not on same map
+            if (targetPawn.RaceProps == null || targetPawn.Dead || targetPawn.Destroyed)
+                yield break;
+
+            if (!selPawn.Spawned || !targetPawn.Spawned || selPawn.Map != targetPawn.Map)
+                yield break;
+
+            // --- Below this point, always show the button (enabled or disabled) ---
+
+            // Check race eligibility — show disabled if incompatible
+            string raceReason = PawnDialogueRoutingPolicy.GetIneligibleRaceReason(targetPawn);
+            if (raceReason != null)
             {
-                yield return new FloatMenuOption("CannotReach".Translate() + ": " + "RimChat_Unreachable".Translate(), null);
+                yield return DisabledOption(raceReason);
                 yield break;
             }
 
+            // Check RPG dialogue enabled — show disabled if off
             if (RimChatMod.Settings == null || !RimChatMod.Settings.EnableRPGDialogue)
+            {
+                yield return DisabledOption("RimChat_Converse_Disabled_RpgOff");
+                yield break;
+            }
+
+            // Check reachability — show disabled if unreachable
+            if (!selPawn.CanReach(targetPawn, PathEndMode.InteractionCell, Danger.Deadly))
+            {
+                yield return DisabledOption("RimChat_Converse_Disabled_Unreachable");
+                yield break;
+            }
+
+            // Hide: either pawn in combat (matches vanilla style — hide instead of disable)
+            if (PawnCombatStateUtility.IsEitherPawnInCombat(selPawn, targetPawn))
                 yield break;
 
-            if (!CanShowRpgDialogueOption(selPawn, targetPawn))
+            // Disable: either pawn drafted (show disabled button with reason)
+            if (PawnCombatStateUtility.IsEitherPawnDrafted(selPawn, targetPawn))
+            {
+                yield return DisabledOption("RimChat_Converse_Disabled_Drafted");
                 yield break;
+            }
 
-            string label = "RimChat_RPGDialogue_Dialogue".Translate();
+            // Check asleep/downed — show disabled with fine-grained reason
+            if (!RestUtility.Awake(targetPawn) || targetPawn.Downed)
+            {
+                if (targetPawn.Downed && !RestUtility.Awake(targetPawn))
+                    yield return DisabledOption("RimChat_Converse_Disabled_DownedAsleep");
+                else if (targetPawn.Downed)
+                    yield return DisabledOption("RimChat_Converse_Disabled_Downed");
+                else
+                    yield return DisabledOption("RimChat_Converse_Disabled_Asleep");
+                yield break;
+            }
+
+            // Check cooldown — show disabled with remaining time
+            var rpgManager = Current.Game?.GetComponent<RimChat.DiplomacySystem.GameComponent_RPGManager>();
+            if (rpgManager != null && rpgManager.IsRpgDialogueOnCooldown(targetPawn, out int remainingTicks))
+            {
+                float remainingHours = System.Math.Max(0f, remainingTicks / 2500f);
+                string cooldownLabel = "RimChat_Converse_Disabled_Cooldown".Translate(remainingHours.ToString("F1"));
+                yield return new FloatMenuOption(cooldownLabel, null);
+                yield break;
+            }
+
+            // All checks passed — show enabled button
+            string label = "RimChat_Converse".Translate();
             yield return new FloatMenuOption(label, () =>
             {
                 RimChatTrackedEntityRegistry.TrackPawn(selPawn);
                 RimChatTrackedEntityRegistry.TrackPawn(targetPawn);
-                var rpgManager = Current.Game?.GetComponent<RimChat.DiplomacySystem.GameComponent_RPGManager>();
-                if (rpgManager != null && rpgManager.IsRpgDialogueOnCooldown(targetPawn, out int remainingTicks))
-                {
-                    float remainingHours = System.Math.Max(0f, remainingTicks / 2500f);
-                    Messages.Message(
-                        "RimChat_RPGDialogue_CooldownRejectedWithHours".Translate(remainingHours.ToString("F1")),
-                        MessageTypeDefOf.RejectInput,
-                        false);
-                    return;
-                }
 
                 JobDef dialogueJobDef = DefDatabase<JobDef>.GetNamedSilentFail("RimChat_RPGDialogue");
                 if (dialogueJobDef == null)
@@ -77,28 +122,13 @@ namespace RimChat.Comp
             }, MenuOptionPriority.Low);
         }
 
-        private bool CanShowRpgDialogueOption(Pawn initiator, Pawn target)
+        /// <summary>
+        /// Create a disabled (greyed-out) float menu option with a reason.
+        /// </summary>
+        private static FloatMenuOption DisabledOption(string reasonKey)
         {
-            if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(initiator, target, out _))
-                return false;
-
-            if (initiator == null || target == null)
-                return false;
-
-            if (target.RaceProps == null || target.Dead || target.Destroyed)
-                return false;
-
-            if (!initiator.Spawned || !target.Spawned || initiator.Map != target.Map)
-                return false;
-
-            if (PawnCombatStateUtility.IsEitherPawnInCombatOrDrafted(initiator, target))
-                return false;
-
-            if (!RestUtility.Awake(target))
-                return false;
-
-            var rpgManager = Current.Game?.GetComponent<RimChat.DiplomacySystem.GameComponent_RPGManager>();
-            return rpgManager == null || !rpgManager.IsRpgDialogueOnCooldown(target, out _);
+            string label = "RimChat_Converse_Disabled".Translate(reasonKey.Translate());
+            return new FloatMenuOption(label, null);
         }
     }
 

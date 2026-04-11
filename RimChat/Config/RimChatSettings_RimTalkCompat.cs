@@ -590,21 +590,40 @@ You may reference RimTalk variables/plugins directly in this section.";
             string currentText = (current ?? string.Empty).Trim();
             string anyText = (any ?? string.Empty).Trim();
             string expectedText = (expected ?? string.Empty).Trim();
+
             if (currentText.Length == 0)
             {
+                // No content — only fill if we have a specific expected value
                 return expectedText.Length > 0;
             }
 
+            // For sections without a specific default (expected is empty),
+            // inheriting from the "any" channel is the correct and intended behavior.
+            // Do NOT flag this as needing repair to avoid infinite fix-save-reload loops.
+            if (expectedText.Length == 0)
+            {
+                return false;
+            }
+
+            // Current already matches expected — no repair needed
+            if (string.Equals(currentText, expectedText, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            // Current equals "any" channel but expected differs — override needed
             if (string.Equals(currentText, anyText, StringComparison.Ordinal))
             {
                 return true;
             }
 
+            // output_specification: special validation for invalid legacy content
             if (string.Equals(normalizedSectionId, "output_specification", StringComparison.Ordinal))
             {
                 return IsRpgArchiveCompressionOutputSpecificationInvalid(currentText);
             }
 
+            // system_rules: special validation for legacy placeholder patterns
             if (string.Equals(normalizedSectionId, "system_rules", StringComparison.Ordinal))
             {
                 return currentText.IndexOf("只保留世界内", StringComparison.OrdinalIgnoreCase) >= 0 ||

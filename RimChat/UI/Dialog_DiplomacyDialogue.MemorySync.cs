@@ -90,8 +90,10 @@ namespace RimChat.UI
             }
 
             EnsureSessionMessageSpeakers(session);
+            _typewriterDirty = true;
             RemoveStaleTypewriterStates(session);
             SyncTypewriterStatesWithSession(session);
+            InvalidateLayoutCache();
         }
 
         private void SyncTypewriterStatesWithSession(FactionDialogueSession currentSession)
@@ -133,17 +135,37 @@ namespace RimChat.UI
                 return;
             }
 
-            HashSet<DialogueMessageData> liveMessages = currentSession?.messages == null
-                ? new HashSet<DialogueMessageData>()
-                : new HashSet<DialogueMessageData>(currentSession.messages.Where(message => message != null));
-
-            List<DialogueMessageData> staleMessages = typewriterStates.Keys
-                .Where(message => message == null || !liveMessages.Contains(message))
-                .ToList();
-
-            for (int i = 0; i < staleMessages.Count; i++)
+            if (currentSession?.messages == null)
             {
-                typewriterStates.Remove(staleMessages[i]);
+                typewriterStates.Clear();
+                return;
+            }
+
+            List<DialogueMessageData> keys = new List<DialogueMessageData>(typewriterStates.Keys);
+
+            for (int i = keys.Count - 1; i >= 0; i--)
+            {
+                DialogueMessageData key = keys[i];
+                if (key == null)
+                {
+                    typewriterStates.Remove(key);
+                    continue;
+                }
+
+                bool found = false;
+                for (int j = 0; j < currentSession.messages.Count; j++)
+                {
+                    if (ReferenceEquals(currentSession.messages[j], key))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    typewriterStates.Remove(key);
+                }
             }
         }
 

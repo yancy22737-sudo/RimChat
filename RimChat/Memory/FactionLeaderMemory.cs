@@ -337,85 +337,70 @@ namespace RimChat.Memory
 
     /// <summary>/// 对单个faction的memoryentry
  ///</summary>
-    public class FactionMemoryEntry
+    public class FactionMemoryEntry : IExposable
     {
-        /// <summary>/// faction唯一 ID
- ///</summary>
-        public string FactionId { get; set; }
-        
-        /// <summary>/// factionname
- ///</summary>
-        public string FactionName { get; set; }
-        
-        /// <summary>/// 首次接触时间 tick
- ///</summary>
-        public int FirstContactTick { get; set; }
-        
-        /// <summary>/// 最后被提及的时间 tick
- ///</summary>
-        public int LastMentionedTick { get; set; }
-        
-        /// <summary>/// 被提及的次数
- ///</summary>
-        public int MentionCount { get; set; }
-        
-        /// <summary>/// 正面交互次数
- ///</summary>
-        public int PositiveInteractions { get; set; }
-        
-        /// <summary>/// 负面交互次数
- ///</summary>
-        public int NegativeInteractions { get; set; }
-        
-        /// <summary>/// relation历史快照
- ///</summary>
-        public List<RelationSnapshot> RelationHistory { get; set; } = new List<RelationSnapshot>();
+        public string FactionId = "";
+        public string FactionName = "";
+        public int FirstContactTick = 0;
+        public int LastMentionedTick = 0;
+        public int MentionCount = 0;
+        public int PositiveInteractions = 0;
+        public int NegativeInteractions = 0;
+        public List<RelationSnapshot> RelationHistory = new List<RelationSnapshot>();
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref FactionId, "factionId", "");
+            Scribe_Values.Look(ref FactionName, "factionName", "");
+            Scribe_Values.Look(ref FirstContactTick, "firstContactTick", 0);
+            Scribe_Values.Look(ref LastMentionedTick, "lastMentionedTick", 0);
+            Scribe_Values.Look(ref MentionCount, "mentionCount", 0);
+            Scribe_Values.Look(ref PositiveInteractions, "positiveInteractions", 0);
+            Scribe_Values.Look(ref NegativeInteractions, "negativeInteractions", 0);
+            Scribe_Collections.Look(ref RelationHistory, "relationHistory", LookMode.Deep);
+            if (RelationHistory == null)
+            {
+                RelationHistory = new List<RelationSnapshot>();
+            }
+        }
     }
 
     /// <summary>/// relation快照
  ///</summary>
-    public class RelationSnapshot
+    public class RelationSnapshot : IExposable
     {
-        /// <summary>/// record时间的 tick
- ///</summary>
-        public int Tick { get; set; }
-        
-        /// <summary>/// relation类型
- ///</summary>
-        public string Relation { get; set; }
-        
-        /// <summary>/// goodwillvalues
- ///</summary>
-        public int Goodwill { get; set; }
+        public int Tick = 0;
+        public string Relation = "";
+        public int Goodwill = 0;
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref Tick, "tick", 0);
+            Scribe_Values.Look(ref Relation, "relation", "");
+            Scribe_Values.Look(ref Goodwill, "goodwill", 0);
+        }
     }
 
     /// <summary>/// 重要eventmemory
  ///</summary>
-    public class SignificantEventMemory
+    public class SignificantEventMemory : IExposable
     {
-        /// <summary>/// event类型
- ///</summary>
-        public SignificantEventType EventType { get; set; }
-        
-        /// <summary>/// 涉及faction的 ID
- ///</summary>
-        public string InvolvedFactionId { get; set; }
-        
-        /// <summary>/// 涉及faction的name
- ///</summary>
-        public string InvolvedFactionName { get; set; }
-        
-        /// <summary>/// event描述
- ///</summary>
-        public string Description { get; set; }
-        
-        /// <summary>/// event发生的 tick
- ///</summary>
-        public int OccurredTick { get; set; }
-        
-        /// <summary>/// 时间戳
- ///</summary>
-        public long Timestamp { get; set; }
+        public SignificantEventType EventType = SignificantEventType.GoodwillChanged;
+        public string InvolvedFactionId = "";
+        public string InvolvedFactionName = "";
+        public string Description = "";
+        public int OccurredTick = 0;
+        public long Timestamp = 0L;
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref EventType, "eventType", SignificantEventType.GoodwillChanged);
+            Scribe_Values.Look(ref InvolvedFactionId, "involvedFactionId", "");
+            Scribe_Values.Look(ref InvolvedFactionName, "involvedFactionName", "");
+            Scribe_Values.Look(ref Description, "description", "");
+            Scribe_Values.Look(ref OccurredTick, "occurredTick", 0);
+            Scribe_Values.Look(ref Timestamp, "timestamp", 0L);
+        }
     }
 
     /// <summary>/// 重要event类型
@@ -435,18 +420,17 @@ namespace RimChat.Memory
 
     /// <summary>/// dialoguerecord
  ///</summary>
-    public class DialogueRecord
+    public class DialogueRecord : IExposable
     {
-        /// <summary>/// whether是玩家 (true=玩家, false=AI)
- ///</summary>
-        public bool IsPlayer { get; set; }
-        
-        /// <summary>/// dialoguecontents
- ///</summary>
-        public string Message { get; set; }
-        
-        /// <summary>/// dialogue发生的游戏 tick
- ///</summary>
-        public int GameTick { get; set; }
+        public bool IsPlayer = false;
+        public string Message = "";
+        public int GameTick = 0;
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref IsPlayer, "isPlayer", false);
+            Scribe_Values.Look(ref Message, "message", "");
+            Scribe_Values.Look(ref GameTick, "gameTick", 0);
+        }
     }
 }

@@ -9,24 +9,30 @@ namespace RimChat.Core
     /// </summary>
     internal static class PawnCombatStateUtility
     {
-        internal static bool IsEitherPawnInCombatOrDrafted(Pawn first, Pawn second)
+        internal static bool IsEitherPawnInCombat(Pawn first, Pawn second)
         {
-            return IsPawnInCombatOrDrafted(first) || IsPawnInCombatOrDrafted(second);
+            return IsPawnInCombat(first) || IsPawnInCombat(second);
         }
 
-        internal static bool IsPawnInCombatOrDrafted(Pawn pawn)
+        internal static bool IsEitherPawnDrafted(Pawn first, Pawn second)
+        {
+            return IsPawnDrafted(first) || IsPawnDrafted(second);
+        }
+
+        internal static bool IsPawnInCombat(Pawn pawn)
         {
             if (pawn == null || pawn.Dead || pawn.Destroyed)
-            {
                 return false;
-            }
-
-            if (pawn.Drafted)
-            {
-                return true;
-            }
 
             return IsCombatJob(pawn.CurJob?.def);
+        }
+
+        internal static bool IsPawnDrafted(Pawn pawn)
+        {
+            if (pawn == null || pawn.Dead || pawn.Destroyed)
+                return false;
+
+            return pawn.Drafted;
         }
 
         private static bool IsCombatJob(JobDef jobDef)

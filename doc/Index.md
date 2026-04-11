@@ -1,4 +1,14 @@
-# RimChat 模块索引（v0.9.87）
+# RimChat 模块索引（v0.9.997）
+
+## VehiclePawn 能力白名单防护（v0.9.997）
+- 目标：根治 VehiclePawn（Vehicles Framework）等非标准 Pawn 子类继承 Pawn 但缺少 story/skills 子系统导致 RimTalk AddHediff native crash 的问题，并自动防御未来类似 Pawn 类型。
+- 关键模块：
+  - `RimChat/Dialogue/PawnDialogueRoutingPolicy.cs`
+  - `RimChat/Comp/PawnDialogueCompDefInjector.cs`
+- 链路变化：
+  - `IsRpgDialogueEligibleRace` 从纯 RaceProps 分类改为能力白名单混合策略：Humanlike/Mechanoid 直接放行，ToolUser 需验证 `pawn.story != null && pawn.skills != null`。
+  - `IsEligiblePawnDef` 增加 `race.Humanlike || race.IsMechanoid || race.ToolUser` 白名单过滤，不再对所有 `typeof(Pawn).IsAssignableFrom(thingClass)` 的 Def 无条件注入 CompPawnDialogue。
+  - 所有经过 `IsRpgDialogueEligibleRace` 的路径（PersonaBootstrap、CompPawnDialogue、DialogueContextResolver、RPG推送、RPG设置等）均受此入口防护覆盖。
 
 ## 空投定价回退到市场价系统（v0.9.88）
 - 目标：移除空投机制对贸易买入价上下文的依赖，统一回退市场价系统并保持既有运费/限额规则。

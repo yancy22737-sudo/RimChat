@@ -30,6 +30,15 @@ namespace RimChat.Config
         {
             DateTime startedAtUtc = DateTime.UtcNow;
             var steps = new List<ApiUsabilityStepResult>();
+
+            // Player2 has no models endpoint and selects model server-side;
+            // run a simplified diagnostic that only validates chat connectivity.
+            if (config?.Provider == AIProvider.Player2)
+            {
+                yield return RunPlayer2CloudDiagnosticCoroutine(config, onProgress, onCompleted, startedAtUtc, steps);
+                yield break;
+            }
+
             const int totalSteps = 6;
             string modelName = config?.GetEffectiveModelName() ?? string.Empty;
 
@@ -189,6 +198,188 @@ namespace RimChat.Config
                 cloudSuccessDetail));
         }
 
+        /// <summary>
+        /// Simplified diagnostic for Player2: no models endpoint, model selected server-side.
+        /// Steps: ConfigValidation → ChatProbe → ResponseContractValidation
+        /// </summary>
+        private static IEnumerator RunPlayer2CloudDiagnosticCoroutine(
+            ApiConfig config,
+            Action<ApiUsabilityProgress> onProgress,
+            Action<ApiUsabilityDiagnosticResult> onCompleted,
+            DateTime startedAtUtc,
+            List<ApiUsabilityStepResult> steps)
+        {
+            const int totalSteps = 3;
+            string modelName = "Default";
+
+            // Step 1: Config validation
+            NotifyProgress(onProgress, ApiUsabilityStep.ConfigValidation, 1, totalSteps);
+            if (config == null || !config.IsEnabled)
+            {
+                onCompleted?.Invoke(BuildFailure(
+                    ApiUsabilityStep.ConfigValidation,
+                    ApiUsabilityErrorCode.UNKNOWN,
+                    "Player2 config is null or disabled.",
+                    0, string.Empty, startedAtUtc, steps, modelName, true, null, string.Empty));
+                yield break;
+            }
+            if (string.IsNullOrWhiteSpace(config.ApiKey))
+            {
+                onCompleted?.Invoke(BuildFailure(
+                    ApiUsabilityStep.ConfigValidation,
+                    ApiUsabilityErrorCode.AUTH_INVALID,
+                    "RimChat_EnterApiKey".Translate(),
+                    0, string.Empty, startedAtUtc, steps, modelName, true, null, string.Empty));
+                yield break;
+            }
+            steps.Add(BuildStepSuccess(ApiUsabilityStep.ConfigValidation, string.Empty, startedAtUtc));
+
+            // Step 2: Chat probe
+            NotifyProgress(onProgress, ApiUsabilityStep.ChatProbe, 2, totalSteps);
+            string chatEndpoint = config.GetEffectiveEndpoint();
+            string chatPayload = BuildPlayer2ChatPayload();
+            ApiUsabilityProbeResponse chatProbe = default;
+            yield return SendProbeCoroutine(
+                BuildProbeRequest(chatEndpoint, "POST", chatPayload, config.Provider, config.ApiKey ?? string.Empty, CloudTimeoutSeconds),
+                probe => chatProbe = probe);
+
+            if (!chatProbe.IsHttpSuccess)
+            {
+                onCompleted?.Invoke(BuildFailureFromProbe(
+                    ApiUsabilityStep.ChatProbe, chatProbe, chatEndpoint,
+                    startedAtUtc, steps, modelName, true, chatPayload));
+                yield break;
+            }
+            steps.Add(BuildStepSuccess(ApiUsabilityStep.ChatProbe, chatEndpoint, startedAtUtc));
+
+            // Step 3: Response contract validation
+            NotifyProgress(onProgress, ApiUsabilityStep.ResponseContractValidation, 3, totalSteps);
+            ContractValidationOutcome contract = ValidateOpenAiChatContract(chatProbe.ResponseBody);
+            ApiUsabilityProbeResponse finalProbe = chatProbe;
+            bool retried = false;
+            if (contract.ShouldRetry)
+            {
+                retried = true;
+                ApiUsabilityProbeResponse retryProbe = default;
+                yield return SendProbeCoroutine(
+                    BuildProbeRequest(chatEndpoint, "POST", chatPayload, config.Provider, config.ApiKey ?? string.Empty, CloudTimeoutSeconds),
+                    probe => retryProbe = probe);
+
+                if (!retryProbe.IsHttpSuccess)
+                {
+                    onCompleted?.Invoke(BuildFailureFromProbe(
+                        ApiUsabilityStep.ResponseContractValidation, retryProbe, chatEndpoint,
+                        startedAtUtc, steps, modelName, true, chatPayload));
+                    yield break;
+                }
+                finalProbe = retryProbe;
+                contract = ValidateOpenAiChatContract(retryProbe.ResponseBody);
+            }
+
+            if (!contract.IsAccepted)
+            {
+                onCompleted?.Invoke(BuildFailure(
+                    ApiUsabilityStep.ResponseContractValidation,
+                    ApiUsabilityErrorCode.RESPONSE_SCHEMA_INVALID,
+                    contract.Detail,
+                    finalProbe.HttpCode, chatEndpoint, startedAtUtc, steps, modelName, true, chatPayload, finalProbe.ResponseBody));
+                yield break;
+            }
+
+            steps.Add(BuildStepSuccess(ApiUsabilityStep.ResponseContractValidation, chatEndpoint, startedAtUtc));
+            string successDetail = BuildContractValidationSuccessDetail(contract, retried);
+            onCompleted?.Invoke(BuildSuccess(
+                ApiUsabilityStep.ResponseContractValidation,
+                finalProbe.HttpCode, chatEndpoint, startedAtUtc, steps, modelName, true, chatPayload, finalProbe.ResponseBody, successDetail));
+        }
+
+        /// <summary>
+        /// Simplified diagnostic for Player2 local app: no model listing, no Ollama probe.
+        /// Steps: ConfigValidation → ChatProbe → ResponseContractValidation
+        /// </summary>
+        private static IEnumerator RunPlayer2LocalDiagnosticCoroutine(
+            LocalModelConfig config,
+            Action<ApiUsabilityProgress> onProgress,
+            Action<ApiUsabilityDiagnosticResult> onCompleted,
+            DateTime startedAtUtc,
+            List<ApiUsabilityStepResult> steps)
+        {
+            const int totalSteps = 3;
+            string modelName = "Default";
+            string normalizedBaseUrl = ApiConfig.NormalizeUrl(config.GetNormalizedBaseUrl());
+
+            // Step 1: Config validation
+            NotifyProgress(onProgress, ApiUsabilityStep.ConfigValidation, 1, totalSteps);
+            if (string.IsNullOrWhiteSpace(normalizedBaseUrl))
+            {
+                onCompleted?.Invoke(BuildFailure(
+                    ApiUsabilityStep.ConfigValidation,
+                    ApiUsabilityErrorCode.UNKNOWN,
+                    "Player2 local config requires a base URL.",
+                    0, string.Empty, startedAtUtc, steps, modelName, false, null, string.Empty));
+                yield break;
+            }
+            steps.Add(BuildStepSuccess(ApiUsabilityStep.ConfigValidation, normalizedBaseUrl, startedAtUtc));
+
+            // Step 2: Chat probe
+            NotifyProgress(onProgress, ApiUsabilityStep.ChatProbe, 2, totalSteps);
+            string chatEndpoint = normalizedBaseUrl.TrimEnd('/') + "/v1/chat/completions";
+            string chatPayload = BuildPlayer2ChatPayload();
+            ApiUsabilityProbeResponse chatProbe = default;
+            yield return SendProbeCoroutine(
+                BuildProbeRequest(chatEndpoint, "POST", chatPayload, AIProvider.Player2, string.Empty, CloudTimeoutSeconds),
+                probe => chatProbe = probe);
+
+            if (!chatProbe.IsHttpSuccess)
+            {
+                onCompleted?.Invoke(BuildFailureFromProbe(
+                    ApiUsabilityStep.ChatProbe, chatProbe, chatEndpoint,
+                    startedAtUtc, steps, modelName, false, chatPayload));
+                yield break;
+            }
+            steps.Add(BuildStepSuccess(ApiUsabilityStep.ChatProbe, chatEndpoint, startedAtUtc));
+
+            // Step 3: Response contract validation
+            NotifyProgress(onProgress, ApiUsabilityStep.ResponseContractValidation, 3, totalSteps);
+            ContractValidationOutcome contract = ValidateOpenAiChatContract(chatProbe.ResponseBody);
+            ApiUsabilityProbeResponse finalProbe = chatProbe;
+            bool retried = false;
+            if (contract.ShouldRetry)
+            {
+                retried = true;
+                ApiUsabilityProbeResponse retryProbe = default;
+                yield return SendProbeCoroutine(
+                    BuildProbeRequest(chatEndpoint, "POST", chatPayload, AIProvider.Player2, string.Empty, CloudTimeoutSeconds),
+                    probe => retryProbe = probe);
+
+                if (!retryProbe.IsHttpSuccess)
+                {
+                    onCompleted?.Invoke(BuildFailureFromProbe(
+                        ApiUsabilityStep.ResponseContractValidation, retryProbe, chatEndpoint,
+                        startedAtUtc, steps, modelName, false, chatPayload));
+                    yield break;
+                }
+                finalProbe = retryProbe;
+                contract = ValidateOpenAiChatContract(retryProbe.ResponseBody);
+            }
+
+            if (!contract.IsAccepted)
+            {
+                onCompleted?.Invoke(BuildFailure(
+                    ApiUsabilityStep.ResponseContractValidation,
+                    ApiUsabilityErrorCode.RESPONSE_SCHEMA_INVALID,
+                    contract.Detail,
+                    finalProbe.HttpCode, chatEndpoint, startedAtUtc, steps, modelName, false, chatPayload, finalProbe.ResponseBody));
+                yield break;
+            }
+
+            steps.Add(BuildStepSuccess(ApiUsabilityStep.ResponseContractValidation, chatEndpoint, startedAtUtc));
+            string successDetail = BuildContractValidationSuccessDetail(contract, retried);
+            onCompleted?.Invoke(BuildSuccess(
+                ApiUsabilityStep.ResponseContractValidation,
+                finalProbe.HttpCode, chatEndpoint, startedAtUtc, steps, modelName, false, chatPayload, finalProbe.ResponseBody, successDetail));
+        }
+
         internal static IEnumerator RunLocalDiagnosticCoroutine(
             LocalModelConfig config,
             Action<ApiUsabilityProgress> onProgress,
@@ -196,6 +387,14 @@ namespace RimChat.Config
         {
             DateTime startedAtUtc = DateTime.UtcNow;
             var steps = new List<ApiUsabilityStepResult>();
+
+            // Player2 local: simplified diagnostic (no model listing, no Ollama probe)
+            if (config != null && config.IsPlayer2Local())
+            {
+                yield return RunPlayer2LocalDiagnosticCoroutine(config, onProgress, onCompleted, startedAtUtc, steps);
+                yield break;
+            }
+
             const int totalSteps = 4;
             string modelName = config?.ModelName ?? string.Empty;
             string normalizedBaseUrl = ApiConfig.NormalizeUrl(config?.GetNormalizedBaseUrl() ?? string.Empty);
@@ -408,7 +607,10 @@ namespace RimChat.Config
             List<ApiUsabilityStepResult> steps)
         {
             string baseUrl = config?.GetNormalizedBaseUrl() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(config?.ModelName))
+            // Player2 local does not require a model name
+            bool missingRequired = string.IsNullOrWhiteSpace(baseUrl) ||
+                (!config.IsPlayer2Local() && string.IsNullOrWhiteSpace(config?.ModelName));
+            if (missingRequired)
             {
                 return BuildFailure(
                     ApiUsabilityStep.ConfigValidation,
@@ -599,6 +801,25 @@ namespace RimChat.Config
 
         private static void ApplyProbeAuthHeader(UnityWebRequest request, AIProvider provider, string apiKey, string requestUrl)
         {
+            // Player2 requires both Bearer token and game-key header
+            if (provider == AIProvider.Player2)
+            {
+                string trimmedKey = apiKey?.Trim();
+                if (!string.IsNullOrWhiteSpace(trimmedKey))
+                {
+                    request.SetRequestHeader("Authorization", $"Bearer {trimmedKey}");
+                }
+                var extraHeaders = provider.GetExtraHeaders();
+                if (extraHeaders != null)
+                {
+                    foreach (var header in extraHeaders)
+                    {
+                        request.SetRequestHeader(header.Key, header.Value);
+                    }
+                }
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(apiKey))
             {
                 return;
@@ -688,6 +909,18 @@ namespace RimChat.Config
             string escapedModel = EscapeJsonString(modelName);
             return "{"
                 + $"\"model\":\"{escapedModel}\","
+                + "\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}],"
+                + "\"max_tokens\":8,"
+                + "\"temperature\":0"
+                + "}";
+        }
+
+        /// <summary>
+        /// Player2 does not accept a model field; model is selected server-side.
+        /// </summary>
+        private static string BuildPlayer2ChatPayload()
+        {
+            return "{"
                 + "\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}],"
                 + "\"max_tokens\":8,"
                 + "\"temperature\":0"

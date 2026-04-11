@@ -20,9 +20,23 @@ namespace RimChat.PawnRpgPush
             AccessTools.Field(typeof(Letter), "label");
         private static readonly System.Reflection.FieldInfo ChoiceTitleField =
             AccessTools.Field(typeof(ChoiceLetter), "title");
+        private static readonly System.Reflection.FieldInfo LetterLoadIDField =
+            AccessTools.Field(typeof(Letter), "loadID");
+
+        private static int nextUniqueLoadID = 800001;
 
         private int npcLoadId = -1;
         private int playerLoadId = -1;
+
+        /// <summary>
+        /// Assign the next unique loadID and return it.
+        /// Called by LoadedObjectDirectoryPatch_FixLegacyLetterLoadID before
+        /// RegisterLoaded to prevent "Letter_0" duplicate key crashes on legacy saves.
+        /// </summary>
+        public static int AssignNextUniqueLoadID()
+        {
+            return nextUniqueLoadID++;
+        }
 
         public void Setup(Pawn npcPawn, Pawn playerPawn, TaggedString labelText, TaggedString bodyText, LetterDef letterDef)
         {
@@ -62,6 +76,10 @@ namespace RimChat.PawnRpgPush
             base.ExposeData();
             Scribe_Values.Look(ref npcLoadId, "npcLoadId", -1);
             Scribe_Values.Look(ref playerLoadId, "playerLoadId", -1);
+            // Legacy loadID=0 fix is now handled by
+            // LoadedObjectDirectoryPatch_FixLegacyLetterLoadID which runs
+            // before RegisterLoaded, preventing the "Letter_0" duplicate key
+            // crash at the source instead of trying to fix it after the fact.
         }
 
         private static Pawn ResolvePawn(int thingId, Pawn fallback)
@@ -95,6 +113,11 @@ namespace RimChat.PawnRpgPush
             }
 
             if (!PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(playerPawn, npcPawn, out _))
+            {
+                return;
+            }
+
+            if (playerPawn.Downed || npcPawn.Downed || !RestUtility.Awake(playerPawn) || !RestUtility.Awake(npcPawn))
             {
                 return;
             }

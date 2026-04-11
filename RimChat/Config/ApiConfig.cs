@@ -65,9 +65,16 @@ namespace RimChat.Config
 
         public string GetEffectiveEndpoint()
         {
+            // Custom provider always resolves from BaseUrl
             if (Provider == AIProvider.Custom && TryResolveCustomRuntimeEndpoints(out CustomUrlRuntimeResolution resolved))
             {
                 return resolved.ChatEndpoint;
+            }
+
+            // Player2 with a BaseUrl override (e.g. local app at localhost:4315)
+            if (Provider == AIProvider.Player2 && !string.IsNullOrWhiteSpace(BaseUrl))
+            {
+                return NormalizeUrl(BaseUrl);
             }
 
             return NormalizeUrl(Provider.GetEndpointUrl());

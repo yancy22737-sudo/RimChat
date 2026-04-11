@@ -575,7 +575,7 @@ namespace RimChat.UI
             Text.Font = GameFont.Tiny;
             GUI.color = TextSecondary;
             Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(x, y - 1f, rect.width - 20f, 20f), label.ToUpper().Translate());
+            Widgets.Label(new Rect(x, y - 1f, rect.width - 20f, 20f), label.Translate().RawText.ToUpper());
 
             // 数values
             y += 18f;

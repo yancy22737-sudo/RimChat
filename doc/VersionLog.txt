@@ -1,3 +1,60 @@
+﻿0.9.999
+- 优化：浮菜单对话按钮原版风格优化——战斗中直接隐藏（参考原版交互逻辑），征召中仍显示禁用按钮。
+- 优化：不可对话原因细粒度原版风格提示——"无法对话：（目标处于倒地状态）"、"无法对话：（目标处于睡眠状态）"、"无法对话：（目标处于倒地/睡眠状态）"。
+- 优化：拆分战斗和征召状态判断逻辑（PawnCombatStateUtility.IsEitherPawnInCombat 和 IsEitherPawnDrafted）。
+- 版本：About/About.xml modVersion 提升到 0.9.999。
+
+0.9.998
+- 修复：动物（Animal 种族）无法对话——v0.9.997 的白名单遗漏 race.Animal，导致动物 ThingDef 不注入 CompPawnDialogue，右键无对话按钮。修复：IsEligiblePawnDef 和 IsRpgDialogueEligibleRace 均加入 race.Animal 支持。
+- 改进：不可对话时显示灰色禁用按钮并提示原因（不兼容种族/RPG对话关闭/无法到达/战斗中/睡眠倒地/冷却中），不再直接隐藏。目标死亡/销毁、不在同一地图、商队和自己对自己仍隐藏。
+- 改进：英文对话按钮文本从 "Dialogue" 改为 "Converse"。
+- 新增：9 个多语言键（Converse 系列禁用状态提示）。
+- 版本：About/About.xml modVersion 提升到 0.9.998。
+
+0.9.997
+- 根修：VehiclePawn（Vehicles Framework 载具）继承 Pawn 导致 RimTalk PersonaService.GetPersonality 内 AddHediff 触发 native crash——VehiclePawn 继承 Pawn 但缺少 story/skills/health 完整子系统，被错误识别为 RPG 对话目标后，RimTalk 的 Hediff_Persona.GetOrAddNew 对其执行 AddHediff 时引发 Unity 引擎层崩溃（C# try-catch 无法捕获）。修复：采用能力白名单混合策略，在入口层彻底排除不具备 RPG 对话能力的 Pawn 子类——① PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace 改为 Humanlike/Mechanoid 直接放行，ToolUser 需验证 pawn.story!=null && pawn.skills!=null ② PawnDialogueCompDefInjector.IsEligiblePawnDef 增加 race.Humanlike/race.IsMechanoid/race.ToolUser 白名单过滤。该方案自动防御任何未来继承 Pawn 但缺少 story/skills 的非标准 Pawn 类型（如无人机、载具等），无需按类型名逐个黑名单。
+- 版本：About/About.xml modVersion 提升到 0.9.997。
+
+0.9.996
+- 根修：旧存档加载 "Letter_0" duplicate key 崩溃——旧存档中 ChoiceLetter 子类 loadID=0，导致 LoadedObjectDirectory.RegisterLoaded 重复注册键 "Letter_0" 崩溃。修复：创建 Harmony Prefix 补丁 LoadedObjectDirectoryPatch_FixLegacyLetterLoadID，在 RegisterLoaded 前检查两个 ChoiceLetter 子类的 loadID，若≤0 则通过新静态方法 AssignNextUniqueLoadID() 分配唯一 ID；移除 ChoiceLetter 内部 ExposeData 修复逻辑，防止滞后修复。
+- 修复：RPG归档压缩频道 output_specification 自矛盾修复死循环——增加 expectedText.Length == 0 检查，当预期值为空时（正确从父频道 any 继承），不标记为需要修复，避免无限 fix-save-reload 循环。
+- 构建：清理 Build.ps1 脚本，移除 net48 子目录构建残留，统一 DLL 输出路径。
+- 工具：.gitignore 添加 Windows 保留设备名 "nul" 忽略，防止正常文件操作受阻。
+- 版本：About/About.xml modVersion 提升到 0.9.996。
+
+0.9.995
+- 根修：与睡觉/倒地 pawn 对话导致游戏 native crash——RestUtility.Awake(target) 只检查 pawn 当前 Job 是否为睡眠 Job，不检查 target.Downed。倒地但未睡眠的 pawn 绕过检查，对话窗口打开后 PawnCacheRenderer.RenderPawn 对倒地姿态 pawn 渲染导致 native crash。修复：5 层防护——①CompPawnDialogue.CanShowRpgDialogueOption 加 target.Downed 拦截右键菜单 ②JobDriver_RPGPawnDialogue FailOn 加 target.Downed 即时中断 Job ③JobDriver_RPGPawnDialogue openDialogue 加 target.Downed 打开前拦截 ④DialogueContextResolver.IsPawnValid 加 !pawn.Downed 全局验证层 ⑤ChoiceLetter_PawnRpgInitiatedDialogue.TryOpenDialogue 加 Downed+Awake 检查拦截 NPC 推送路径。
+- 修复：空投交易带材料制作物品时报错 "MakeThing error: Apparel_Broadwrap is madeFromStuff but stuff=null"——BuildStacks 方法对 MadeFromStuff=true 的 ThingDef 传入 stuff=null，导致 ThingMaker.MakeThing 报错。修复：当 def.MadeFromStuff 时使用 def.defaultStuff 作为默认材料。
+- 版本：About/About.xml modVersion 提升到 0.9.995。
+
+0.9.994
+- 根修：归档压缩频道 output_specification 自矛盾修复循环导致游戏崩溃——增加 currentText == expectedText 短路判断，已为 canonical 值时跳过修复。
+- 版本：About/About.xml modVersion 提升到 0.9.994。
+
+0.9.993
+- 根修：旧存档加载 loadIDs 未消费错误根本性修复——改用 LegacyScribeHelper.RemoveLegacyReferenceNode 直接移除遗留引用节点。
+- 新增：LegacyScribeHelper 工具类。
+- 版本：About/About.xml modVersion 提升到 0.9.993。
+
+0.9.992
+- 根修：旧存档加载 Faction/Pawn 引用节点未被消耗错误——Saving 阶段不再写入旧引用节点。
+- 修复：DialogueMessageData.speakerPawn 和 PawnRpgPushState.pawn 旧存档加载报错。
+- 修复：社交圈新闻解析误杀问题。
+- 版本：About/About.xml modVersion 提升到 0.9.992。
+
+0.9.991
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.991`。
+
+0.9.99
+
+0.9.98
+- 修复：旧存档加载闪退（根本性修复）——将所有 `Scribe_References.Look` 存储 Faction/Pawn 直接引用的类改为"ID存储+PostLoadInit延迟解析"模式，涉及 `FactionPresenceState`、`FactionDialogueSession`、`GameAIInterface.ItemAirdrop`、`DelayedDiplomacyEvent`、`PublicSocialPost`、`SocialCircleState`/`ScheduledSocialEventEntry`、`SocialActionIntent`、`NpcDialogueModels`/`FactionNpcPushState`、`QuestPart_AICallback`、`PawnRpgPushModels`。这样在加载时不会因引用解析失败而崩溃，彻底解决旧存档闪退问题。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.98`。
+
+0.9.97
+- 紧急修复：0.9.93 更新后旧存档无法载入（卡在"生成所有生物"时闪退）——`FactionSpecialItemSlot` 类移除 `ILoadReferenceable` 接口，因为该接口导致 RimWorld 在加载旧存档时因唯一 ID 冲突而底层崩溃。改为纯 `IExposable` 实现，旧存档的 slot 自动分配新 ID，彻底解决存档加载闪退问题。
+- 版本：`About/About.xml` `modVersion` 提升到 `0.9.97`。
+
 0.9.93
 - 修复：`FactionSpecialItemSlot` 存档加载时ID重复注册错误——为每个slot分配唯一ID，旧存档自动迁移分配新ID，解决"Id already used"报错。
 - 修复：社交圈世界新闻解析失败（claim_not_reflected）——改进中文锚点词提取逻辑，支持中文标点分隔符，先检查完整claim匹配再提取锚点词。
@@ -13,8 +70,8 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.92`。
 
 0.9.91
-- 根修：重构对话触发的社交新闻事实包，输入改为“公开主张 / 背景张力 / 观察到的反应 / 玩法影响”结构，不再把抽象元数据直接喂给新闻生成链路。
-- 根修：社交新闻标题与引语新增“必须明确主张/诉求/态度”约束，禁止“波澜 / 发酵 / 口径 / 信号”一类不说明事件本体的空泛表达。
+- 根修：重构对话触发的社交新闻事实包，输入改为"公开主张 / 背景张力 / 观察到的反应 / 玩法影响"结构，不再把抽象元数据直接喂给新闻生成链路。
+- 根修：社交新闻标题与引语新增"必须明确主张/诉求/态度"约束，禁止"波澜 / 发酵 / 口径 / 信号"一类不说明事件本体的空泛表达。
 - 调整：社交新闻解析层新增显式主张校验，标题或引语缺少明确主张时 fail-fast 拒绝草稿，避免空话新闻进入社交圈。
 - 文档：同步更新 `About/About.xml`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.91`。
@@ -36,7 +93,7 @@
 - 根修：`request_item_airdrop` 运行时新增交易上限 fail-fast 校验，报价超限直接阻断并返回明确失败码 `trade_limit_exceeded`。
 - 根修：空投价格链路从 `MarketValue/BaseMarketValue` 切换为贸易买入价解析（受玩家谈判者社交技能影响，来源于商队/轨道商交易价格）；无有效谈判/交易上下文时 fail-fast。
 - 调整：空投交易卡参考公式与运费展示改为动态值（不再写死 500/仓），并新增贸易价格上下文不可用的前台阻断提示。
-- 调整：默认外交动作提示和运行时空投规则注入同步改为“贸易买入价口径 + 新分档运费/限额”。
+- 调整：默认外交动作提示和运行时空投规则注入同步改为"贸易买入价口径 + 新分档运费/限额"。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt` 与中英文语言键。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.87`。
 
@@ -48,9 +105,9 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.86`。
 
 0.9.85
-- 根修：空投报价确认菜单改为结构化 `PendingAirdropDialogState` 调度，不再依赖裸委托 `pendingAirdropDialog`，阻断“已准备但确认窗未稳定显示”的时序失控。
+- 根修：空投报价确认菜单改为结构化 `PendingAirdropDialogState` 调度，不再依赖裸委托 `pendingAirdropDialog`，阻断"已准备但确认窗未稳定显示"的时序失控。
 - 根修：外交窗口仅在 NPC 逐字消息完整播放结束后再等待 1 秒弹出空投确认菜单，避免与打字机效果抢焦点或被窗口刷新吞掉。
-- 根修：空投确认统一收敛到 `Dialog_AirdropTradeConfirmWithAlternative`，移除 `Dialog_MessageBox` 混用路径；只有显式点击“取消”才进入 `player_cancelled_confirmation`。
+- 根修：空投确认统一收敛到 `Dialog_AirdropTradeConfirmWithAlternative`，移除 `Dialog_MessageBox` 混用路径；只有显式点击"取消"才进入 `player_cancelled_confirmation`。
 - 调整：新增 `AirdropConfirmScheduled`、`AirdropConfirmQueued`、`AirdropConfirmDisplayed`、`AirdropConfirmDiscarded`、`AirdropConfirmExplicitCancel` 日志，区分系统未显示与玩家主动取消。
 - 构建：`build.ps1` 已通过（0 error）。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
@@ -58,7 +115,7 @@
 
 0.9.84
 - 根修：`DialogueResponseEnvelopeParser` 在外交/RPG 结构化通道严格要求 JSON 包络；当模型返回纯文本或非结构化内容时直接 fail-fast 为 `no_structured_envelope`，不再回退旧文本协议。
-- 调整：结构化包络出现未知顶层键时，由“直接判错”改为“记录 warning 并继续使用 `visible_dialogue`”，降低有效可见文本被误丢弃的概率。
+- 调整：结构化包络出现未知顶层键时，由"直接判错"改为"记录 warning 并继续使用 `visible_dialogue`"，降低有效可见文本被误丢弃的概率。
 - 根修：`GameComponent_NpcDialoguePushManager` 在包络解析失败时不再回退原始输出，改为直接丢弃并记录原因，阻断未结构化文本直通 NPC 推送链路。
 - 根修：外交窗口显示层命中沉浸防护时不再清空可见文本；同时空投确认弹窗改为在 NPC 逐字机完成后再延迟弹出，避免与逐字显示抢占交互焦点。
 - 构建：修复 `DialogueResponseEnvelopeParser.cs` 对 `Log.Warning` 的编译依赖（补充 `using Verse;`），`build.ps1` 已通过（0 error）。
@@ -66,33 +123,33 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.84`。
 
 0.9.83
-- 调整：聊天区空投交易气泡移除底部“参考总价”栏，并同步压缩气泡高度与底部留白。
-- 调整：小卡片指标中的“价格”文案改为“单价”，新增独立语言键 `RimChat_UnitPrice`，避免影响其他价格场景。
+- 调整：聊天区空投交易气泡移除底部"参考总价"栏，并同步压缩气泡高度与底部留白。
+- 调整：小卡片指标中的"价格"文案改为"单价"，新增独立语言键 `RimChat_UnitPrice`，避免影响其他价格场景。
 - 文档：同步更新 `About/About.xml`、中英文语言键、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.83`。
 
 0.9.82
-- 调整：聊天区空投交易气泡的小卡片移除“获得 / 支付”标签，仅保留物资缩略图、名称、defName 与底部数量/价格/总价指标。
+- 调整：聊天区空投交易气泡的小卡片移除"获得 / 支付"标签，仅保留物资缩略图、名称、defName 与底部数量/价格/总价指标。
 - 调整：删除中部语义标签占位后，名称区恢复直接衔接指标区，卡片信息密度更稳定。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.82`。
 
 0.9.81
-- 调整：聊天区空投交易气泡里的“获得 / 支付”标签改为绘制在小卡片中部的居中标签条，不再贴在卡片顶部边缘。
+- 调整：聊天区空投交易气泡里的"获得 / 支付"标签改为绘制在小卡片中部的居中标签条，不再贴在卡片顶部边缘。
 - 调整：为物资名称区预留独立标签空间，避免中部语义标签与物资名、指标区发生视觉冲突。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.81`。
 
 0.9.80
-- 修复：聊天区空投交易气泡改为按玩家买家视角显示标签，左侧需求物资显示“获得”，右侧支付物资显示“支付”。
+- 修复：聊天区空投交易气泡改为按玩家买家视角显示标签，左侧需求物资显示"获得"，右侧支付物资显示"支付"。
 - 调整：仅交换聊天气泡内空投交易卡的分类标签语义，不改左右物资卡位置，不改消息载荷 `need/offer` 字段含义。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.80`。
 
 0.9.79
 - 根修：Google 云端模型列表在强类型 JSON 解析未命中时，新增基于 `name` 字段的兜底抽取，避免有效的 Google AI Studio 响应仍然打开空模型菜单。
-- 根修：Google OpenAI 兼容聊天端点改为使用 `Authorization: Bearer <API Key>` 鉴权；保留模型列表链路的 `key=` / `x-goog-api-key` 方案，修复“配置正确但仍提示鉴权失败”。
-- 调整：快速连通性测试改为优先使用“首个已启用且已填写 API Key 的云端配置”，不再因为尚未选中模型而提前阻断；Google 可继续保持 Base URL 为空并走内置默认端点。
+- 根修：Google OpenAI 兼容聊天端点改为使用 `Authorization: Bearer <API Key>` 鉴权；保留模型列表链路的 `key=` / `x-goog-api-key` 方案，修复"配置正确但仍提示鉴权失败"。
+- 调整：快速连通性测试改为优先使用"首个已启用且已填写 API Key 的云端配置"，不再因为尚未选中模型而提前阻断；Google 可继续保持 Base URL 为空并走内置默认端点。
 - 调整：云端可用性配置校验改为输出本地化且字段精确的缺失提示；缺 API Key / 缺模型时，失败摘要会直接显示对应配置错误。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt` 与语言键。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.79`。
@@ -144,7 +201,7 @@
 0.9.70
 - 重做：外交历史管理窗口改为高保真对齐 RPG 历史记录面板，取消先前的双视图列表式布局。
 - 调整：外交历史现在只管理当前外交派系，不再提供 `当前派系 / 玩家总历史` 视图切换。
-- 调整：历史记录改为按“当前会话 + 历史会话”分段展示；历史会话由持久化 `DialogueHistory` 按稳定时间间隔切段生成。
+- 调整：历史记录改为按"当前会话 + 历史会话"分段展示；历史会话由持久化 `DialogueHistory` 按稳定时间间隔切段生成。
 - 调整：交互改为单击记录行选中、双击编辑；仅在选中状态下于右侧显示删除符号。
 - 根修：编辑 / 删除历史记录时，同时回写 `FactionDialogueSession.messages` 与 `LeaderMemory.DialogueHistory`，保证外交主窗口与历史面板双向同步。
 - 本地化：补充会话标题与窗口标题占位符语言键。
@@ -161,7 +218,7 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.69`。
 
 0.9.68
-- 调整：外交窗口策略状态区改为可折叠布局；关闭时压缩为单行“策略”入口，开启时展开显示完整状态文案。
+- 调整：外交窗口策略状态区改为可折叠布局；关闭时压缩为单行"策略"入口，开启时展开显示完整状态文案。
 - 新增：策略状态区增加高度伸缩 + 淡入淡出动效，折叠后释放出的纵向空间会回收到消息列表。
 - 本地化：新增 `RimChat_StrategyCollapsedEntry` 中英语言键。
 - 文档：同步更新 `doc/Index.md`、`doc/config.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
@@ -177,7 +234,7 @@
 - 根修：`ThingDefCatalog` 对空投候选 mod 物品改为更稳的入池规则，合法 item def 不再因为过度依赖原版交易元数据而系统性漏收。
 - 新增：`ThingDefCatalog.TryGetRecordByDefName(...)` 与 `GetTradeablePaymentRecords()`，交易卡绑定和付款解析不再只依赖缓存 catalog 是否已收录目标 def。
 - 优化：`ThingDefRecord.BuildSearchText(...)` 现在补充 camel-case、分类祖先链和交易/资源语义词，提升 mod 物品命名下的本地检索稳定性。
-- 根修：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 现在按“强资源信号 -> 结构化交易信号 -> 元数据资源信号”判定，降低特殊 mod 资源被误判出 resource family 的概率。
+- 根修：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 现在按"强资源信号 -> 结构化交易信号 -> 元数据资源信号"判定，降低特殊 mod 资源被误判出 resource family 的概率。
 - 根修：`BuildPaymentPlan(...)` 现在优先在当前轨道信标库存中解析 `payment_items.item`；若物品全局可解析但当前信标无货，稳定返回 `payment_item_insufficient`，避免库存外相似物误判。
 - 根修：交易卡 `need_def` 绑定解析新增 direct def fallback，合法绑定物品不会因为 catalog 漏收而被静默打成未解析。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
@@ -189,11 +246,11 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.65`。
 
 0.9.64
-- 新增：外交窗口 `+发送信息` 新增“挑衅”和“请求商队”入口；“挑衅”使用独立窗口展示普通袭击、持续袭击、联合袭击三种选项及解释。
-- 新增：选择联合袭击时加入二次确认；确认后只写入系统消息“玩家挑衅了对方，将引发‘xx袭击’”，并立即触发 AI 回复链。
-- 新增：点击“请求商队”后写入系统消息“玩家向对方请求派遣商队交易。”并立即触发 AI 回复链。
+- 新增：外交窗口 `+发送信息` 新增"挑衅"和"请求商队"入口；"挑衅"使用独立窗口展示普通袭击、持续袭击、联合袭击三种选项及解释。
+- 新增：选择联合袭击时加入二次确认；确认后只写入系统消息"玩家挑衅了对方，将引发'xx袭击'"，并立即触发 AI 回复链。
+- 新增：点击"请求商队"后写入系统消息"玩家向对方请求派遣商队交易。"并立即触发 AI 回复链。
 - 调整：`BuildChatMessages(...)` 现在会跳过刚写入的同文案系统消息，避免系统驱动请求在历史与当前输入中重复注入。
-- 根修：全局移除 `request_caravan / request_aid / create_quest` 的 projected goodwill floor 阻断，同时同步取消提示词层同源隐藏规则，避免“实际不扣好感却被资格校验卡住”。
+- 根修：全局移除 `request_caravan / request_aid / create_quest` 的 projected goodwill floor 阻断，同时同步取消提示词层同源隐藏规则，避免"实际不扣好感却被资格校验卡住"。
 - 本地化：新增中英文发送信息菜单、挑衅窗口、联合袭击确认和系统消息语言键。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.64`。
@@ -201,7 +258,7 @@
 0.9.62
 - 修复：外交发送构建提示词时，`ResolveMandatoryRaceXenotype(...)` 不再直接读取会触发原版 `Pawn_GeneTracker.XenotypeLabel` 的危险属性；遇到异常基因/异种数据时安全回退为 `N/A`。
 - 修复：外交窗口发送链新增提示词构建异常收口，发送失败时改为系统消息与日志提示，不再因为提示词构建异常直接炸窗。
-- 优化：外交请求掉单/阻断现在会记录明确 reason code，并写入会话系统消息，便于定位“消息发出但没回复”的根因。
+- 优化：外交请求掉单/阻断现在会记录明确 reason code，并写入会话系统消息，便于定位"消息发出但没回复"的根因。
 - 文档：同步更新 `doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.62`。
 
@@ -224,7 +281,7 @@
 
 0.9.59
 - 根修：社交圈软影响链路新增 fail-fast 防线，`SocialCircleService.TryAffectPlayerGoodwill(...)` 在 `faction == PlayerColony` 时直接阻断，避免触发 `PlayerColony -> PlayerColony` 自关系查询报错。
-- 根修：`SocialCircleService.ApplySoftImpact(...)` 改为“非空、非玩家、去重”派系集合处理，避免 Source/Target 重复或玩家派系误入导致重复/非法好感变更。
+- 根修：`SocialCircleService.ApplySoftImpact(...)` 改为"非空、非玩家、去重"派系集合处理，避免 Source/Target 重复或玩家派系误入导致重复/非法好感变更。
 - 根修：`SocialCircleService.AddIntentScore(...)` 禁止把玩家派系写入 `ActionIntents`；`SocialCircleActionResolver.CanAttemptExecution(...)` 新增 `intent.Faction.IsPlayer` 快速拒绝，兼容旧存档残留脏数据。
 - 根修：`FactionGoodwillPatch_NpcDialogue.Prefix(...)` 新增 `__instance == other` 保护，阻断补丁层自关系读取。
 - 观测：上述阻断路径新增 DevMode 一次性 warning（去重键），正式游玩不刷屏。
@@ -232,7 +289,7 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.59`。
 
 0.9.58
-- 根修：`RimTalkNativeRpgPromptRenderer` 的原生 `ScribanParser.Render` 绑定从单签名改为“多签名探测 + 缓存绑定”，兼容非本机不同 RimTalk 运行时形态。
+- 根修：`RimTalkNativeRpgPromptRenderer` 的原生 `ScribanParser.Render` 绑定从单签名改为"多签名探测 + 缓存绑定"，兼容非本机不同 RimTalk 运行时形态。
 - 行为：当 `social_circle_post` 通道命中原生渲染兼容失败时，改为 fail-fast 阻断，不再把降级后脏 prompt 继续发送给模型。
 - 新增：社交圈失败原因扩展 `PromptRenderIncompatible`（入队/生成两套枚举），并新增中英文语言键 `RimChat_SocialFailureReason_prompt_render_incompatible`。
 - 调整：`AIChatServiceAsync.ProcessRequestCoroutine(...)` 对 `AIRequestDebugSource.SocialNews` 精确分流，跳过外交对话类 Guard（二次沉浸/契约处理），避免 JSON 新闻响应被对话后处理污染。
@@ -242,8 +299,8 @@
 
 0.9.57
 - 性能：`PlaySettingsPatch_CommsToggleIcon.Postfix(...)` 热路径收敛为单次窗口扫描（同帧不再重复 `WindowOfType<Dialog_ApiDebugObservability>()`）。
-- 性能：通讯切换图标 tooltip 改为“状态变化才重建”的轻量缓存，减少每帧 `Translate(key + args)` 字符串构造与分配抖动。
-- 行为：保持“窗口存在即开关状态真值”不变；不新增配置项、不改存档结构、不改 Def 与对外接口。
+- 性能：通讯切换图标 tooltip 改为"状态变化才重建"的轻量缓存，减少每帧 `Translate(key + args)` 字符串构造与分配抖动。
+- 行为：保持"窗口存在即开关状态真值"不变；不新增配置项、不改存档结构、不改 Def 与对外接口。
 - 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.57`。
 
@@ -276,7 +333,7 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.53`。
 
 0.9.52
-- 根修：`AIJsonContentExtractor.TryExtractPrimaryText(...)` 改为结构化返回 `PrimaryTextExtractionResult`（`IsSuccess/Content/ReasonTag/MatchedPath`），用于稳定区分“可重试空文本”和“不可恢复解析失败”。
+- 根修：`AIJsonContentExtractor.TryExtractPrimaryText(...)` 改为结构化返回 `PrimaryTextExtractionResult`（`IsSuccess/Content/ReasonTag/MatchedPath`），用于稳定区分"可重试空文本"和"不可恢复解析失败"。
 - 新增：解析器补充 `content[]` 文本片段提取（`content[].text`）并统一与原有字符串键候选合并评分，兼容本地模型常见回包形态（含 `choices/message/content` 变体）。
 - 调整：`AIChatServiceAsync` 解析失败分流改为 fail-fast。仅 `empty_primary_text` 允许一次重试；其他原因直接返回本地化解析错误，不再将 `RimChat_ImmersionFallback_*` 固定句写入会话历史。
 - 调整：`AppendParseRetryMessage(...)` 注入 `PARSE_RETRY_REASON` 与 `PARSE_MATCH_PATH`，增强模型重试回合的格式纠偏信号。
@@ -286,9 +343,9 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.52`。
 
 0.9.51
-- 新增：日志观测趋势区右侧加入“本局统计”面板，仅显示 3 项均值：平均每分钟调用、平均每分钟令牌、平均单次调用令牌。
+- 新增：日志观测趋势区右侧加入"本局统计"面板，仅显示 3 项均值：平均每分钟调用、平均每分钟令牌、平均单次调用令牌。
 - 新增：日志观测记录表支持分页（首页/上一页/下一页/末页 + 页码信息），每页条数按当前可视高度动态计算。
-- 调整：日志观测记录列表口径改为“本次游戏进程完整记录”，不再按最近 30 分钟裁剪；趋势图仍保持最近 30 分钟窗口。
+- 调整：日志观测记录列表口径改为"本次游戏进程完整记录"，不再按最近 30 分钟裁剪；趋势图仍保持最近 30 分钟窗口。
 - 调整：`AIRequestDebugSnapshot` 扩展 `SessionSummary`（本局统计快照），对外获取接口 `TryGetRequestDebugSnapshot` 签名保持不变。
 - 本地化：新增中英文日志观测语言键（本局统计 3 项 + 分页控件）。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
@@ -301,41 +358,41 @@
 - 调整：批量付款执行改为串行首错即停；已成功目标不回滚，并从待支付集合中移除，下一轮仅需覆盖剩余目标。
 - 新增：`FactionDialogueSession` 扩展批量赎金运行态（批次 ID、目标集合、总叫价/总区间），兼容旧存档加载。
 - 新增：`RansomContractRecord` 增加 `IsBatchRansom/BatchGroupId/BatchTargetCount` 元数据，用于批量惩罚分支识别。
-- 调整：批量惩罚采用固定“中度宽松”：放人时限 +50%，价值下跌阈值上调，常规超时/跌价惩罚按 0.7 系数执行。
+- 调整：批量惩罚采用固定"中度宽松"：放人时限 +50%，价值下跌阈值上调，常规超时/跌价惩罚按 0.7 系数执行。
 - 保留：器官新增缺失惩罚在批量模式下不走宽松系数，强度与单人一致（仍可触发对应惩罚链路）。
-- 提示词：同步更新 `action_rules`、系统提示词与重试契约，新增 `[RansomBatchSelection]` 规则，避免模型仍按“单笔一次”输出。
+- 提示词：同步更新 `action_rules`、系统提示词与重试契约，新增 `[RansomBatchSelection]` 规则，避免模型仍按"单笔一次"输出。
 - 本地化：新增中英批量赎金 UI/系统提示语言键（批量覆盖失败、总价越界、剩余目标、全选/全不选等）。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.48`。
 
 0.9.47
-- 根修：`ReplaceCommsConsole=true` 时，通讯台菜单接管逻辑移除对原版 action 声明类型/程序集名的脆弱门禁，改为“可解析出有效派系即接管”。
+- 根修：`ReplaceCommsConsole=true` 时，通讯台菜单接管逻辑移除对原版 action 声明类型/程序集名的脆弱门禁，改为"可解析出有效派系即接管"。
 - 修复：`CommsConsolePatch.GetFloatMenuOptionsPostfix(...)` 现在仅以 `NullOption / NullAction / InvalidFaction` 作为 fail-fast 跳过原因，避免因闭包形态变化导致全部选项未接管。
-- 行为：勾选“替换通讯台”后，点击任意可联络派系时恢复直接打开 RimChat 外交通讯窗口，不再需要先关闭原版通讯树。
+- 行为：勾选"替换通讯台"后，点击任意可联络派系时恢复直接打开 RimChat 外交通讯窗口，不再需要先关闭原版通讯树。
 - 兼容：无新增配置项、无存档结构变更、无外部 API 变更。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.47`。
 
 0.9.46
-- 根修：外交在线状态由不可达恢复为在线时，`GameComponent_NpcDialoguePushManager.CancelQueuedTriggersForFaction(...)` 会立即清空该派系历史主动队列，彻底阻断“长期未使用后恢复补发”。
+- 根修：外交在线状态由不可达恢复为在线时，`GameComponent_NpcDialoguePushManager.CancelQueuedTriggersForFaction(...)` 会立即清空该派系历史主动队列，彻底阻断"长期未使用后恢复补发"。
 - 新增：外交主动节流参数配置化并提升默认值：全局冷却 `6h`、派系冷却 `3~7天`、队列上限 `3`、队列过期 `12h`；旧存档首次迁移强制回写该节流档位。
 - 新增：NPC 主动设置页增加节流参数与 `EnableNpcPushThrottleDebugLog` 开关，可按需输出节流命中与清队列日志。
-- 优化：`GameComponent_NpcDialoguePushManager` 新增“活跃候选派系缓存 + 低频会话同步 + 低频清理”，常规轮询由全量候选重建改为增量判定，降低 GC 与轮询开销。
+- 优化：`GameComponent_NpcDialoguePushManager` 新增"活跃候选派系缓存 + 低频会话同步 + 低频清理"，常规轮询由全量候选重建改为增量判定，降低 GC 与轮询开销。
 - 调整：`ForcePresenceOnlineForNpcInitiated(...)` 与 `RefreshPresenceOnDialogueOpen(...)` 在检测到 `Unavailable -> Online` 边沿时统一触发历史队列清理。
 - 本地化：新增中英节流配置相关语言键。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.46`。
 
 0.9.45
-- 根修：新增 `GameComponent_DiplomacyManager.HandleInboundFactionMessage(...)` 统一入站消息入口，在同派系收到普通/系统入站消息时先执行会话自动重开（`ReinitiateConversation`），再写入消息，彻底收敛“结束态恢复”逻辑。
-- 修复：`GameComponent_NpcDialoguePushManager`、`RansomContractManager`、`GameComponent_DiplomacyManager.SocialCircle` 三条入站链路统一改走上述入口，避免“对方持续来信但玩家无法回复”的状态断链。
-- 调整：外交窗口发送门控改为仅依赖入站自动恢复，不再显示“重新发起对话”按钮；无新入站消息时仍保持 fail-fast 阻断。
+- 根修：新增 `GameComponent_DiplomacyManager.HandleInboundFactionMessage(...)` 统一入站消息入口，在同派系收到普通/系统入站消息时先执行会话自动重开（`ReinitiateConversation`），再写入消息，彻底收敛"结束态恢复"逻辑。
+- 修复：`GameComponent_NpcDialoguePushManager`、`RansomContractManager`、`GameComponent_DiplomacyManager.SocialCircle` 三条入站链路统一改走上述入口，避免"对方持续来信但玩家无法回复"的状态断链。
+- 调整：外交窗口发送门控改为仅依赖入站自动恢复，不再显示"重新发起对话"按钮；无新入站消息时仍保持 fail-fast 阻断。
 - 兼容：不新增存档字段，不改外部配置结构，旧存档可直接继承新逻辑。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.45`。
 
 0.9.44
-- 新增：外交窗口 `社交圈` 页签新增“发帖”入口，玩家可手动填写“标题 + 正文”直接发布公开帖子，不再经过 AI 润色。
+- 新增：外交窗口 `社交圈` 页签新增"发帖"入口，玩家可手动填写"标题 + 正文"直接发布公开帖子，不再经过 AI 润色。
 - 新增：`Dialog_ManualSocialPost` 最小化发帖窗口，仅保留标题和正文输入，并对空内容与超长输入执行 fail-fast 阻断。
 - 新增：`GameComponent_DiplomacyManager.TryPublishManualPlayerSocialPost(...)`，直接创建玩家原文帖子并写入社交圈持久化状态，正常参与列表展示、未读统计与摘要镜像。
 - 新增：手动发帖后会按内容相关性自动挑选随机 1-3 个有效派系，并强制走现有 `NpcDialoguePush` 主动来信链路逐个回应。
@@ -346,9 +403,9 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.44`。
 
 0.9.43
-- 新增：外交对话窗口策略提示行支持整行点击切换全局开关；开启时尾部显示“点击关闭”，关闭时显示“点击开启”。
+- 新增：外交对话窗口策略提示行支持整行点击切换全局开关；开启时尾部显示"点击关闭"，关闭时显示"点击开启"。
 - 新增：`RimChatSettings` 持久化字段 `EnableDiplomacyStrategyToggle`，默认开启，并在跨窗口、跨派系和重开游戏后保持状态。
-- 调整：策略按钮三选项显示时，策略提示行自动隐藏，不再与“策略可用次数/社交门槛”提示并存。
+- 调整：策略按钮三选项显示时，策略提示行自动隐藏，不再与"策略可用次数/社交门槛"提示并存。
 - 调整：外交窗口内策略 follow-up 请求、策略按钮展示与按钮点击自动发送统一受全局开关门控；关闭时只阻断策略 UI 链路，不影响主对话。
 - 本地化：新增 `RimChat_StrategyToggleDisable`、`RimChat_StrategyToggleEnable` 中英语言键。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
@@ -367,10 +424,10 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.42`。
 
 0.9.41
-- 调整：`request_raid_call_everyone` 的提示词动作目录语义改为“公开摇人总攻”，明确它是跨派系联合袭击而非普通袭击别名。
+- 调整：`request_raid_call_everyone` 的提示词动作目录语义改为"公开摇人总攻"，明确它是跨派系联合袭击而非普通袭击别名。
 - 调整：默认动作目录与运行时补齐文案统一改写；玩家明确说出 `call everyone / 联合袭击 / 都叫来 / 全都叫来 / everyone attack / all in` 时，按主动要求联合总攻理解。
 - 调整：提示词构建阶段不再把 `call_everyone_requires_post_raid_escalation` 暴露为默认 blocked action；全局冷却与无可用派系等硬阻断仍继续显示。
-- 调整：`request_raid_waves` 文案从“联合袭击不可用时的替代”改为“持续施压的多波次进攻”，避免旧叙事误导模型。
+- 调整：`request_raid_waves` 文案从"联合袭击不可用时的替代"改为"持续施压的多波次进攻"，避免旧叙事误导模型。
 - 根修：将 `request_raid_call_everyone` 专属音频从不兼容的 `1.6/Sounds/sound_request_raid_call_everyone.MP3` 切换为稳定的 `1.6/Sounds/sound_request_raid_call_everyone.wav`，根除模组加载阶段的 `AudioClip` 解码失败与 `resolvedGrains` 报错。
 - 新增：`build.ps1` 增加联合袭击关键音频 fail-fast 校验；要求该资源必须为 `PCM WAV / 44100Hz / 16-bit / mono|stereo`。
 - 新增：若 `sound_request_raid_call_everyone` 同名 `.mp3` 仍存在，构建会直接终止，避免不兼容资源继续被部署到游戏目录。
@@ -386,9 +443,9 @@
 
 0.9.39
 - 调整：提示词去重改造。`<environment>` 保持为环境与事件详情唯一权威块；`world.environment_params` 与 `world.recent_world_events` 变量改为紧凑快照/摘要口径，避免主链 section 二次展开同量文本。
-- 调整：外交运行时节点去重。`instruction_stack.faction_characteristics` 已注入时，运行时抑制 `diplomacy_fallback_role` 重复输出，消除“领袖身份句”双写。
+- 调整：外交运行时节点去重。`instruction_stack.faction_characteristics` 已注入时，运行时抑制 `diplomacy_fallback_role` 重复输出，消除"领袖身份句"双写。
 - 新增：运行时强制补充 `mandatory_race_profile` 独立块（外交 + RPG + proactive），并将其纳入运行时校验；缺失时 fail-fast 抛出 `PromptRenderException`。
-- 新增：事件注入升级为“双层输出”。在条目或字符预算溢出时，`AppendRecentWorldEventIntel(...)` 保留最新原文条目并追加 `EventDigest` 摘要（类型分布、主题聚类、时序趋势）。
+- 新增：事件注入升级为"双层输出"。在条目或字符预算溢出时，`AppendRecentWorldEventIntel(...)` 保留最新原文条目并追加 `EventDigest` 摘要（类型分布、主题聚类、时序趋势）。
 - 新增：`BuildRecentWorldEventIntelCompactDigest(...)` 用于 `world.recent_world_events` 变量紧凑摘要输出，明确指向 `<environment>` 查看完整事件详情。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 
@@ -402,18 +459,18 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.38`。
 
 0.9.37
-- 新增：外交响应合同强制注入“空投/商队交易常识”，即时交换仅允许 `request_item_airdrop`，且单次仅允许一种换一种；命中已知交易事实时允许让步打折；商队属于延时交易且无法控货。
+- 新增：外交响应合同强制注入"空投/商队交易常识"，即时交换仅允许 `request_item_airdrop`，且单次仅允许一种换一种；命中已知交易事实时允许让步打折；商队属于延时交易且无法控货。
 - 新增：外交/主动外交/外交策略三通道在派系提示词后固定注入 `FIXED_FACTION_INTEL` 情报块，包含派系描述、科技等级、商队/任务/袭击当前态、玩家远征状态、据点摧毁历史、袭击伤亡与破坏、玩家科技等级。
 - 新增：`FactionIntelLedgerComponent` 持久化记录据点摧毁历史与袭击破坏统计（建筑损失、玩家死亡/倒地峰值、进攻方死亡），并接入 `Pawn.Kill`、`Thing.TakeDamage`、`WorldObject.Destroy` 采集链路。
-- 新增：`GameAIInterface` 的 `create_quest` 发布追踪持久化；`HasActiveRimChatQuestForFaction(...)` 可精确判断“当前该派系是否存在 RimChat 发布且仍进行中的任务”。
-- 新增：`GameComponent_DiplomacyManager` 事件查询接口，提供“当前商队已派出/当前袭击已安排（含在途与进行中）”判定。
+- 新增：`GameAIInterface` 的 `create_quest` 发布追踪持久化；`HasActiveRimChatQuestForFaction(...)` 可精确判断"当前该派系是否存在 RimChat 发布且仍进行中的任务"。
+- 新增：`GameComponent_DiplomacyManager` 事件查询接口，提供"当前商队已派出/当前袭击已安排（含在途与进行中）"判定。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.37`。
 
 0.9.36
 - 根修：`DialogueSummaryService.BuildRpgDynamicFactionMemoryBlock(...)` 增加目标 pawn 约束，`targetPawn` 不存在或无效时 fail-fast 不注入 `dynamic_faction_memory`。
 - 根修：`CollectSortedSummaries(...)` 改为严格 `PawnLoadId == targetPawnId` 过滤，同派系跨通道摘要不再跨 pawn 复用。
-- 调整：动态派系记忆块标头改为 `TARGET-PAWN SCOPED`，明确注入语义为“仅目标 pawn 个人摘要”。
+- 调整：动态派系记忆块标头改为 `TARGET-PAWN SCOPED`，明确注入语义为"仅目标 pawn 个人摘要"。
 - 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.36`。
 
@@ -444,20 +501,20 @@
 0.9.32
 - 调整：`request_raid_call_everyone` 到达窗口由 `16-36` 小时缩短为 `16-30` 小时（调度与通知参数同步）。
 - 新增：联合袭击参与裁剪；当敌对派系数量少于或等于友好/中立派系数量时，按 `PlayerGoodwill` 升序逐个取消友好/中立派系参与，直到敌对数量大于友好/中立数量。
-- 增强：援军到达信件 `SendAidLetter(...)` 增加有效 `LookTargets`，支持原版“转到事件发送地点”按钮。
+- 增强：援军到达信件 `SendAidLetter(...)` 增加有效 `LookTargets`，支持原版"转到事件发送地点"按钮。
 - 兼容：旧存档 `RaidCallEveryone` 迁移窗口同步为 `16-30` 小时。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.32`。
 
 0.9.31
-- 根修：`TryArriveCallEveryoneAidPawns(...)` 移除 `arrivalMode.Worker.Arrive(...)` 隐式落点路径，改为“合法入口点 + 显式 Spawn”流程，根除援军到达阶段 `(-1000,-1000,-1000)` 越界坐标导致的无援军生效问题。
+- 根修：`TryArriveCallEveryoneAidPawns(...)` 移除 `arrivalMode.Worker.Arrive(...)` 隐式落点路径，改为"合法入口点 + 显式 Spawn"流程，根除援军到达阶段 `(-1000,-1000,-1000)` 越界坐标导致的无援军生效问题。
 - 新增：入口点 fail-fast 选择链路（优先边缘可站立格，失败回退 `TradeDropSpot`），并对每个援军 pawn 执行附近可站立格显式上图。
 - 调整：援军创建 `AssistColony` 领主前，要求至少 1 名 pawn 成功上图；否则直接失败并记录 `entry/attempted/spawnFailed` 审计信息。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.31`。
 
 0.9.30
-- 根修：`ScheduleRaidCallEveryone(...)` 移除友好/中立“立即执行”，所有目标派系统一在联合袭击触发后 `16-36` 小时窗口随机到达。
+- 根修：`ScheduleRaidCallEveryone(...)` 移除友好/中立"立即执行"，所有目标派系统一在联合袭击触发后 `16-36` 小时窗口随机到达。
 - 根修：`DelayedDiplomacyEvent.ExecuteRaidCallEveryoneEvent(...)` 新增 `MilitaryAidCustom` 分支，友好/中立支援改为 RimChat 自建军事援军链路（生成 combat 队伍 + 进图 + `LordJob_AssistColony`），不再依赖 `FriendlyRaid/RaidFriendly` 可执行性。
 - 调整：`RaidCallEveryone` 事件启用 no-retry 策略，失败后不再重试，直接 fail-fast 记录并丢弃。
 - 兼容：读档 `PostLoadInit` 增加旧存档迁移；未执行 `RaidCallEveryone` 自动重排到 `16-36` 小时窗口，友中立动作迁移为 `MilitaryAidCustom`，并清空重试状态。
@@ -466,8 +523,8 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.30`。
 
 0.9.29
-- 根修：`Dialog_DiplomacyDialogue.ItemAirdropConfirmation.TryInjectPendingAirdropCountFromLatestPlayerMessage(...)` 现在优先使用 `FactionDialogueSession.pendingAirdropTradeCardRequestedCount` 回填 `count`，不再依赖“最后一条玩家消息必须带数量”。
-- 修复：玩家仅回复“同意/确认”时，空投执行链路不再丢失目标数量并回退 `fallback_default_family`（资源默认 75）。
+- 根修：`Dialog_DiplomacyDialogue.ItemAirdropConfirmation.TryInjectPendingAirdropCountFromLatestPlayerMessage(...)` 现在优先使用 `FactionDialogueSession.pendingAirdropTradeCardRequestedCount` 回填 `count`，不再依赖"最后一条玩家消息必须带数量"。
+- 修复：玩家仅回复"同意/确认"时，空投执行链路不再丢失目标数量并回退 `fallback_default_family`（资源默认 75）。
 - 保持：仅在参数中缺失 `count/quantity` 时才注入，不覆盖显式数量参数。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.29`。
@@ -475,13 +532,13 @@
 0.9.28
 - 根修：`GameAIInterface.ItemAirdrop.Async.TryBuildAirdropAsyncContext(...)` 现在显式读取并回填 `selected_def -> context.ForcedSelectedDef`，异步选择阶段可正确进入强制选定分支，不再持续回落 `selection_manual_choice`。
 - 根修：异步上下文新增与同步链路一致的绑定语义透传（`HasBoundNeed` / `HadForcedSelectionConflict`），避免绑定冲突场景在异步链路丢失选择原因。
-- 性能：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 的逐条 `Log.Message` 改为“仅 DevMode 输出 + 窗口限频”，阻断候选遍历时日志洪泛导致的主线程卡顿放大。
+- 性能：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 的逐条 `Log.Message` 改为"仅 DevMode 输出 + 窗口限频"，阻断候选遍历时日志洪泛导致的主线程卡顿放大。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.28`。
 
 0.9.27
-- 根修：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 恢复“强资源信号优先”判定；`category=Item && stuffProps!=null` 且非食物/药物/服装时直接判为资源，避免 `WoodLog` 被噪声 `IsWeapon` 再次误杀。
-- 根修：`GameAIInterface.TryApplyBoundNeedArbitration(...)` 改为“绑定优先”；当交易卡 `bound_need_def` 可解析时，文本 `need_family` 冲突不再阻断，而是记录 `bound_need_family_conflict_overridden` 审计并继续按绑定物资执行。
+- 根修：`ItemAirdropSafetyPolicy.IsResourceCandidate(...)` 恢复"强资源信号优先"判定；`category=Item && stuffProps!=null` 且非食物/药物/服装时直接判为资源，避免 `WoodLog` 被噪声 `IsWeapon` 再次误杀。
+- 根修：`GameAIInterface.TryApplyBoundNeedArbitration(...)` 改为"绑定优先"；当交易卡 `bound_need_def` 可解析时，文本 `need_family` 冲突不再阻断，而是记录 `bound_need_family_conflict_overridden` 审计并继续按绑定物资执行。
 - 调整：绑定物资注入候选时的 `Family` 改为由绑定物资反推家族，不再沿用漂移的文本家族。
 - 新增：空投绑定冲突覆盖审计语言键 `RimChat_ItemAirdropBoundNeedFamilyConflictOverrideAudit`（中英文）。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
@@ -493,12 +550,12 @@
 - 修复：`WarningThreat` 类战斗主动消息允许在带 bypass 标记时通过入口过滤，不再被 `HandleTriggerContext` 直接拦截。
 - 新增：战斗主动消息 AI 失败时，使用现有语言键 fallback 文案立即投递（fail-fast），避免消息丢失。
 - 调整：`Raid/Wave/CallEveryone` 到达消息改为事件成功后立即触发；新增离场监控事件，按参战 pawn 实际离开/结束后发送离场消息。
-- 调整：`request_raid_waves` 的最终波次结束消息不再固定延迟估算，改为“最后一波离场后”触发。
+- 调整：`request_raid_waves` 的最终波次结束消息不再固定延迟估算，改为"最后一波离场后"触发。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.26`。
 
 0.9.25
-- 根修：`GameComponent_DiplomacyManager.ProcessDelayedEvents()` 改为“快照遍历 + 延迟合并”机制，执行链路内新增延迟事件不再在 `foreach` 期间修改原集合，消除 `Collection was modified` 循环报错。
+- 根修：`GameComponent_DiplomacyManager.ProcessDelayedEvents()` 改为"快照遍历 + 延迟合并"机制，执行链路内新增延迟事件不再在 `foreach` 期间修改原集合，消除 `Collection was modified` 循环报错。
 - 稳定性：新增延迟事件处理的 tick 级防重入保护，避免同 tick 重复处理放大异常日志。
 - 调整：`RaidCallEveryone` 执行分支统一走 `TriggerRaidEvent(...)`，不再在该链路调用军事援助分支。
 - 修复：移除 `raid_call_everyone` 对 `FriendlyRaid` 的执行依赖，消除该链路下的无效 Def 查找刷屏噪音。
@@ -506,9 +563,9 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.25`。
 
 0.9.24
-- 根修：`CommsConsolePatch.GetFloatMenuOptionsPostfix` 拦截条件收敛为“原版通讯 action 来源 + 有效派系”，不再以“可解析到派系”直接替换 action。
+- 根修：`CommsConsolePatch.GetFloatMenuOptionsPostfix` 拦截条件收敛为"原版通讯 action 来源 + 有效派系"，不再以"可解析到派系"直接替换 action。
 - 修复：新增 `IsVanillaCommsAction(...)` 静态判定（基于 `action.Method/DeclaringType/Assembly`），第三方通讯选项（如星环扩展）默认放行，不再被误接管。
-- 调整：`ExtractFactionFromOption(...)` 移除“全派系列表 + label 模糊匹配”回退，仅保留原版通讯上下文内的闭包提取与 commTargets 匹配。
+- 调整：`ExtractFactionFromOption(...)` 移除"全派系列表 + label 模糊匹配"回退，仅保留原版通讯上下文内的闭包提取与 commTargets 匹配。
 - 日志：新增 fail-fast 放行原因诊断（`NullOption/NullAction/NonVanillaAction/InvalidFaction`），并带节流。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.24`。
@@ -544,7 +601,7 @@
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.19`。
 
 0.9.18
-- 调整：聊天里的空投交易卡不再在“AI 未执行空投动作”时额外插入“空投信息被忽略，无交易行为”系统消息。
+- 调整：聊天里的空投交易卡不再在"AI 未执行空投动作"时额外插入"空投信息被忽略，无交易行为"系统消息。
 - 优化：聊天内空投卡重绘为沉浸式终端单据样式，强化标题层级、双物资卡视觉和价格信息分区。
 - 修复：`set_dnd` 新增独立到期状态，持续 3 个游戏日；到期后回到派系排班态重算，不再复用普通 presence cache。
 - 优化：物资空投冷却提示改为游戏内剩余时长显示，不再把 `RemainingSeconds` 直接按现实时间解释。
@@ -560,7 +617,7 @@
 
 0.9.16
 - 修复：空投最终确认在注入 `count` 时，改为优先使用交易卡结构化保存的需求数量，不再让付款银币数覆盖谈判中的物资数量。
-- 修复：文本回退提取新增“需求 xN / need xN”优先规则，降低“需求数量 + 付款金额”混合消息下的数量漂移。
+- 修复：文本回退提取新增"需求 xN / need xN"优先规则，降低"需求数量 + 付款金额"混合消息下的数量漂移。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.16`。
 
@@ -572,22 +629,22 @@
 0.9.14
 - 修复：空投交易卡绑定物品元数据现在会贯穿普通确认、延迟意图和最终确认弹窗，不再在普通玩家跟进消息或 AI 回包结束时被误清空。
 - 修复：统一异步空投选择的绑定物品优先级，并新增 `bound_need_prepared_mismatch` fail-fast 校验，防止最终准备单据静默漂移到别的物资。
-- 调整：玩家显式手动改选候选物资时，会先解除交易卡绑定，让“主动换物品”和“状态丢失误换物品”彻底分离。
+- 调整：玩家显式手动改选候选物资时，会先解除交易卡绑定，让"主动换物品"和"状态丢失误换物品"彻底分离。
 - 提示词：收紧 `request_item_airdrop` 契约；当交易卡已精确绑定 `need_def` 时，AI 只能拒绝、重报价或调整数量/付款方式，不能静默改物资。
 - 文档：同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` `modVersion` 提升到 `0.9.14`。
 
 0.9.13
 - 根修：空投交易卡现在把 `NeedDefName/NeedLabel/NeedSearchText` 作为绑定需求元数据注入到 `request_item_airdrop` 执行链路，不再只保留自由文本 `need`。
-- 根修：物资空投准备阶段新增“绑定需求仲裁”分支；当候选池与卡片绑定物资冲突时，系统会按绑定物资重建候选与选择，不再把错误候选带入确认窗。
+- 根修：物资空投准备阶段新增"绑定需求仲裁"分支；当候选池与卡片绑定物资冲突时，系统会按绑定物资重建候选与选择，不再把错误候选带入确认窗。
 - 根修：若绑定需求物资无法解析，或与当前需求家族冲突，系统前台直接阻断交易并写入详细审计日志（含 category/tradeability/BaseMarketValue/stackLimit/stuffProps 等字段）。
 - 兼容：重报价 `Counteroffer/重报价` 仍只作为排序/默认值信息，不升级为强制执行源。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本升级：`About/About.xml` 的 `modVersion` 更新为 `0.9.13`。
 
 0.9.12
-- 重构：物资空投请求卡界面重画为“精确搜索 + 双物资卡 + 参考价格”布局，提交前必须精确绑定需求物资。
-- 新增：参考价格固定按“需求物资单价 x 需求数量”实时计算，并同步显示到聊天气泡。
+- 重构：物资空投请求卡界面重画为"精确搜索 + 双物资卡 + 参考价格"布局，提交前必须精确绑定需求物资。
+- 新增：参考价格固定按"需求物资单价 x 需求数量"实时计算，并同步显示到聊天气泡。
 - 修复：二次开窗不再回填需求物资、需求搜索词和需求数量，只保留出价区默认值。
 - 修复：空投二阶段 `selection_timeout/queue_timeout` 直接默认 Top1 并进入最终确认，不再询问玩家，不再发送该阶段系统消息。
 - 重构：`name -> defName` 统一为共享多维度匹配引擎，覆盖搜索建议、支付解析与候选排序；低置信度直接失败，最高分并列按歧义处理。
@@ -617,22 +674,22 @@
 - 版本升级：`About/About.xml` 的 `modVersion` 更新为 `0.9.10`。
 
 0.9.9
-- 修复：空投信息卡 UI 重构为“单一语义”流程，移除意义不清的候选列表/刷新按钮/搜索框，避免玩家认知冲突。
-- 修复：库存面板改为“通电轨道信标可达的以物易物库存（含数量）”，点击即选择出价物资。
+- 修复：空投信息卡 UI 重构为"单一语义"流程，移除意义不清的候选列表/刷新按钮/搜索框，避免玩家认知冲突。
+- 修复：库存面板改为"通电轨道信标可达的以物易物库存（含数量）"，点击即选择出价物资。
 - 修复：底部输入区改为响应式布局，解决数量/出价输入与提交按钮互相遮挡问题。
-- 调整：提交摘要文案改为“需求数量 + 出价物资数量”，不再默认银币语义。
+- 调整：提交摘要文案改为"需求数量 + 出价物资数量"，不再默认银币语义。
 - 文案：新增中英键 `RimChat_AirdropTradeCard_OfferCountLabel`、`RimChat_AirdropTradeCard_SelectedOfferItem`、`RimChat_AirdropTradeCard_NoOfferItem`、`RimChat_AirdropTradeCard_NoInventory`。
 - 版本升级：`About/About.xml` 的 `modVersion` 更新为 `0.9.9`。
 
 0.9.8
 - 调整：空投信息卡提交后仅显示自然语言摘要，不再把结构化交易块直接展示在聊天区。
-- 新增：空投信息卡结构参数改为内部注入到 AI 请求（隐藏上下文），信息卡作为“参考报价输入”。
+- 新增：空投信息卡结构参数改为内部注入到 AI 请求（隐藏上下文），信息卡作为"参考报价输入"。
 - 新增：会话态缓存最近一次 AI 重报价（`item/count/silver/reason/tick`），下次打开空投信息卡时默认回填。
 - 新增：AI 重报价固定句式解析（`重报价: item=<defName> count=<int> silver=<int> reason=<text>` / `Counteroffer: ...`）。
-- 新增：当信息卡发起后 AI 本轮未返回 `request_item_airdrop` 动作时，系统提示“空投信息被忽略，无交易行为”。
-- 调整：空投信息卡右侧库存列表改为“通电轨道信标可达物资 + 可用数量”。
+- 新增：当信息卡发起后 AI 本轮未返回 `request_item_airdrop` 动作时，系统提示"空投信息被忽略，无交易行为"。
+- 调整：空投信息卡右侧库存列表改为"通电轨道信标可达物资 + 可用数量"。
 - 调整：`[?]` 受限原因映射扩展为 code 本地化优先，未覆盖回退 `validation.message`，再回退通用文案。
-- 调整：Prompt 契约明确“信息卡为参考报价，AI 可拒绝/重报价/改参数执行”，并约定固定重报价句式。
+- 调整：Prompt 契约明确"信息卡为参考报价，AI 可拒绝/重报价/改参数执行"，并约定固定重报价句式。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本升级：`About/About.xml` 的 `modVersion` 更新为 `0.9.8`。
 
@@ -657,8 +714,8 @@
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 
 0.9.4
-- 重构：API 设置页版本日志语言选择改为按 `LanguageDatabase.activeLanguage.folderName` 直读 `1.6/Languages/<folderName>`，不再使用“中文/其他”二分硬编码。
-- 新增：语言目录解析支持“归一化 + 别名映射”（如 `zh-Hans` -> `ChineseSimplified`），并统一在缺失时 fail-fast 回退 `English`。
+- 重构：API 设置页版本日志语言选择改为按 `LanguageDatabase.activeLanguage.folderName` 直读 `1.6/Languages/<folderName>`，不再使用"中文/其他"二分硬编码。
+- 新增：语言目录解析支持"归一化 + 别名映射"（如 `zh-Hans` -> `ChineseSimplified`），并统一在缺失时 fail-fast 回退 `English`。
 - 新增：`AvailableLanguages` 改为扫描 `1.6/Languages` 一级子目录动态生成，不再仅中英硬编码。
 - 调整：版本日志文件候选顺序改为 `VersionLog_<语言目录>.txt` -> `VersionLog.txt` -> `VersionLog_en.txt`。
 - 新增：目录/文件缺失时打印明确警告日志，包含活动语言、尝试路径与最终回退路径。
@@ -666,23 +723,23 @@
 
 0.9.3
 - 根修：取消空投二阶段 AI 选择请求，改为本地直出候选并进入确认链路，避免二阶段请求无首包导致的必超时。
-- 新增：确认弹窗默认自动选最高匹配候选（Top1），并提供低可视度“这不是我想要的物品”按钮；可手动从前5候选切换后再确认执行。
+- 新增：确认弹窗默认自动选最高匹配候选（Top1），并提供低可视度"这不是我想要的物品"按钮；可手动从前5候选切换后再确认执行。
 - 修复：空投数量参数解析支持 `quantity`（兼容旧 `count`），并与 `need` 显式数量按既有规则合并，修复 `quantity=500` 被误判为默认数量 `5` 的问题。
 - 调整：候选列表与跟进解析统一扩展到前5候选（编号/中文序号/defName/label）。
 - 本地化：新增中英键 `RimChat_ItemAirdropAlternativeLowVisibility`，并更新候选回复提示为 `1/2/3/4/5`。
 - 版本升级：`About/About.xml` 的 `modVersion` 从 `0.9.2` 更新为 `0.9.3`。
 
 0.9.2
-- 根修：空投二阶段 `AirdropSelection` 通道禁用本地连接超时重试，`selection_timeout` 不再稳定叠加“双轮等待”。
+- 根修：空投二阶段 `AirdropSelection` 通道禁用本地连接超时重试，`selection_timeout` 不再稳定叠加"双轮等待"。
 - 新增：二阶段请求与排队超时解耦，新增配置 `ItemAirdropSecondPassQueueTimeoutSeconds`（默认 15，范围 3..120），`ItemAirdropSecondPassTimeoutSeconds` 仅控制单次请求超时。
-- 新增：二阶段异步传输诊断字段扩展（`firstByteMs/attempts/payloadBytes/http/endpoint`），用于定位“无首包响应”根因。
-- 调整：空投数量合法窗口去除固定 `ItemAirdropMaxTotalItemsPerDrop` 截断，改为 `hardMax=min(预算上限, 掉落堆叠上限)`，实现“按需求+预算”并保留堆叠物理约束。
+- 新增：二阶段异步传输诊断字段扩展（`firstByteMs/attempts/payloadBytes/http/endpoint`），用于定位"无首包响应"根因。
+- 调整：空投数量合法窗口去除固定 `ItemAirdropMaxTotalItemsPerDrop` 截断，改为 `hardMax=min(预算上限, 掉落堆叠上限)`，实现"按需求+预算"并保留堆叠物理约束。
 - 本地化：新增中英键 `RimChat_ItemAirdropSecondPassQueueTimeoutSeconds`。
 - 文档：同步更新 `doc/Api.md`、`doc/config.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
 - 版本升级：`About/About.xml` 的 `modVersion` 从 `0.9.1` 更新为 `0.9.2`。
 
 0.9.1
-- 修复：空投动作执行策略调整为“同轮仅接受首条成功空投请求”，后续同轮空投动作返回拒绝结果，避免多空投动作导致整轮空投不可用。
+- 修复：空投动作执行策略调整为"同轮仅接受首条成功空投请求"，后续同轮空投动作返回拒绝结果，避免多空投动作导致整轮空投不可用。
 - 修复：新增空投候选回复发送前直连；玩家在候选待选状态下回复 `1/2/3/defName/label` 时直接映射 `selected_def` 并执行，不再重复触发二阶段 AI 选择请求。
 - 修复：空投数量决策新增 `parameters.count` 融合；当与 `need` 显式数量并存时取较大值，超过合法上限 `hardMax` 自动截断并写入审计来源。
 - 新增：二阶段异步选择诊断日志（dispatch/success/timeout/parse_failed/error），日志包含 requestId、queueMs、processingMs、endToEndMs、failureReason，便于区分排队超时/请求超时/解析失败。
@@ -695,7 +752,7 @@
 
 0.8.20
 - 新增：囚犯信息卡发送时记录核心器官快照（心/肝/肺/肾/眼，按实例计数），并写入赎金合约用于离图对账。
-- 新增：离图时按“新增核心器官缺失”判定离图失败；命中后延迟 5-10 游戏小时执行超时级重罚，并在社交圈谴责文案中写入器官缺失事实。
+- 新增：离图时按"新增核心器官缺失"判定离图失败；命中后延迟 5-10 游戏小时执行超时级重罚，并在社交圈谴责文案中写入器官缺失事实。
 - 调整：命中器官失败链路时不再叠加即时价值缩水处罚（drop penalty），避免同一事件双罚。
 - 修复：囚犯信息卡参考赎金改为每次发卡强制重算；新增读档/开新局清空赎金运行态缓存，修复读档后报价不刷新。
 - 本地化：新增中英键 `RimChat_PrisonerRansomOrganFailureBody`、`RimChat_PrisonerRansomOrganFailureWarningMessage`、`RimChat_PrisonerRansomOrganFailureCondemnSummary`、`RimChat_RansomCoreOrgansIntact`。
@@ -703,7 +760,7 @@
 - 版本：`About/About.xml` 升级为 `0.8.20`。
 
 0.8.19
-- 新增：赎金合约持久化字段扩展，记录目标名称快照与“健康离图延迟回执”调度状态（到期 tick/是否已发送）。
+- 新增：赎金合约持久化字段扩展，记录目标名称快照与"健康离图延迟回执"调度状态（到期 tick/是否已发送）。
 - 新增：囚犯以严格健康（健康>=85%、意识>=85%、且非倒地）离图后，按游戏内 5-10 小时延迟发送主动回执（写入会话 + 主动来信）。
 - 新增：囚犯超时未离图时，在保留原有重罚/报复袭击的基础上，追加会话警告来信，并触发派系首领社交圈谴责生成（AI 出稿）。
 - 本地化：新增中英键 `RimChat_PrisonerRansomHealthyExitReplyMessage`、`RimChat_PrisonerRansomTimeoutWarningMessage`、`RimChat_PrisonerRansomTimeoutCondemnSummary` 及相关标题键。
@@ -720,7 +777,7 @@
 
 0.8.17
 - 优化：赎金证据卡缩略图改为中心裁切放大绘制（固定 zoom），在不改变气泡宽度与文字区宽度的前提下放大 pawn 主体占比。
-- 调整：赎金证据卡字段“当前叫价”改为“ID”，值改为 `pawn.GetUniqueLoadID()` 原样字符串。
+- 调整：赎金证据卡字段"当前叫价"改为"ID"，值改为 `pawn.GetUniqueLoadID()` 原样字符串。
 - 同步：囚犯信息卡字段顺序校验更新为 `ID` 字段，并保留 legacy 顺序兼容历史消息文本。
 - 本地化：更新 `RimChat_RansomProofCardBody` 中英文本地化键（`当前叫价/Current ask` -> `ID`）。
 - 文档：同步更新 `doc/Index.md`、`doc/VersionLog_en.txt`。
@@ -752,63 +809,63 @@
 - 版本：`About/About.xml` 升级为 `0.8.14`。
 
 0.8.13
-- 强化：赎金承诺动作一致性规则提升为 MUST 级，覆盖“已提交/已支付/钱货两清/已放人离开”等完成态措辞。
-- 强化：通信终端语境增加硬约束，明确禁止线下到场式叙述（如“当面处理/带人离开”）。
+- 强化：赎金承诺动作一致性规则提升为 MUST 级，覆盖"已提交/已支付/钱货两清/已放人离开"等完成态措辞。
+- 强化：通信终端语境增加硬约束，明确禁止线下到场式叙述（如"当面处理/带人离开"）。
 - 同步：默认提示词、系统默认配置、运行时迁移补丁、压缩响应合同与 `action_rules.txt` 全部追加上述硬规则。
 - 版本：`About/About.xml` 升级为 `0.8.13`。
 
 0.8.12
-- 规则强化：提示词明确“当前是通信终端在线聊天，不是线下会面”，禁止线下到场式表述。
-- 赎金约束：提示词新增强制规则——若文本承诺“已提交/已支付赎金”，同条回复必须同时输出 `pay_prisoner_ransom` 动作。
+- 规则强化：提示词明确"当前是通信终端在线聊天，不是线下会面"，禁止线下到场式表述。
+- 赎金约束：提示词新增强制规则——若文本承诺"已提交/已支付赎金"，同条回复必须同时输出 `pay_prisoner_ransom` 动作。
 - 同步：默认提示词、系统默认配置、运行时迁移补丁与 `action_rules.txt` 全部对齐上述约束，避免旧配置回灌丢失。
 - 验证：可在日志 `C:\\Users\\Administrator\\AppData\\LocalLow\\Ludeon Studios\\RimWorld by Ludeon Studios\\Player.log` 检查承诺文本与动作提交是否同轮出现。
 - 版本：`About/About.xml` 升级为 `0.8.12`。
 
 0.8.11
-- 根修：`pay_prisoner_ransom` 重构为“单次支付提交”，移除代码侧多轮议价与自动放人链路。
+- 根修：`pay_prisoner_ransom` 重构为"单次支付提交"，移除代码侧多轮议价与自动放人链路。
 - 执行：报价仅做参数/目标/区间校验；通过后立即空投银币并登记赎金合约，成功状态改为 `paid_submitted`。
 - 交互：目标缺失或失效时回退到 `request_info(prisoner)` 选人语义；失败统一为简洁系统提示（参数错误、目标不可用、区间越界、模式错误等）。
-- UI：移除 `counter_offer/rejected_floor_not_met` 反馈分支，新增“支付已提交/到账，放人由玩家手动操作”系统消息。
+- UI：移除 `counter_offer/rejected_floor_not_met` 反馈分支，新增"支付已提交/到账，放人由玩家手动操作"系统消息。
 - 合约：保留赎金合约惩罚机制；支付成功后立即清理会话绑定，避免重复扣款。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.8.11`。
 
 0.8.10
-- 根修：`pay_prisoner_ransom` 的非终态成功结果（`counter_offer` / `rejected_floor_not_met`）新增系统反馈消息，避免“有动作但无体感效果”。
-- 交互：当报价触发还价时，系统会明确展示“报价被拒 + 当前还价 + 轮次”；当低于底价终止时，系统会明确展示“谈判结束 + 底价要求”。
+- 根修：`pay_prisoner_ransom` 的非终态成功结果（`counter_offer` / `rejected_floor_not_met`）新增系统反馈消息，避免"有动作但无体感效果"。
+- 交互：当报价触发还价时，系统会明确展示"报价被拒 + 当前还价 + 轮次"；当低于底价终止时，系统会明确展示"谈判结束 + 底价要求"。
 - 本地化：新增中英键 `RimChat_RansomCounterOfferSystem`、`RimChat_RansomRejectedFloorSystem`。
 - 兼容：不新增存档字段，不修改赎金动作契约与参数结构。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.8.10`。
 
 0.8.9
-- 调整：赎金报价规则回退为“区间校验优先”，不再要求 `offer_silver` 必须精确命中当前叫价。
+- 调整：赎金报价规则回退为"区间校验优先"，不再要求 `offer_silver` 必须精确命中当前叫价。
 - 根修：移除执行层 `offer_must_match_current_ask` fail-fast；只要报价落在当前可报价区间内即可继续议价/成交。
-- 同步：移除默认提示词、系统默认配置与运行时迁移中的“必须等于当前叫价”硬规则，避免后续自动回灌。
+- 同步：移除默认提示词、系统默认配置与运行时迁移中的"必须等于当前叫价"硬规则，避免后续自动回灌。
 - 兼容：不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 动作结构与参数契约。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.8.9`。
 
 0.8.8
 - 根修：`pay_prisoner_ransom` 执行层新增硬校验——当系统存在 `currentAsk` 时，`offer_silver` 必须等于当前叫价；不命中时直接 fail-fast。
-- 阻断：将“低价反复还价但文本声称已付款”的假成功路径改为可见失败提示，避免玩家误判“已付款但无效果”。
+- 阻断：将"低价反复还价但文本声称已付款"的假成功路径改为可见失败提示，避免玩家误判"已付款但无效果"。
 - 本地化：新增中英键 `RimChat_RansomOfferMustMatchCurrentAskSystem`，失败提示包含 `offered/currentAsk/min/max`。
 - 兼容：不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 动作结构与参数契约。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.8.8`。
 
 0.8.7
-- 根修：`pay_prisoner_ransom` 成功分支状态机改为“仅 `accepted_and_released` 清理赎金绑定状态”；`counter_offer/rejected_floor_not_met` 不再误清理。
-- 短期阻断：移除“`result.IsSuccess` 即清理”的错误触发条件，阻断“付钱 -> 丢目标 -> 重新选人”死循环。
-- 加固：新增赎金成功状态日志分流，明确区分“终态成功并清理”与“非终态成功保留绑定”。
+- 根修：`pay_prisoner_ransom` 成功分支状态机改为"仅 `accepted_and_released` 清理赎金绑定状态"；`counter_offer/rejected_floor_not_met` 不再误清理。
+- 短期阻断：移除"`result.IsSuccess` 即清理"的错误触发条件，阻断"付钱 -> 丢目标 -> 重新选人"死循环。
+- 加固：新增赎金成功状态日志分流，明确区分"终态成功并清理"与"非终态成功保留绑定"。
 - 兼容：不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 动作契约与参数结构，旧档兼容保持不变。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.8.7`。
 
 0.8.6
-- 根修：赎金链路取消“request_info 必须先成功”的硬前置门禁；`pay_prisoner_ransom` 在 `target_pawn_load_id` 已明确有效时可直接执行。
-- 行为：仅在缺少有效目标信息时触发补信息链路（弹囚犯选择并提示补充信息），不再因“未完成 request_info”直接拒绝。
-- 提示词：默认 Prompt、系统默认配置、运行时迁移补丁、动作目录说明统一改为“缺信息才 request_info”语义。
+- 根修：赎金链路取消"request_info 必须先成功"的硬前置门禁；`pay_prisoner_ransom` 在 `target_pawn_load_id` 已明确有效时可直接执行。
+- 行为：仅在缺少有效目标信息时触发补信息链路（弹囚犯选择并提示补充信息），不再因"未完成 request_info"直接拒绝。
+- 提示词：默认 Prompt、系统默认配置、运行时迁移补丁、动作目录说明统一改为"缺信息才 request_info"语义。
 - 兼容：不新增存档字段，不修改 `request_info/pay_prisoner_ransom` 动作契约结构，旧会话状态字段继续复用。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.8.6`。
@@ -821,18 +878,18 @@
 - 版本：`About/About.xml` 升级为 `0.8.5`。
 0.8.4
 - 根修：`pay_prisoner_ransom` 越界报价失败文案升级为可读区间提示，明确显示 `offered/min/max/currentAsk`，不再只回传内部错误串。
-- 加固：`request_info(prisoner)` 选人完成后新增“当前可报价区间”系统消息，作为下一轮谈判硬约束输入，减少模型越界报价。
+- 加固：`request_info(prisoner)` 选人完成后新增"当前可报价区间"系统消息，作为下一轮谈判硬约束输入，减少模型越界报价。
 - 规则：保持原有议价窗口边界（0.6x~1.4x）不变，不做放宽与自动夹值；继续 fail-fast 拒绝越界报价。
-- 提示词：默认 Prompt、运行时迁移规则、紧凑动作目录同步补充“offer_silver 必须落在当前可报价区间”约束。
-- 新增：外交发送区增加纯文字入口 `+发送信息`，点击弹出轻量菜单，当前支持“发送囚犯信息”。
-- 重构：囚犯信息手动入口复用既有囚犯选择弹窗，手动触发不再插入“请先选择囚犯”系统提示。
+- 提示词：默认 Prompt、运行时迁移规则、紧凑动作目录同步补充"offer_silver 必须落在当前可报价区间"约束。
+- 新增：外交发送区增加纯文字入口 `+发送信息`，点击弹出轻量菜单，当前支持"发送囚犯信息"。
+- 重构：囚犯信息手动入口复用既有囚犯选择弹窗，手动触发不再插入"请先选择囚犯"系统提示。
 - 优化：囚犯信息卡保持系统语义但改为我方视觉归属（右侧气泡、我方头像、我方配色），不改 AI 主链路语义。
 - 优化：囚犯信息卡改为横向紧凑布局，缩略图使用裁剪填充，减少留白并显著降低气泡占用高度。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.8.4`。
 0.8.3
 - 加固：提示词强约束升级，明确 `request_info(info_type=prisoner)` 是 `pay_prisoner_ransom` 的唯一合法前置动作。
-- 加固：默认外交提示词（Prompt/Default）将“先 request_info、后 pay”升级为硬门禁表述，禁止前置未完成时直接 pay。
+- 加固：默认外交提示词（Prompt/Default）将"先 request_info、后 pay"升级为硬门禁表述，禁止前置未完成时直接 pay。
 - 根修：旧配置自动迁移补齐赎金前置约束；若本地历史 Prompt 缺失该约束，加载时自动回写到 `ApiActions` 与 `ResponseFormat.ImportantRules`。
 - 加固：紧凑动作目录与输出规范补充赎金强约束文案，避免模型在压缩规则下遗漏前置时机。
 - 版本：`About/About.xml` 升级为 `0.8.3`。
@@ -847,11 +904,11 @@
 - 版本：`About/About.xml` 升级为 `0.8.2`。
 0.8.1
 - 根修：新增赎金目标选择流程。检测到 `pay_prisoner_ransom` 意图且缺少目标时，强制弹出囚犯选择框，未选择前不执行支付。
-- 新增：选择囚犯后在聊天流输出“囚犯存活证明卡片”（含 pawn 缩略图、健康/意识/行走/所属派系、三档固定 quote）。
+- 新增：选择囚犯后在聊天流输出"囚犯存活证明卡片"（含 pawn 缩略图、健康/意识/行走/所属派系、三档固定 quote）。
 - 新增：卡片后追加系统参考报价消息，口径为当前 `CurrentAskSilver`。
 - 行为：仅绑定 `target_pawn_load_id` 到会话运行态；不自动出价、不自动提交支付，后续继续由玩家与 AI 谈价。
 - 修复：`AIResponseParser` 不再静默丢弃缺参赎金动作，改为保留意图并输出字段级缺参日志（便于复盘）。
-- 合约：外交重试提示强化为“赎金缺 `target_pawn_load_id/offer_silver` 时不得声称已付款/已提交”。
+- 合约：外交重试提示强化为"赎金缺 `target_pawn_load_id/offer_silver` 时不得声称已付款/已提交"。
 - 本地化：新增赎金选择、存活证明卡片、参考报价相关中英语言键。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.8.1`。
@@ -887,9 +944,9 @@
 - 版本：`About/About.xml` 升级为 `0.7.107`。
 
 0.7.106
-- 根修：`request_item_airdrop` 二阶段选品不再由模型自由决定数量；当 `need` 含显式数量（如“50个干肉饼”）时，执行链路强制使用该数量并做合法窗口校验。
-- 修复：二阶段提示词移除“single-item/count=1”误导语句，明确“显式数量优先，模型仅负责选 `selected_def`”。
-- 一致性：同步链路与异步链路统一复用显式数量校验，避免出现“同一请求在不同路径下数量行为不一致”。
+- 根修：`request_item_airdrop` 二阶段选品不再由模型自由决定数量；当 `need` 含显式数量（如"50个干肉饼"）时，执行链路强制使用该数量并做合法窗口校验。
+- 修复：二阶段提示词移除"single-item/count=1"误导语句，明确"显式数量优先，模型仅负责选 `selected_def`"。
+- 一致性：同步链路与异步链路统一复用显式数量校验，避免出现"同一请求在不同路径下数量行为不一致"。
 - 可观测性：`selection` 阶段审计改为记录最终生效数量与来源（`llm/fallback_explicit/fallback_default_family`），日志可直接反映真实投放决策。
 - 文档：同步更新 `doc/VersionLog_en.txt`、`doc/Api.md`、`doc/Index.md`。
 - 版本：`About/About.xml` 升级为 `0.7.106`。
@@ -899,13 +956,13 @@
 - 新增：`GameAIInterface.BeginPrepareItemAirdropTradeAsync(...)` 与 `CancelItemAirdropAsyncRequest(...)`，支持异步准备、超时回退、窗口关闭主动取消。
 - 新增：外交会话运行态 `pendingAirdropRequestId/pendingAirdropRequestLease/isWaitingForAirdropSelection`，用于异步 requestId 跟踪和回调防串线。
 - 行为：二阶段/别名超时通过 `AIChatServiceAsync` 请求级超时覆盖（按空投配置生效），`selection_timeout` 仍回退到玩家候选确认链路。
-- 体验：输入区新增空投二阶段“匹配中”非阻塞状态条；对话窗口关闭时立即取消空投异步请求。
+- 体验：输入区新增空投二阶段"匹配中"非阻塞状态条；对话窗口关闭时立即取消空投异步请求。
 - 本地化：新增 `RimChat_ItemAirdropSelectionInProgressSystem`、`RimChat_ItemAirdropSelectionInProgressBar`（中/英）。
 - 文档：同步更新 `doc/VersionLog_en.txt`、`doc/Api.md`、`doc/Index.md`、`doc/config.md`。
 - 版本：`About/About.xml` 升级为 `0.7.105`。
 
 0.7.104
-- 修复：空投支付解析器新增“语义分词全包含”匹配层（CamelCase/label 拆词），覆盖 `MealPackaged -> MealSurvivalPackaged` 这类“词序变化 + 插词”输入。
+- 修复：空投支付解析器新增"语义分词全包含"匹配层（CamelCase/label 拆词），覆盖 `MealPackaged -> MealSurvivalPackaged` 这类"词序变化 + 插词"输入。
 - 根修：`ItemAirdropPaymentResolver` 在 defName/label 精确、归一化包含、近似编辑距离之外，新增多词语义匹配打分，降低 `payment_item_unresolved` 误报。
 - 兼容：保持既有并列最高分 fail-fast（`payment_item_ambiguous`）与 Top3 候选提示策略不变。
 - 文档：同步更新 `doc/VersionLog_en.txt`、`doc/Api.md`、`doc/Index.md`、`doc/config.md`。
@@ -913,10 +970,10 @@
 
 0.7.103
 - 根修：`request_item_airdrop` 预算改为单一真相源，统一由 `payment_items` 市场价汇总后向下取整（`Floor`）自动派生；外部 `budget_silver` 不再参与执行判断。
-- 兼容：当输入仍携带 `budget_silver` 时仅记录审计（`RequestItemAirdrop.BudgetMismatch`），用于追踪“传入预算 vs 派生预算”偏差，不阻断交易。
-- 根修：空投准备链路改为“先解析支付并派生预算，再做候选选择与数量合法性校验”，避免预算/支付双字段分歧。
+- 兼容：当输入仍携带 `budget_silver` 时仅记录审计（`RequestItemAirdrop.BudgetMismatch`），用于追踪"传入预算 vs 派生预算"偏差，不阻断交易。
+- 根修：空投准备链路改为"先解析支付并派生预算，再做候选选择与数量合法性校验"，避免预算/支付双字段分歧。
 - 规则：`request_item_airdrop` 动作契约调整为 `need + payment_items` 必填；`budget_silver` 降为可选审计字段。
-- 短期阻断：外交链路在二阶段 `selection_timeout` 场景下强制追加系统候选提示，避免 NPC 台词覆盖导致“空投失败无提示”。
+- 短期阻断：外交链路在二阶段 `selection_timeout` 场景下强制追加系统候选提示，避免 NPC 台词覆盖导致"空投失败无提示"。
 - 联动：单金额简写映射改为仅注入 `payment_items=[{item:Silver,count:amount}]`，不再写入 `budget_silver`。
 - 文档：同步更新 `doc/Api.md`、`doc/config.md`、`doc/Index.md`、`doc/VersionLog_en.txt` 与动作契约来源（`SystemPromptConfig`、`PromptPersistenceService`、`action_rules`、默认外交提示词）。
 - 版本：`About/About.xml` 升级为 `0.7.103`。
@@ -924,46 +981,46 @@
 0.7.102
 - 根修：`request_item_airdrop` 二阶段选择请求升级为结构化响应通道（`AIChatClientResponse`），可回传 `httpStatusCode/failureReason/token`，不再只有裸文本结果。
 - 短期阻断：空投二阶段超时默认值从 `12s` 提升到 `25s`（配置项 `ItemAirdropSecondPassTimeoutSeconds`），降低稳定 `~12003ms` 超时概率。
-- 根修：二阶段失败语义细分为 `selection_timeout / selection_queue_timeout / selection_service_error`；timeout/queue_timeout 继续走“待玩家确认候选”链路，service_error 直接 fail-fast。
+- 根修：二阶段失败语义细分为 `selection_timeout / selection_queue_timeout / selection_service_error`；timeout/queue_timeout 继续走"待玩家确认候选"链路，service_error 直接 fail-fast。
 - 优化：二阶段提示词候选行压缩为关键字段（`def/label/unit/max_legal_count`）并限制展示前 20 条，减少模型选择阶段 token 压力。
 - 观测：`AIRequestDebugSource.AirdropSelection` 外部写入支持 token 字段透传，避免二阶段观测长期 `tokens=0` 的排查盲区。
 - 文档：同步更新 `doc/Api.md`、`doc/config.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.102`。
 
 0.7.101
-- 根修：空投支付解析新增独立模块 `ItemAirdropPaymentResolver`，统一执行“defName 精确 -> label 精确 -> 归一化强匹配 -> 近似匹配”，替换原 `GameAIInterface.ItemAirdrop.Barter` 内联解析逻辑。
+- 根修：空投支付解析新增独立模块 `ItemAirdropPaymentResolver`，统一执行"defName 精确 -> label 精确 -> 归一化强匹配 -> 近似匹配"，替换原 `GameAIInterface.ItemAirdrop.Barter` 内联解析逻辑。
 - 短期阻断：当支付品命中并列最高分时，直接返回 `payment_item_ambiguous` 并附带 Top3 候选（`defName(label)`），禁止自动扣货。
-- 根修：`request_item_airdrop` 二阶段 `selection_timeout` 不再自动回退 Top1 成交；改为返回“待玩家确认候选”数据（Top3）。
+- 根修：`request_item_airdrop` 二阶段 `selection_timeout` 不再自动回退 Top1 成交；改为返回"待玩家确认候选"数据（Top3）。
 - 新增：外交 UI 支持空投超时候选确认提示（编号/defName/名称），并写入延迟动作运行态，等待玩家回复后继续同一动作链路。
 - 新增：玩家回复 `1/2/3` 或候选名称/defName 时，动作映射会回填 `selected_def` 后重提 `request_item_airdrop`，避免再次走超时兜底。
-- 契约：`request_item_airdrop.payment_items.item` 规则收口为“defName 优先，label 仅在唯一可解析时备用”；同步更新 `Prompt/Default/DiplomacyDialoguePrompt_Default.json`、`SystemPromptConfig`、`PromptPersistenceService`、`action_rules.txt`。
+- 契约：`request_item_airdrop.payment_items.item` 规则收口为"defName 优先，label 仅在唯一可解析时备用"；同步更新 `Prompt/Default/DiplomacyDialoguePrompt_Default.json`、`SystemPromptConfig`、`PromptPersistenceService`、`action_rules.txt`。
 - 本地化：新增空投超时候选确认相关语言键（中/英）。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.101`。
 
 0.7.100
 - 修复：外交延迟意图映射新增 `request_item_airdrop` 单金额简写处理；当玩家仅输入单金额（如 `2100银`/`2100 silver`）时，自动补齐 `budget_silver` 与 `payment_items` 并直接生成空投动作。
-- 规则：默认映射为“预算=支付”；支付物资固定为 `Silver`，支付数量等于输入金额。
-- 约束：多金额表达（如“预算2100支付2000”）不触发简写映射，保持原有确认/澄清链路。
-- 修复：映射命中后改用确定性本地化提示文案，避免沿用会话中可能过期的失败文本造成“文本误报”。
+- 规则：默认映射为"预算=支付"；支付物资固定为 `Silver`，支付数量等于输入金额。
+- 约束：多金额表达（如"预算2100支付2000"）不触发简写映射，保持原有确认/澄清链路。
+- 修复：映射命中后改用确定性本地化提示文案，避免沿用会话中可能过期的失败文本造成"文本误报"。
 - 本地化：新增 `RimChat_DiplomacyAirdropAmountMapped` 中英文语言键。
 - 文档：同步更新 `doc/Index.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.100`。
 
 0.7.99
 - 短期阻断：`AIResponseParser.AddActionIfValid` 新增 `request_item_airdrop` 参数结构校验；缺失 `need/budget_silver/payment_items` 或结构非法时，解析期直接丢弃动作并记录日志，阻断运行时 `payment_items_missing` 执行失败链路。
-- 根修：修正外交紧凑动作目录中的空投契约提示，`request_item_airdrop` 改为明确要求 `budget_silver` 与 `payment_items[{item,count}]`，并写明“支付总价>=预算、超付<=5%”。
-- 提示词规则：同步更新 `RimChat/action_rules.txt` 的空投参数与示例，移除旧的“预算可选、无 payment_items”误导描述。
+- 根修：修正外交紧凑动作目录中的空投契约提示，`request_item_airdrop` 改为明确要求 `budget_silver` 与 `payment_items[{item,count}]`，并写明"支付总价>=预算、超付<=5%"。
+- 提示词规则：同步更新 `RimChat/action_rules.txt` 的空投参数与示例，移除旧的"预算可选、无 payment_items"误导描述。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.99`。
 
 0.7.98
-- 新增：`request_item_airdrop` 支持以物易物交易单（`payment_items`），并改为“先准备交易单，确认后执行”链路。
+- 新增：`request_item_airdrop` 支持以物易物交易单（`payment_items`），并改为"先准备交易单，确认后执行"链路。
 - 根修：外交对话链路接入最终确认弹窗；玩家确认前不执行空投与扣货，取消后写入系统消息并终止执行。
-- 根修：空投支付改为真实物资折银校验，限定“通电轨道信标覆盖范围”库存；库存不足、清单缺失、超付超限等场景全部 fail-fast。
+- 根修：空投支付改为真实物资折银校验，限定"通电轨道信标覆盖范围"库存；库存不足、清单缺失、超付超限等场景全部 fail-fast。
 - 规则：`budget_silver` 升级为必填且为预算权威；`payment_items` 升级为必填数组（每项 `item/count`），支付总价必须 `>= budget_silver` 且超付不超过 5%。
 - 安全：同一轮对话仅允许一条 `request_item_airdrop`，多条动作直接拒绝，避免并发确认窗与重复扣货风险。
-- 架构：新增 `GameAIInterface.ItemAirdrop.Barter` 交易域模块，拆分“准备单据 / 扣货提交”职责，保留旧接口兼容调用。
+- 架构：新增 `GameAIInterface.ItemAirdrop.Barter` 交易域模块，拆分"准备单据 / 扣货提交"职责，保留旧接口兼容调用。
 - 解析：`AIResponseParser.ParseParameters` 升级为通用 JSON 值解析，支持 object/array/bool/null，空投可直接读取结构化 `payment_items`。
 - 本地化：新增空投确认弹窗与执行结果语言键（中/英）。
 - 提示词：更新默认动作契约，明确 `request_item_airdrop` 需包含 `budget_silver + payment_items`。
@@ -971,26 +1028,26 @@
 - 版本：`About/About.xml` 升级为 `0.7.98`。
 
 0.7.97
-- 根修：RPG 新会话首轮改为“单次提示词构建 + 缓存复用”，移除同窗口首轮双重系统提示词构建，首轮发送仅消费缓存结果。
+- 根修：RPG 新会话首轮改为"单次提示词构建 + 缓存复用"，移除同窗口首轮双重系统提示词构建，首轮发送仅消费缓存结果。
 - 根修：新增 RPG 归档异步预热链路（`BeginPromptMemoryWarmup`），窗口打开即后台加载归档快照；首轮链路禁用冷加载阻塞。
 - 根修：`BuildPromptMemoryBlock` 新增显式参数 `allowCompressionScheduling/allowCacheLoad`，首轮强制 `false/false`，彻底剥离压缩调度与冷加载同步阻塞。
 - 根修：新增暖启动压缩延迟调度队列（`_pendingWarmupCompressionTargets`），仅在主线程安全检查点触发 `TryScheduleSessionCompression`。
 - 架构：`RpgPromptTurnContextScope` 新增 `AllowMemoryCompressionScheduling/AllowMemoryColdLoad` 运行时标记，打通 UI -> PromptPersistence -> Renderer -> RuntimeVariableBridge 全链路。
 - 配置：思维链开关升级为按通道独立持久化 `ThoughtChainByChannel`，移除旧全局 `EnableThoughtChainNode` 的写回路径，仅在加载期一次性迁移。
 - 默认：`rpg_dialogue=false`、`proactive_rpg_dialogue=false`，其余通道保持开启。
-- UI：AI 设置页新增“按通道启用思维链”列表开关，支持逐通道编辑；重置 UI 设置时恢复通道默认矩阵。
+- UI：AI 设置页新增"按通道启用思维链"列表开关，支持逐通道编辑；重置 UI 设置时恢复通道默认矩阵。
 - 多语言：新增键 `RimChat_ThoughtChainByChannelTitle`、`RimChat_ThoughtChainChannelToggleLabel`（中/英）。
 - 文档：同步更新 `doc/config.md`、`doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.97`。
 
 0.7.96
-- 根修：新增外交响应契约守卫 `DiplomacyResponseContractGuard`，针对“明确执行承诺但缺失 actions JSON”执行 fail-fast；首轮违约自动重试，重试后仍违约时降级为角色内澄清追问，避免“口头已提交但未执行”。
+- 根修：新增外交响应契约守卫 `DiplomacyResponseContractGuard`，针对"明确执行承诺但缺失 actions JSON"执行 fail-fast；首轮违约自动重试，重试后仍违约时降级为角色内澄清追问，避免"口头已提交但未执行"。
 - 新增：`AIChatServiceAsync` 外交通道接入契约重试链路与调试遥测（`contractValidationStatus/contractRetryCount/contractFailureReason`），与 RPG 契约校验保持统一观测口径。
 - 根修：新增外交意图映射策略模块 `Dialog_DiplomacyDialogue.ActionPolicies`，覆盖延迟动作 `request_item_airdrop/request_caravan/request_aid/request_raid/trigger_incident/create_quest`。
-- 策略：对“再发一次/发送请求/还是没收到”等模糊催单先追问确认；收到“确认/下单/yes/confirm”等肯定词后再补发动作；缺必填参数时持续追问，不做表面承诺。
-- 去重：新增“同动作同参数 + 2 个助手回合”短窗口去重，阻断重复提交导致的重复派发。
+- 策略：对"再发一次/发送请求/还是没收到"等模糊催单先追问确认；收到"确认/下单/yes/confirm"等肯定词后再补发动作；缺必填参数时持续追问，不做表面承诺。
+- 去重：新增"同动作同参数 + 2 个助手回合"短窗口去重，阻断重复提交导致的重复派发。
 - 运行态：`FactionDialogueSession` 新增不入档的延迟动作意图状态（pending/last intent + 执行签名与回合），用于跨轮确认与防重。
-- 提示词：强化默认提示词与运行时 response contract，明确“承诺-动作绑定”与“模糊催单先追问”硬规则。
+- 提示词：强化默认提示词与运行时 response contract，明确"承诺-动作绑定"与"模糊催单先追问"硬规则。
 - 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.96`。
 
@@ -998,16 +1055,16 @@
 - 新增：外交对话链路中，`request_item_airdrop` 成功后写入系统提示 `成功触发空投({0} x{1}@{2}银)`。
 - 新增：`Dialog_DiplomacyDialogue` 的动作执行结果 `ActionExecutionOutcome` 增加 `Data` 透传，用于读取空投结构化返回数据。
 - 规则：系统提示仅在外交会话内生效，仅针对空投成功动作；失败分支与其他动作逻辑保持不变。
-- 兼容：保留原有“空投到达”信件通知，系统提示与信件并存。
+- 兼容：保留原有"空投到达"信件通知，系统提示与信件并存。
 - 本地化：新增键 `RimChat_ItemAirdropTriggeredSystem`（中文/英文）。
 - 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.95`。
 
 0.7.94
 - 根修：`request_item_airdrop` 数量合法性改为单一真相源，统一由 `ComputeLegalCountWindow(...)` 计算 `maxByBudget/maxBySystem/hardMax`。
-- 约束：动作语义收敛为“单物品交易”；`need` 出现多数字时直接 fail-safe，返回 `need_count_ambiguous`。
+- 约束：动作语义收敛为"单物品交易"；`need` 出现多数字时直接 fail-safe，返回 `need_count_ambiguous`。
 - 修复：二阶段 `selection_timeout` 回退不再默认注入 25；改为 Top1 后先算 `hardMax`，显式超量直接 `selection_count_out_of_range`，无显式数量按品类默认值并受 `hardMax` 约束。
-- 提示词：二阶段候选新增 `max_legal_count`，并写死规则 `count must be 1..max_legal_count for selected_def`，消除“legal count”语义歧义。
+- 提示词：二阶段候选新增 `max_legal_count`，并写死规则 `count must be 1..max_legal_count for selected_def`，消除"legal count"语义歧义。
 - 可观测性：`RequestItemAirdrop.Stage` 的 `selection` 阶段新增 `countSource=llm|fallback_explicit|fallback_default_family`、`hardMax`、`maxByBudget`。
 - 文档：同步更新 `doc/Api.md`、`doc/Index.md`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.94`。
@@ -1023,12 +1080,12 @@
 - 根修：修正 `ThingDefCatalog.IsSpawnableItemDef` 过度过滤导致的空投候选池塌缩问题。
 - 调整：移除对 `scatterableOnMapGen` 与 `mineable` 的全局排除，恢复常见物资（如钢铁/食物）进入候选目录。
 - 调整：在目录层显式排除尸体 Def（`def.IsCorpse`），避免候选池被尸体类 near-miss 污染。
-- 结果：`request_item_airdrop` 在食物/材料请求下不再出现“records 有值但 familyReject=records 且全是尸体 nearMiss”的异常形态。
+- 结果：`request_item_airdrop` 在食物/材料请求下不再出现"records 有值但 familyReject=records 且全是尸体 nearMiss"的异常形态。
 - 验证：待游戏内复测 `RequestItemAirdrop.Stage` 的 `prepare` 诊断应出现非零候选或非尸体 near-miss。
 - 版本：`About/About.xml` 升级为 `0.7.92`。
 
 0.7.91
-- 根修：`request_item_airdrop` 在候选阶段新增“输入归一化 + 强匹配召回 + 本地同义词扩展”链路；在保持 AI 二阶段选择的前提下，显著降低 `no_candidates` 误空集。
+- 根修：`request_item_airdrop` 在候选阶段新增"输入归一化 + 强匹配召回 + 本地同义词扩展"链路；在保持 AI 二阶段选择的前提下，显著降低 `no_candidates` 误空集。
 - 修复：`ItemAirdropIntentParser` 支持 `| / \\ 、，。；：` 分隔符边界与字母/数字/中文混写拆分（如 `steel10个`），并清理数量/单位噪声 token。
 - 新增：`ThingDefResolver` 本地中英同义词扩展（优先于 AI 别名扩展），候选评分增加强匹配通道（defName/label 归一化包含关系加权）。
 - 新增：候选诊断计数（`recordsScanned`、`rejectedByBlacklist`、`rejectedByBlockedCategory`、`rejectedByFamily`、`rejectedByMatchScore`）与 `nearMisses` 采样。
@@ -1037,7 +1094,7 @@
 - 版本：`About/About.xml` 升级为 `0.7.91`。
 
 0.7.90
-- 根修：彻底移除 `GameComponent_RPGManager.PersonaBootstrap` 的 `persona_bootstrap` 外发请求链路；不再调用 `SendChatRequestAsync(... PersonaBootstrap)`，API Debug 不再产生新“人格引导”请求记录。
+- 根修：彻底移除 `GameComponent_RPGManager.PersonaBootstrap` 的 `persona_bootstrap` 外发请求链路；不再调用 `SendChatRequestAsync(... PersonaBootstrap)`，API Debug 不再产生新"人格引导"请求记录。
 - 调整：`ProcessNpcPersonaBootstrapTick` 改为 RimTalk-only 模式；无 RimTalk 时直接完成 bootstrap（fail-fast），有 RimTalk 时仅执行人格复制链路。
 - 调整：`ProcessNpcPersonaRuntimeTick` 新增无 RimTalk 停扫门禁（一次命中后关闭后续 runtime 扫描），避免无效周期扫描。
 - 调整：`RetryOrFallbackPersonaPrompt` 收敛为 RimTalk 同步/复制，不再重试 AI 生成，也不再本地 fallback 造句。
@@ -1046,18 +1103,18 @@
 - 版本：`About/About.xml` 升级为 `0.7.90`。
 
 0.7.89
-- 优化：`request_item_airdrop` 改为“自然语言归一优先”，不再要求首轮必须命中固定族群词；会先尝试原始 need，再在候选为空时触发 AI 中英文别名扩展。
-- 优化：新增“首轮别名扩展”链路（可配置），空候选时向 AI 请求 `aliases` 列表并回注到检索词，提升 `医药/steel/混合中英` 等表达的命中率。
-- 优化：当已识别需求族群且候选为空时，新增一次“同品类放宽重试”（仅放宽类别黑名单，不跨品类），降低误空集失败率。
-- 优化：候选排序提高“具体 Def 精确命中”权重（defName/label 精确命中优先），`steel` 等明确物资请求会优先命中对应 Def。
+- 优化：`request_item_airdrop` 改为"自然语言归一优先"，不再要求首轮必须命中固定族群词；会先尝试原始 need，再在候选为空时触发 AI 中英文别名扩展。
+- 优化：新增"首轮别名扩展"链路（可配置），空候选时向 AI 请求 `aliases` 列表并回注到检索词，提升 `医药/steel/混合中英` 等表达的命中率。
+- 优化：当已识别需求族群且候选为空时，新增一次"同品类放宽重试"（仅放宽类别黑名单，不跨品类），降低误空集失败率。
+- 优化：候选排序提高"具体 Def 精确命中"权重（defName/label 精确命中优先），`steel` 等明确物资请求会优先命中对应 Def。
 - 新增配置：`EnableAirdropAliasExpansion`、`ItemAirdropAliasExpansionMaxCount`、`ItemAirdropAliasExpansionTimeoutSeconds`、`EnableAirdropSameFamilyRelaxedRetry`，并提供中英设置项。
-- 提示词：`request_item_airdrop` 契约更新为“首轮优先提供中英文别名（constraints）以提升命中率”。
+- 提示词：`request_item_airdrop` 契约更新为"首轮优先提供中英文别名（constraints）以提升命中率"。
 - 验证：`build.ps1` 通过（0 errors；保留既有 Scriban `NU1902/NU1903` 安全告警）。
 - 版本：`About/About.xml` 升级为 `0.7.89`。
 
 0.7.88
-- 修复：`request_item_airdrop` 的需求族群识别改为“子串匹配 + 中英关键词扩展”，覆盖无空格中文请求（如“干肉饼”“生存餐”“医疗包”）并提高分类稳定性。
-- 修复：候选构建从“白名单优先 + 通用补池”收敛为“严格族群优先”；当需求族群已识别时，禁止跨族群 fallback 混入，避免明显错品类选品。
+- 修复：`request_item_airdrop` 的需求族群识别改为"子串匹配 + 中英关键词扩展"，覆盖无空格中文请求（如"干肉饼""生存餐""医疗包"）并提高分类稳定性。
+- 修复：候选构建从"白名单优先 + 通用补池"收敛为"严格族群优先"；当需求族群已识别时，禁止跨族群 fallback 混入，避免明显错品类选品。
 - 修复：新增 `need_family_unknown` fail-fast；当需求文本无法分类到 `food/medicine/weapon/apparel` 时直接失败，不再继续执行高风险选品。
 - 验证：执行 `build.ps1` 成功（0 errors；保留既有 Scriban `NU1902/NU1903` 安全告警）。
 - 版本：`About/About.xml` 升级为 `0.7.88`。
@@ -1065,14 +1122,14 @@
 0.7.87
 - 重构：`request_item_airdrop` 升级为两阶段链路：候选构建（阶段1）-> LLM 选择（阶段2）-> 严格校验与投放（阶段3）。
 - 新增：空投领域模型与策略模块：`ItemAirdropModels`、`ItemAirdropIntentParser`、`ItemAirdropSafetyPolicy`、`ItemAirdropSelectionParser`。
-- 新增：候选构建采用“白名单优先（food/medicine/weapon/apparel）+ 通用补池”，并按 `需求匹配分 > 安全分 > 价格` 排序。
+- 新增：候选构建采用"白名单优先（food/medicine/weapon/apparel）+ 通用补池"，并按 `需求匹配分 > 安全分 > 价格` 排序。
 - 新增：二阶段严格 schema 校验 `selected_def/count/reason`；候选外 def、字段缺失、数量/预算越界均 fail-fast。
 - 新增：配置项 `ItemAirdropSelectionCandidateLimit`、`ItemAirdropSecondPassTimeoutSeconds`、`ItemAirdropBlockedCategoriesCsv`（保留 `EnableAIItemAirdrop`，不新增两阶段开关）。
 - 新增：API Debug 来源 `AIRequestDebugSource.AirdropSelection` 与中英语言键，二阶段请求标签 `channel:airdrop_selection`。
 - 更新：空投审计分段写入 `RequestItemAirdrop.Stage`（prepare/selection/execute/failed），并同步 `RequestItemAirdrop` 结果审计。
 
 0.7.86
-- 新增：外交动作 `request_item_airdrop`，支持“需求文本 -> 真实 ThingDef 检索 -> 原版空投投递”全链路执行。
+- 新增：外交动作 `request_item_airdrop`，支持"需求文本 -> 真实 ThingDef 检索 -> 原版空投投递"全链路执行。
 - 新增：`ThingDefCatalog` 与 `ThingDefResolver`，基于已加载 Def（原版+Mod）做规则优先检索、Top1 选择与黑名单拦截，未匹配时 fail-fast 返回失败码。
 - 新增：`GameAIInterface.RequestItemAirdrop(...)`，统一处理参数校验、预算解析（budget_silver > ransom=wealth*1% > AI默认预算）、数量换算、落点查找与空投执行。
 - 新增：空投安全边界配置 `EnableAIItemAirdrop`、预算上下限、赎金比例、最大堆数、最大总数量、Def 黑名单（CSV）。
@@ -1093,9 +1150,9 @@
 - 版本：`About/About.xml` 升级为 `0.7.85`。
 
 0.7.84
-- 修复：共享异步请求层新增 `Queued/Cancelled` 状态与请求调度元数据，本地单飞队列改为“前台交互优先 + 同优先级 FIFO + 60 秒排队超时”的可观测队列。
+- 修复：共享异步请求层新增 `Queued/Cancelled` 状态与请求调度元数据，本地单飞队列改为"前台交互优先 + 同优先级 FIFO + 60 秒排队超时"的可观测队列。
 - 修复：`AIChatServiceAsync.CancelRequest(...)` 现在会立刻中止飞行中的 `UnityWebRequest`，并通过 `AllowCallbacks` 门禁彻底屏蔽关闭窗口、切换派系、请求顶替后的旧回调。
-- 修复：外交窗口不再把 `pending_request_mismatch` / `request_lease_invalid` 等 stale callback 写成“已丢弃过期对话回包”系统消息；真实失败改为底部错误提示与弹出提醒。
+- 修复：外交窗口不再把 `pending_request_mismatch` / `request_lease_invalid` 等 stale callback 写成"已丢弃过期对话回包"系统消息；真实失败改为底部错误提示与弹出提醒。
 - 修复：外交窗口关闭时无论是否切换派系，都会取消策略补请求，避免旧派系策略请求继续占住本地单飞队列。
 - 修复：RPG 对话沿用同一套 dropped 原因抑制规则，关闭窗口后的旧回包不再污染前台 UI。
 - 多语言：新增 `RimChat_DiplomacyRequestQueued`、`RimChat_ErrorQueueTimeout`、`RimChat_DialogueRequestUnavailable` 中英键。
@@ -1178,13 +1235,13 @@
 - 版本：`About/About.xml` 升级为 `0.7.74`。
 
 0.7.73
-- 修复：`CommsConsolePatch` 通讯台替换入口改为“点击拦截后立即走 `DialogueWindowCoordinator.TryOpen` 开窗”，不再依赖 `CommsConsoleCallback.MapComponentTick` 到站回调链路。
+- 修复：`CommsConsolePatch` 通讯台替换入口改为"点击拦截后立即走 `DialogueWindowCoordinator.TryOpen` 开窗"，不再依赖 `CommsConsoleCallback.MapComponentTick` 到站回调链路。
 - 修复：当通讯台即时开窗被拒绝时，新增日志 `Comms immediate open rejected`，并继续走 `source=comms_immediate` 直接开窗短路。
 - 验证：`build.ps1` 构建与部署通过（0 errors，保留既有 Scriban 安全告警）。
 - 版本：`About/About.xml` 升级为 `0.7.73`。
 
 0.7.72
-- 修复：`CommsConsolePatch.GetFloatMenuOptionsPostfix` 移除对“call/contact/呼叫/联系”等关键词的硬匹配依赖，改为“派系目标识别成功即拦截”，避免多语言文案差异导致通讯台点击无响应。
+- 修复：`CommsConsolePatch.GetFloatMenuOptionsPostfix` 移除对"call/contact/呼叫/联系"等关键词的硬匹配依赖，改为"派系目标识别成功即拦截"，避免多语言文案差异导致通讯台点击无响应。
 - 修复：`ExtractFactionFromOption(...)` 改为优先从 `FloatMenuOption.action` 闭包提取 `Faction`，其次使用 `console.GetCommTargets(myPawn)` 与全派系标签匹配回退；不再依赖 `Find.Selector.SingleSelectedThing`。
 - 修复：通讯台入口新增诊断日志：
   - `Comms option intercepted`
@@ -1194,17 +1251,17 @@
 
 0.7.71
 - 修复：外交窗口入口新增 fail-fast 拒绝原因日志，覆盖 `FactionDialogRimChatBridgePatch`、`CommsConsolePatch.CommsConsoleCallback`、`Dialog_SelectFactionForDialogue`、`MainTabWindow_RimChat`、`ChoiceLetter_NpcInitiatedDialogue`、`Dialog_DiplomacyDialogue` 派系切换入口。
-- 修复：当 `DialogueWindowCoordinator.TryOpen(...)` 拒绝开窗时，统一尝试“直接开外交窗口”短路阻断，避免“点击无反应”。
+- 修复：当 `DialogueWindowCoordinator.TryOpen(...)` 拒绝开窗时，统一尝试"直接开外交窗口"短路阻断，避免"点击无反应"。
 - 调试：日志新增统一标识 `Applying direct diplomacy open fallback`，用于在 `Player.log` 快速定位入口链路与拒绝原因。
 - 验证：`build.ps1` 构建与部署通过（0 errors，保留既有 Scriban 安全告警）。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.71`。
 
 0.7.70
-- 重构：新增对话生命周期核心模型 `DialogueRuntimeContext / DialogueContextResolver / DialogueContextValidator / DialogueRequestLease / DialogueResponseEnvelope`，统一“开窗前/发请求前/回包落地前/动作执行前” fail-fast 判定。
+- 重构：新增对话生命周期核心模型 `DialogueRuntimeContext / DialogueContextResolver / DialogueContextValidator / DialogueRequestLease / DialogueResponseEnvelope`，统一"开窗前/发请求前/回包落地前/动作执行前" fail-fast 判定。
 - 重构：新增 `DialogueWindowCoordinator` 与 `DialogueOpenIntent`；项目内外交与 RPG 所有窗口入口统一收口到协调器，禁止入口直接 `new Dialog_*` 绕过生命周期校验。
 - 修复：`CommsConsolePatch.CommsConsoleCallback` 改为 ID 化 pending intent（Pawn/Faction/Console/Map），`MapComponentTick` 不再直接构造外交窗口；仅在解析 live 上下文并通过协调器校验后开窗。
-- 重构：新增 `RpgDialogueConversationController`，RPG 窗口从“直接调用 AIChatServiceAsync”迁移为“控制器 + lease”模式；窗口关闭顺序统一为先关闭 lease 再取消 request。
+- 重构：新增 `RpgDialogueConversationController`，RPG 窗口从"直接调用 AIChatServiceAsync"迁移为"控制器 + lease"模式；窗口关闭顺序统一为先关闭 lease 再取消 request。
 - 修复：RPG 回包处理改为两阶段（Envelope 解析 -> 主线程动作执行），动作执行前强制二次上下文校验；上下文失效时写系统提示并中止动作，不再继续推进。
 - 重构：`DiplomacyConversationController` 升级为 lease 驱动；外交回调落地新增 session/context/version/live 对象联合校验，失效回包写系统消息并丢弃。
 - 升级：`GameComponent_RPGManager` 持久层从 `Dictionary<Pawn,...>` 升级为 `Dictionary<string,...>`（Pawn `GetUniqueLoadID()`）；新增旧字段一次性迁移（仅读旧字段，迁移后只写新字段）。
@@ -1221,20 +1278,20 @@
 - 版本：`About/About.xml` 升级为 `0.7.69`。
 
 0.7.68
-- 修复：`RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs` 在外交 NPC 主动投递入口新增“新一轮发起复位”前置流程；当会话处于 `isConversationEndedByNpc=true` 时，先执行 `ReinitiateConversation()`，再写入主动消息。
+- 修复：`RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs` 在外交 NPC 主动投递入口新增"新一轮发起复位"前置流程；当会话处于 `isConversationEndedByNpc=true` 时，先执行 `ReinitiateConversation()`，再写入主动消息。
 - 修复：`RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs` 新增 `ForcePresenceOnlineForNpcInitiated(Faction faction)`，将目标派系强制恢复在线并清空 `forcedOfflineUntilTick/cacheUntilTick/lastReason`，避免主动投递后立即回弹为离线或勿扰。
-- 修复：主动投递复位后新增系统提示键 `RimChat_ConversationReinitiatedByNpc`（中英双语），用于明确“对方主动重新发起对话”状态切换。
+- 修复：主动投递复位后新增系统提示键 `RimChat_ConversationReinitiatedByNpc`（中英双语），用于明确"对方主动重新发起对话"状态切换。
 - 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.68`。
 
 0.7.67
-- 修复：RPG 通道恢复 `response_contract_node_template` 运行时注入；`dialogue.response_contract_body` 现在由 RPG 合同构建器填充（含可用 actions、TryGainMemory 示例与输出契约），不再只剩“引用说明”。
+- 修复：RPG 通道恢复 `response_contract_node_template` 运行时注入；`dialogue.response_contract_body` 现在由 RPG 合同构建器填充（含可用 actions、TryGainMemory 示例与输出契约），不再只剩"引用说明"。
 - 修复：`PromptUnifiedNodeSchemaCatalog` 为 `rpg_dialogue / proactive_rpg_dialogue` 增加 `response_contract_node_template` 允许节点；运行时必需节点校验同步纳入该节点（fail-fast）。
-- 修复：工作台/运行时节点布局新增“允许节点自动补全”机制；旧自定义布局缺少新增节点时会自动补齐，避免再次出现注入缺项。
-- 修复：RPG 请求构建新增动作合同存在性检测；当 `EnableRPGAPI=true` 且检测缺失合同时，记录告警并禁用“本轮自动记忆兜底”。
-- 修复：`EnsureRpgActionFallbacks` 调整为“退出动作保留、自动记忆可门控”；缺失合同时自动记忆映射与兜底整体关闭。
+- 修复：工作台/运行时节点布局新增"允许节点自动补全"机制；旧自定义布局缺少新增节点时会自动补齐，避免再次出现注入缺项。
+- 修复：RPG 请求构建新增动作合同存在性检测；当 `EnableRPGAPI=true` 且检测缺失合同时，记录告警并禁用"本轮自动记忆兜底"。
+- 修复：`EnsureRpgActionFallbacks` 调整为"退出动作保留、自动记忆可门控"；缺失合同时自动记忆映射与兜底整体关闭。
 - 修复：自动记忆改为单会话单次兜底（仅自动来源计数）；模型显式返回 `TryGainMemory` 不受该门控影响。
-- 修复：协作意图映射词表收紧，移除高歧义短词（如“行/好/okay”），改为明确承诺短语触发，降低误判连发。
+- 修复：协作意图映射词表收紧，移除高歧义短词（如"行/好/okay"），改为明确承诺短语触发，降低误判连发。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.67`。
 
@@ -1261,7 +1318,7 @@
 
 0.7.63
 - 修复：`PromptDomainJsonUtility.LoadSingle/TryDeserialize` 改为反射反序列化优先（`ReflectionJsonFieldDeserializer`），`JsonUtility` 作为兜底，修复默认分域 JSON 在运行时被静默反序列化为空对象的问题。
-- 修复：`TryLoadPromptDomains(includeCustom:false, ...)` 新增“默认域聚合重建”链路；当直接分域装配语义校验失败时，改走 default-only 聚合 JSON 重建并再次校验。
+- 修复：`TryLoadPromptDomains(includeCustom:false, ...)` 新增"默认域聚合重建"链路；当直接分域装配语义校验失败时，改走 default-only 聚合 JSON 重建并再次校验。
 - 修复：`PromptDomainFileCatalog.ResolveModRoot()` 根路径归一化升级为逐级向上探测 `Prompt/Default`，避免版本子目录导致的默认域误定位。
 - 日志：default-only 失败时输出域文件存在性诊断（System/Diplomacy/Pawn/Social），用于快速定位配置链路故障。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
@@ -1273,7 +1330,7 @@
 - 修复：`TryLoadPromptDomains(includeCustom:false, ...)` 下 RPG 模板改用 `RpgPromptCustomStore.LoadDefaultsOnly()`，不再读取 `PawnDialoguePrompt_Custom.json`。
 - 修复：`PromptDomainFileCatalog.ResolveModRoot()` 新增根路径归一化；当 `LoadedMod` 根目录落到 `.../1.6` 子目录时，自动提升到真实 mod 根目录，避免 default-only 误读空域配置。
 - 修复：`PersistPromptWorkspaceBufferNow(..., persistToDisk:true)` 仅在发生实质文本变更时同步 preset payload；无改动保存不再触发默认只读预设报错。
-- 修复：Ctrl+S 保存入口调整为“无实质改动静默成功；有实质改动才提示保存成功”。
+- 修复：Ctrl+S 保存入口调整为"无实质改动静默成功；有实质改动才提示保存成功"。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.62`。
 
@@ -1281,12 +1338,12 @@
 - 修复：`RpgNpcDialogueArchiveManager` 写盘入口新增 fail-fast 存档标识校验；无法解析当前存档时直接阻断写入并输出错误日志，不再写入共享 `Default` 桶。
 - 修复：NPC 记忆存档名解析链路扩展为 `name/Name/fileName/FileName -> 任意字符串成员启发式 -> ScribeMetaHeaderUtility.loadedGameName`，降低版本差异导致的 `Default` 回退。
 - 修复：新增 `Prompt/NPC` legacy 自动迁移流程；首次加载目标存档时先备份到 `Prompt/NPC/_migration_backup/...`，再迁移 `Save_*_Default/rpg_npc_dialogues` 与根目录旧结构到当前存档目录。
-- 修复：`RpgNpcDialogueArchive` 新增 `saveKey` 持久化字段，读盘只接纳“当前存档 saveKey”或 legacy 无键档案，阻断跨存档串读。
+- 修复：`RpgNpcDialogueArchive` 新增 `saveKey` 持久化字段，读盘只接纳"当前存档 saveKey"或 legacy 无键档案，阻断跨存档串读。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.61`。
 
 0.7.60
-- 修复：`AIChatServiceAsync.ProcessRequestCoroutine(...)` 对“HTTP 200 但无可解析文本”新增 fail-fast 重试链路；命中后追加精简重试提示，仅重试 1 次。
+- 修复：`AIChatServiceAsync.ProcessRequestCoroutine(...)` 对"HTTP 200 但无可解析文本"新增 fail-fast 重试链路；命中后追加精简重试提示，仅重试 1 次。
 - 修复：重试仍无可解析文本时，外交/RPG 通道统一回落到本地沉浸台词，阻断 `解析AI响应失败` 在主动推送链路的重复掉落。
 - 修复：`AIJsonContentExtractor.TryExtractPrimaryText(...)` 扩展候选键（`generated_text/answer/reasoning_content`），提升多模型响应兼容性。
 - 修复：主动外交与主动RPG推送请求显式绑定 `usageChannel`（`Diplomacy/Rpg`），不再以 `Unknown` 绕过对话守卫链路。
@@ -1297,8 +1354,8 @@
 - 修复：对话重试链路的 strict 合同提示词改为精简版本，降低机械化与冗长输出倾向，同时保持 `{"actions":[...]}` 契约不变。
 - 修复：运行时提示词增加风格优先级注入（默认自然简短），并去重 `response_contract/output_specification` 权威重复行，减少重复规则噪声。
 - 修复：主动外交推送与 PawnRPG 主动推送移除固定 260 字硬截断；改为 `ProactiveMessageHardLimit` 配置化（默认 `0` 表示不截断）。
-- 修复：动作失败日志新增“预期拒绝/真实异常”分级，默认将 cooldown/blocked/validation 类拒绝降为 Info，减少“任务成功但日志报错”噪声。
-- 修复：当同轮存在成功动作时，预期拒绝不再追加系统失败提示，避免“已成功执行 + 额外失败提示”的双状态显示。
+- 修复：动作失败日志新增"预期拒绝/真实异常"分级，默认将 cooldown/blocked/validation 类拒绝降为 Info，减少"任务成功但日志报错"噪声。
+- 修复：当同轮存在成功动作时，预期拒绝不再追加系统失败提示，避免"已成功执行 + 额外失败提示"的双状态显示。
 - 修复：对话气泡宽度计算改为与换行高度一致的估算口径；输入区底部状态文案宽度改为自适应，缓解窄窗口错位。
 - 新增：UI 气泡轨道越界一次性断言日志（仅诊断），用于回归定位显示错位问题。
 - 新增配置：`DialogueStyleMode`、`ProactiveMessageHardLimit`、`ExpectedActionDenyLogLevel`。
@@ -1307,44 +1364,44 @@
 
 0.7.58
 - 调整：API 设置页 `测试连通性` 与 `测试可用性` 改为同一行 50/50 等宽按钮，任一测试执行中双按钮统一禁用。
-- 修复：本地可用性诊断链路移除“模型可用性校验”阻断步骤；本地模式不再因模型列表未命中而误判失败，改为以最小 chat 实测 + 响应契约校验作为最终判据。
+- 修复：本地可用性诊断链路移除"模型可用性校验"阻断步骤；本地模式不再因模型列表未命中而误判失败，改为以最小 chat 实测 + 响应契约校验作为最终判据。
 - 新增：可用性测试成功摘要显示响应速度评级（`极快/快/正常/慢/极慢`），阈值为 `<500 / <1500 / <3000 / <6000 / >=6000 ms`。
-- 新增：当可用性测试速度评级为 `极慢` 时，追加提示“连接质量较差，建议更换服务商”。
+- 新增：当可用性测试速度评级为 `极慢` 时，追加提示"连接质量较差，建议更换服务商"。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.58`。
 
 0.7.57
 - 新增：API 设置页连接测试拆分为双按钮：`测试连通性`（快速探测）+ `测试可用性`（深度链路诊断）。
 - 新增：`RimChat/Config/ApiUsabilityDiagnosticService.cs`，提供 fail-fast 深度可用性测试（云端 6 步 / 本地 5 步）与结构化结果模型（Step/ErrorCode/Hint/TechDetail/HTTP/Endpoint/Elapsed）。
-- 新增：深度测试按步骤实时进度展示（`步骤 x/y`），失败后输出“原因 + 1-2 条可执行建议 + 技术细节折叠区”。
-- 新增：深度测试失败结果区提供“日志观测”快速跳转，不再强制自动弹窗。
+- 新增：深度测试按步骤实时进度展示（`步骤 x/y`），失败后输出"原因 + 1-2 条可执行建议 + 技术细节折叠区"。
+- 新增：深度测试失败结果区提供"日志观测"快速跳转，不再强制自动弹窗。
 - 新增：深度测试结果写入 API 日志观测（source=`API 可用性测试`），便于在观测窗口复盘请求/响应。
 - 调整：`RimChat_TestConnectionButton` 英文文案改为 `Test Connectivity`；新增 `Test Usability` 及配套中英诊断语言键。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.57`。
 
 0.7.56
-- 修复：外交主动对话在“等待回复”阶段不再硬锁输入，玩家可继续发起新消息，避免出现无法继续回复的卡死体验。
-- 修复：同派系外交会话改为“新请求覆盖旧请求”；新请求入队前会取消并清理旧 `pendingRequestId`，阻断旧请求残留锁导致的会话僵死。
+- 修复：外交主动对话在"等待回复"阶段不再硬锁输入，玩家可继续发起新消息，避免出现无法继续回复的卡死体验。
+- 修复：同派系外交会话改为"新请求覆盖旧请求"；新请求入队前会取消并清理旧 `pendingRequestId`，阻断旧请求残留锁导致的会话僵死。
 - 新增：外交会话级短防抖（2 秒，按游戏 tick 计），防止同目标连点刷请求。
-- 修复：发送未入队时，命中防抖/等待态不再误走本地 fallback 回复，避免产生“未真实请求却出现兜底回复”的行为偏差。
+- 修复：发送未入队时，命中防抖/等待态不再误走本地 fallback 回复，避免产生"未真实请求却出现兜底回复"的行为偏差。
 - 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.56`。
 
 0.7.55
 - 修复：工作台 Prompt Bundle 导入链路改为 fail-fast 硬校验；导入文件必须命中 `BundleVersion + IncludedModules + 至少一个 Bundle payload`，否则立即拒绝。
-- 修复：导入 `PromptPresets_Custom.json`（含 `Presets/ChannelPayloads/UnifiedPromptCatalog`）时，改为明确提示“预设文件类型错误”，不再进入默认对象回退与写盘链路。
-- 修复：`TryGetImportPreview` 失败后不再回退“直接全量导入”，统一中止并展示可区分错误原因，避免“看起来成功但被默认覆盖”的假象。
+- 修复：导入 `PromptPresets_Custom.json`（含 `Presets/ChannelPayloads/UnifiedPromptCatalog`）时，改为明确提示"预设文件类型错误"，不再进入默认对象回退与写盘链路。
+- 修复：`TryGetImportPreview` 失败后不再回退"直接全量导入"，统一中止并展示可区分错误原因，避免"看起来成功但被默认覆盖"的假象。
 - 日志：新增统一错误码前缀 `PBIMP_*`（Player.log 可检索导入失败根因）。
-- 调整：提示词工作台头部“导入/导出”按钮改为走 Prompt Bundle 链路；旧 preset 文件导入在该入口下将被硬拒绝。
+- 调整：提示词工作台头部"导入/导出"按钮改为走 Prompt Bundle 链路；旧 preset 文件导入在该入口下将被硬拒绝。
 - 修复：工作台通过 Bundle 导入成功后，会自动创建并激活一个新预设（基于导入后当前状态快照），确保导入内容在预设列表可见。
 - 修复：Prompt Bundle 协议新增 `UnifiedPromptCatalog/UnifiedPromptCatalogJson` 承载，工作台 section/node 自定义可随 bundle 完整往返。
 - 兼容：旧 bundle 若不含 unified payload，不再把 unified 误覆盖为 fallback；仅沿用旧的 legacy 导入路径。
-- 调整：按需求将工作台头部“导入/导出”回退为“预设导入/导出”功能（`PromptPreset` 协议）；Bundle 导入导出仍保留在提示词配置页链路。
-- 修复：工作台导入预设成功后会立即激活该预设，避免“列表已导入但编辑区仍显示默认预设内容”。
+- 调整：按需求将工作台头部"导入/导出"回退为"预设导入/导出"功能（`PromptPreset` 协议）；Bundle 导入导出仍保留在提示词配置页链路。
+- 修复：工作台导入预设成功后会立即激活该预设，避免"列表已导入但编辑区仍显示默认预设内容"。
 - 重构：提示词工作台改为 `PromptUnifiedCatalog` 单真源编辑链路；工作台 section/node 编辑不再走 `SetPromptSectionCatalog(...)` 双向回写。
 - 重构：`SetPromptSectionCatalog(...)` 降级为迁移专用 fail-fast 入口，新增 `ImportLegacySectionCatalogToUnifiedCatalog(...)` 一次性导入接口。
-- 调整：工作台改为“内存编辑 + 显式保存落盘”；切 section/node/channel/preset 不再触发自动写盘，保存按钮统一负责 `PromptUnifiedCatalog` 持久化。
+- 调整：工作台改为"内存编辑 + 显式保存落盘"；切 section/node/channel/preset 不再触发自动写盘，保存按钮统一负责 `PromptUnifiedCatalog` 持久化。
 - 调整：preset payload 正式字段移除 `PromptSectionCatalog`，激活链路只应用 `UnifiedPromptCatalog`；旧 payload 的 section 字段仅在导入时单向迁移到 unified。
 - 调整：`Prompt/Custom/PawnDialoguePrompt_Custom.json` 不再保存 `PromptSectionCatalog`；旧字段仅用于一次性迁移读取。
 - 新增：`PromptPersistenceService.LoadConfigReadOnly()` 与 `RepairAndRewritePromptDomains()`；工作台预览与 UI 刷新链路切换到只读加载，避免预览触发写回。
@@ -1355,12 +1412,12 @@
 0.7.54
 - 修复：工作台正文编辑区在按钮点击同帧先同步 live `TextEditor` 文本，再执行保存/切换，避免焦点离开后仍写入旧 buffer。
 - 修复：`PromptPersistenceService.HasAnyPromptCustomOverrideFile()` / `BackupPromptCustomDirectory()` 只跟踪真正的 prompt-domain 自定义文件，不再把 `PromptPresets_Custom.json`、`PromptUnifiedCatalog_Custom.json` 误判为 domain override 并触发自愈写回。
-- 修复：提示词工作台在“保存未成功”时会 fail-fast 阻断分段/通道/预设切换，避免切换后回滚到旧文本造成“看起来已保存但内容恢复原文”。
+- 修复：提示词工作台在"保存未成功"时会 fail-fast 阻断分段/通道/预设切换，避免切换后回滚到旧文本造成"看起来已保存但内容恢复原文"。
 - 修复：保存链路在写入预设 payload 失败时改为显式拒绝切换并保留待保存状态，防止未同步状态被后续预设激活覆盖。
 - 新增：提示词工作台预设列表支持行内快捷操作（复制/删除）与双击行内重命名（Enter/失焦保存，Esc 取消）。
 - 新增：默认预设只读与自动分叉主链；首次编辑意图会自动创建 `Custom yyyyMMdd-HHmmss` 并切换到新预设。
 - 新增：预设存储模型 `PromptPresetStoreConfig` 增加 `DefaultPresetId`，schema 升级到 `2`，旧 store 自动归一化迁移。
-- 新增：主编辑器工具栏改为 `Undo / Redo / Save / Reset`，Undo/Redo 按“预设+通道+分段/节点”隔离历史栈。
+- 新增：主编辑器工具栏改为 `Undo / Redo / Save / Reset`，Undo/Redo 按"预设+通道+分段/节点"隔离历史栈。
 - 重构：`RimChatSettings_PromptSectionWorkspace` 与 `PromptPresetService` 拆分为 partial 文件，目标文件回到 `<800` 行阈值。
 - 本地化：新增/调整中英键（默认只读提示、自动分叉提示、行内重命名提示、工具栏四按钮文案）。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
@@ -1385,11 +1442,11 @@
 - 版本：`About/About.xml` 升级为 `0.7.52`。
 
 0.7.51
-- 修复：RimTalk 自定义变量快照刷新策略改为“节流刷新”而非“仅首轮空快照刷新”，消除启动早期快照冻结导致的变量丢失问题。
+- 修复：RimTalk 自定义变量快照刷新策略改为"节流刷新"而非"仅首轮空快照刷新"，消除启动早期快照冻结导致的变量丢失问题。
 - 修复：`GetAllCustomVariables()` 解析链路新增双协议兼容（`Item1..Item4` + 命名属性），适配不同返回结构，避免解析后全空。
 - 修复：`mod_variables` 自动填充前强制刷新 RimTalk 快照，避免加载时序窗口导致 section 长期空白。
 - 修复：变量浏览器快照刷新前主动同步 RimTalk 自定义变量，确保 UI 展示与工作台 section 数据源一致。
-- 新增：桥接快照可观测日志（raw_count / parsed_count / duplicate_count / force），用于快速定位“枚举成功但解析失败”。
+- 新增：桥接快照可观测日志（raw_count / parsed_count / duplicate_count / force），用于快速定位"枚举成功但解析失败"。
 - 新增：当 RimTalk 返回原始变量非空但解析结果为 0 时，Bridge 按 fail-fast 阻断并输出明确错误原因（仅阻断 Bridge 链路）。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.51`。
@@ -1407,13 +1464,13 @@
 - 版本：`About/About.xml` 升级为 `0.7.50`。
 
 0.7.48
-- 修复：`create_quest` 非法模板名 fail-fast 失败分支统一附带“当前派系可用 questDefName 列表”，阻断 `ResourceCollectionQuest/ResourceDeliveryQuest` 等盲猜模板名反复重试。
+- 修复：`create_quest` 非法模板名 fail-fast 失败分支统一附带"当前派系可用 questDefName 列表"，阻断 `ResourceCollectionQuest/ResourceDeliveryQuest` 等盲猜模板名反复重试。
 - 修复：`QuestGuidanceNodeTemplate` 默认字面量改为 `{{ dialogue.quest_guidance_body }}`，恢复动态任务可用性正文注入链路。
 - 迁移：补齐 quest guidance 节点中文旧字面量模板的自动升级规则，旧配置可幂等迁移到运行时占位模板。
 - 新增：RPG 提示词变量 `pawn.relation.social_summary`（双向社交摘要：互评、直接关系、亲缘/恋爱状态、派系好感提示）。
 - 调整：RPG `pawn.target.profile` / `pawn.initiator.profile` 扩展输出当前 Job、Needs、Visible Conditions、Recent Memories（按 `RpgSceneParamSwitches` 开关控制）。
 - 调整：`rpg_relationship_profile` 默认模板同步注入 `pawn.relation.social_summary`，覆盖手动与主动 RPG 通道。
-- 调整：`Prompt/Default/SystemPrompt_Default.json` 中 `IncludeNeeds`、`IncludeRecentJobState` 默认开启；并新增“历史默认签名命中才升级”的开关迁移，避免覆盖用户自定义配置。
+- 调整：`Prompt/Default/SystemPrompt_Default.json` 中 `IncludeNeeds`、`IncludeRecentJobState` 默认开启；并新增"历史默认签名命中才升级"的开关迁移，避免覆盖用户自定义配置。
 - 本地化：同步新增中英文键 `RimChat_TemplateVar_pawn_relation_social_summary_Desc`。
 - 新增：`TextIntegrityGuard`，为外交/RPG 可见对白增加乱码/碎片检测，命中后同链路重试 1 次，二次失败回退本地沉浸兜底台词。
 - 新增：`LeaderMemoryManager` 摘要入库网关（净化 + 异常判定 + 一次修复请求）；修复后仍异常或修复失败时直接丢弃并写结构化告警日志。
@@ -1425,8 +1482,8 @@
 0.7.47
 - 新增：提示词变量 `world.faction.description`，值为当前对话派系的有效派系提示词（默认源自 `FactionPrompts_Default.json`，支持自定义覆盖）。
 - 调整：`pawn.personality` 运行时链路改为 RimTalk 人格优先，同步回退 RimChat 已存人格，仍为空时使用人格引导即时生成并持久化。
-- 调整：提示词工作台顶部“派系提示词”快捷按钮改为派系模板编辑入口（打开派系列表并进入 `Dialog_FactionPromptEditor`）；“人设提示词”快捷入口保留。
-- 新增：从“人设提示词”保存后，自动尝试向当前通道 `character_persona` 分段插入 `{{ pawn.personality }}`（已存在则跳过，幂等）。
+- 调整：提示词工作台顶部"派系提示词"快捷按钮改为派系模板编辑入口（打开派系列表并进入 `Dialog_FactionPromptEditor`）；"人设提示词"快捷入口保留。
+- 新增：从"人设提示词"保存后，自动尝试向当前通道 `character_persona` 分段插入 `{{ pawn.personality }}`（已存在则跳过，幂等）。
 - 调整：默认 `any/system_rules` 新增边缘世界背景分段文案，并同步更新：
   - `Prompt/Default/PromptSectionCatalog_Default.json`
   - `Prompt/Default/PromptUnifiedCatalog_Default.json`
@@ -1450,8 +1507,8 @@
 - 版本：`About/About.xml` 升级为 `0.7.44`。
 
 0.7.43
-- 新增：`RimChat/UI/Dialog_ApiDebugObservability.cs` 头部新增“设置”入口按钮，点击可直接打开 RimChat 模组设置窗口；若实例缺失则 fail-fast 提示错误消息。
-- 调整：日志观测 Token 趋势窗口改为“最近 30 分钟、1 分钟粒度”，并同步更新中英文文案（趋势标题/无数据提示/入口 tooltip）。
+- 新增：`RimChat/UI/Dialog_ApiDebugObservability.cs` 头部新增"设置"入口按钮，点击可直接打开 RimChat 模组设置窗口；若实例缺失则 fail-fast 提示错误消息。
+- 调整：日志观测 Token 趋势窗口改为"最近 30 分钟、1 分钟粒度"，并同步更新中英文文案（趋势标题/无数据提示/入口 tooltip）。
 - 优化：`RimChat/AI/AIChatServiceAsync.DebugTelemetry.cs` 快照构建改为单次遍历聚合（records + summary + buckets），减少 LINQ 多次枚举与临时分配，保持只读快照语义。
 - 修复：`RimChat/UI/Dialog_RPGPawnDialogue.cs` 构造阶段移除重复个人记忆重建，改为 `HasPromptMemory(...)` 轻量判断，降低 RPG 对话开窗卡顿峰值。
 - 新增：`RimChat/Memory/RpgNpcDialogueArchiveManager.PromptCache.cs`，为 `BuildPromptMemoryBlock(...)` 引入版本戳失效缓存（按 target/interlocutor/summary 参数维度缓存）。
@@ -1471,10 +1528,10 @@
 
 0.7.41
 - 新增：外交对话气泡头像渲染（外角 24px），普通消息与图片消息统一显示说话者头像；系统消息保持无头像。
-- 调整：外交聊天气泡最大宽度从原先 75% 提升到 85%，并改为“头像通道 + 气泡通道”布局，避免长文本与头像重叠越界。
+- 调整：外交聊天气泡最大宽度从原先 75% 提升到 85%，并改为"头像通道 + 气泡通道"布局，避免长文本与头像重叠越界。
 - 新增：`DialogueMessageData` 说话者持久化字段（`speakerPawnThingId` + `speakerPawn` 引用），支持旧存档消息补齐后稳定恢复头像来源。
-- 新增：外交会话打开时自动补齐历史消息说话者；玩家侧优先当前谈判者，缺失时回退“社交最高殖民者”。
-- 新增：对方说话者策略改为“领袖优先；领袖缺失则会话内固定随机发言人（必要时自动生成）”，保证同一会话不抖动。
+- 新增：外交会话打开时自动补齐历史消息说话者；玩家侧优先当前谈判者，缺失时回退"社交最高殖民者"。
+- 新增：对方说话者策略改为"领袖优先；领袖缺失则会话内固定随机发言人（必要时自动生成）"，保证同一会话不抖动。
 - 调整：外交发送链路（玩家发送/AI 回复/fallback 回复/发送图片）与 NPC 主动推送链路统一写入说话者 Pawn。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.41`。
@@ -1482,7 +1539,7 @@
 0.7.40
 - 新增：统一战斗态判定工具 `RimChat/Core/PawnCombatStateUtility.cs`，收口 `征召 + 标准战斗Job`（`Wait_Combat`、`AttackMelee`、`AttackStatic`、`UseVerbOnThing`）规则。
 - 修复：`RimChat/Comp/CompPawnDialogue.cs` 的右键入口门控改为双向判定；当前 pawn 或目标 pawn 任一处于战斗/征召状态时，不再显示 RimChat 对话选项。
-- 修复：`RimChat/AI/JobDriver_RPGPawnDialogue.cs` 在打开窗口前新增同一套 fail-fast 判定，阻断“点菜单后状态变化”的时序绕过。
+- 修复：`RimChat/AI/JobDriver_RPGPawnDialogue.cs` 在打开窗口前新增同一套 fail-fast 判定，阻断"点菜单后状态变化"的时序绕过。
 - 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.40`。
 
@@ -1494,15 +1551,15 @@
 - 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
 
 0.7.38
-- 修复：`图片生成`设置页改为开发中封板，整页只显示统一“开发中”提示，禁止继续交互配置。
+- 修复：`图片生成`设置页改为开发中封板，整页只显示统一"开发中"提示，禁止继续交互配置。
 - 修复：外交提示词运行时动作目录强制过滤 `send_image`，预览/构建链路不再输出该动作说明。
 - 修复：提示词工作台 `ApiActions` 可编辑列表移除 `send_image`，避免从编辑端继续暴露生图动作入口。
 - 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
 
 0.7.37
-- 调整：生图功能全入口封闭为“开发中”状态；外交窗口的相册/自拍入口改为禁用并显示统一提示。
+- 调整：生图功能全入口封闭为"开发中"状态；外交窗口的相册/自拍入口改为禁用并显示统一提示。
 - 调整：`send_image` 动作执行链新增双层硬拦截（`Dialog_DiplomacyDialogue.ImageAction` + `DiplomacyImageGenerationService.GenerateImage`），禁止触发生成。
-- 调整：动作资格校验中 `send_image` 统一返回“开发中”拒绝结果，阻断非 UI 调用路径。
+- 调整：动作资格校验中 `send_image` 统一返回"开发中"拒绝结果，阻断非 UI 调用路径。
 - 调整：移除 `AppendSendImageTemplateGuidance` 的运行时注入调用，并在 blocked-action 提示中隐藏 `send_image`，避免继续向模型注入生图引导。
 - 调整：移除自拍提示词中的隐藏注入段（`SelfiePromptInjectionBuilder.Build(...)` 拼接）。
 - 本地化：新增语言键 `RimChat_ImageGenerationInDevelopment`（中文/英文）。
@@ -1510,7 +1567,7 @@
 
 0.7.36
 - 调整：输出协议收敛为单一权威源 `response_contract`（`dialogue.response_contract_body`）；`RESPONSE FORMAT` 与 `CRITICAL ACTION RULES` 改为仅引用权威段落，不再重复正文规则。
-- 调整：将“自然语言禁止暴露 AI 身份/机制、但 parser JSON 允许”边界语句收口到权威协议段，仅保留一处定义。
+- 调整：将"自然语言禁止暴露 AI 身份/机制、但 parser JSON 允许"边界语句收口到权威协议段，仅保留一处定义。
 - 调整：默认 Prompt 各通道 `output_specification` 改为引用式文案，不再内嵌 JSON 结构规则。
 - 文档：`doc/Api.md` 移除旧 `{\"action\":...,\"parameters\":...,\"response\":...}` 单对象协议示例，统一为 `{\"actions\":[...]}`。
 - 同步：更新 `RimChat/Persistence/PromptPersistenceService.cs`、`RimChat/Config/PromptTextConstants.cs`、`RimChat/Config/RimTalkPromptEntryDefaultsConfig.cs`、`Prompt/Default/PromptSectionCatalog_Default.json`、`Prompt/Default/RimTalkPromptEntries_Default.json`、`Prompt/Default/PromptUnifiedCatalog_Default.json`、`doc/config.md`、`doc/Index.md`。
@@ -1535,13 +1592,13 @@
 - 版本：`About/About.xml` 升级为 `0.7.33`。
 
 0.7.32
-- 修复：提示词工作台“节点编排”列表移除顶部 `正文` 列表头，避免 `正文` 标签固定显示在最前。
+- 修复：提示词工作台"节点编排"列表移除顶部 `正文` 列表头，避免 `正文` 标签固定显示在最前。
 - 保持：节点项排序逻辑不变；`思维链` 仍按末尾规则展示。
 - 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
 - 版本：`About/About.xml` 升级为 `0.7.32`。
 
 0.7.31
-- 修复：Prompt Workbench 结构化预览与导出文本统一排序为“其它节点（保持原相对顺序）-> 正文 -> 思维链 -> 结束标签”，确保思维链固定位于正文底部。
+- 修复：Prompt Workbench 结构化预览与导出文本统一排序为"其它节点（保持原相对顺序）-> 正文 -> 思维链 -> 结束标签"，确保思维链固定位于正文底部。
 - 修复：`thought_chain_node_template` 的后置逻辑改为独立识别（不依赖固定 slot），跨频道统一生效。
 - 保持：除 `正文/思维链` 定位外，其它节点相对顺序不变。
 - 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
@@ -1555,21 +1612,21 @@
 - 版本：`About/About.xml` 升级为 `0.7.30`。
 
 0.7.29
-- 调整：`api_limits_node_template`、`quest_guidance_node_template`、`response_contract_node_template` 从“单行包裹变量”升级为“次一级结构文本 + 动态变量块”模板。
+- 调整：`api_limits_node_template`、`quest_guidance_node_template`、`response_contract_node_template` 从"单行包裹变量"升级为"次一级结构文本 + 动态变量块"模板。
 - 保持：三段运行时正文仍由旧链路实时生成：`AppendApiLimits(...)`、`AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`、`AppendAdvancedConfig(...) / AppendSimpleConfig(...)`。
 - 同步：更新 `Prompt/Default/PromptUnifiedCatalog_Default.json` 与 `Prompt/Default/DiplomacyDialoguePrompt_Default.json`，确保提示词工作台默认可见结构化模板而非纯占位符。
 - 版本：`About/About.xml` 升级为 `0.7.29`。
 
 0.7.28
-- 重构：三段节点默认模板恢复为“多行节点模板 + Scriban 动态变量正文”，`ApiLimitsNodeTemplate/QuestGuidanceNodeTemplate/ResponseContractNodeTemplate` 分别绑定 `{{ dialogue.api_limits_body }}`、`{{ dialogue.quest_guidance_body }}`、`{{ dialogue.response_contract_body }}`。
+- 重构：三段节点默认模板恢复为"多行节点模板 + Scriban 动态变量正文"，`ApiLimitsNodeTemplate/QuestGuidanceNodeTemplate/ResponseContractNodeTemplate` 分别绑定 `{{ dialogue.api_limits_body }}`、`{{ dialogue.quest_guidance_body }}`、`{{ dialogue.response_contract_body }}`。
 - 保持：运行时正文值来源不变，继续由 `AppendApiLimits(...)`、`AppendDynamicQuestGuidance(...) + AppendQuestSelectionHardRules(...)`、`AppendAdvancedConfig(...) / AppendSimpleConfig(...)` 实时生成。
 - 修复：`RenderPromptNodeTemplate(...)` 对三段正文新增 fail-fast 校验，body 为空时抛 `PromptRenderException(TemplateMissing)`，不再静默输出空段。
-- 迁移：`EnsurePromptTemplateDefaults(...)` 新增一次性自动迁移，命中旧“说明文硬文本”时自动重写为 Scriban 模板，并写日志。
+- 迁移：`EnsurePromptTemplateDefaults(...)` 新增一次性自动迁移，命中旧"说明文硬文本"时自动重写为 Scriban 模板，并写日志。
 - 文档：同步更新 `About/About.xml`、`Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
 - 版本：`About/About.xml` 升级为 `0.7.28`。
 
 0.7.27
-- 修复：统一 `social_circle_post` 社交新闻节点合同，`PromptUnifiedCatalog_Default.json` 的 `social_news_style/social_news_json_contract/social_news_fact` 改为完整结构模板，不再是“仅返回 JSON”弱约束。
+- 修复：统一 `social_circle_post` 社交新闻节点合同，`PromptUnifiedCatalog_Default.json` 的 `social_news_style/social_news_json_contract/social_news_fact` 改为完整结构模板，不再是"仅返回 JSON"弱约束。
 - 修复：`PromptUnifiedDefaults.ApplyFallbackNodes(...)` 的 `social_news_*` 回退节点改为引用 `PromptTextConstants` 社交默认模板常量，避免默认资产与代码回退漂移。
 - 结果：社交新闻生成链路与 `SocialNewsJsonParser` 必填字段（`headline/lead/cause/process/outlook`）恢复一致，避免出现 `missing_required_fields`。
 - 验证：执行 `build.ps1` 构建与部署通过（`0 errors`，`1 warning`）。
@@ -1599,7 +1656,7 @@
 - 重构：`PromptUnifiedNodeSchemaCatalog` 新增严格校验入口（`NormalizeStrictChannelOrThrow`、`GetAllowedNodesStrict`、`EnsureNodeAllowedForChannelOrThrow`），仅在节点链路启用严格通道判定，未知/空 channel 立即抛出 `InvalidOperationException`。
 - 修复：`PromptUnifiedCatalog.ResolveNode(...)`、`ResolveNodeLayout(...)`、`SetNode(...)`、`SetNodeLayout(...)` 改为 fail-fast；非法 `channel/nodeId` 不再静默返回空值或写入脏数据。
 - 新增：`PromptUnifiedCatalog.ValidateInvariantsOrThrow()`，启动后校验节点生命周期不变量（channel 合法、节点/布局在 allowlist、空 allowlist 通道无节点数据、布局 nodeId 不重复）。
-- 新增：`PromptUnifiedCatalogNormalizeReport` 与 `NormalizeWithReport(...)`，归一化改为“纯清洗+变更报告”；`NormalizeNodes/NormalizeNodeLayout` 不再逐条 `Log.Error`。
+- 新增：`PromptUnifiedCatalogNormalizeReport` 与 `NormalizeWithReport(...)`，归一化改为"纯清洗+变更报告"；`NormalizeNodes/NormalizeNodeLayout` 不再逐条 `Log.Error`。
 - 修复：`RimChatSettings_RimTalkCompat.EnsureUnifiedCatalogReady()` 的保存判定改为 `legacy迁移变化 || migration版本变化 || normalizeReport.HasStructuralChange`，移除旧的 `NodeLayout.Count` 推断。
 - 调整：日志分层为摘要模式：阻断性不变量错误记 `Error` 并抛出；自动清洗记 `Warning`；默认布局补全与迁移完成记 `Info`。
 - 验证：执行 `build.ps1` 构建与部署通过。
@@ -1609,7 +1666,7 @@
 0.7.24
 - 修复：`PromptPersistenceService.TemplateVariables` 新增派系好感安全读取，`current_faction_profile` 在玩家派系/自派系场景不再触发 `Faction.PlayerGoodwill` 空引用。
 - 修复：`PromptPersistenceService.Hierarchical.ResolveFactionPromptText` 在派系缺失时显式补齐 `world.faction` 与 `world.faction.name`，避免 `prompt_templates.diplomacy_fallback_role` 渲染出现 `world.faction is null`。
-- 修复：`AIChatServiceAsync` 与 `AIChatService` 增加发送前消息标准化，统一纠正非法 role，并在“仅 system 消息”场景自动补一条最小 `user` 指令，避免 `HTTP 400 Param Incorrect`。
+- 修复：`AIChatServiceAsync` 与 `AIChatService` 增加发送前消息标准化，统一纠正非法 role，并在"仅 system 消息"场景自动补一条最小 `user` 指令，避免 `HTTP 400 Param Incorrect`。
 - 修复：`DialogueSummaryService` 与 `RpgNpcDialogueArchiveManager.Sessions` 摘要链路显式补充 `user` 消息；`summary_generation` 发送通道改为按根通道映射到 `Diplomacy/Rpg`，启用一致重试策略。
 - 验证：执行 `build.ps1` 构建验证（见本次提交记录）。
 - 文档：同步更新 `About/About.xml`、`Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
@@ -1618,7 +1675,7 @@
 0.7.22
 - 重构：新增统一 Workbench composer（`PromptPersistenceService.WorkbenchComposer.cs`），工作台预览与运行时侧链（social/persona/summary/archive/image）共用同一套 section/node 渲染与变量注入流程。
 - 调整：`PromptSectionSchemaCatalog` 升级为通道映射单一事实源（根通道归属、共享通道、运行时归一化）；`RimChatSettings_PromptAdvancedFramework` 移除重复硬编码判断并统一走 schema 目录。
-- 改造：`SocialNewsPromptBuilder`、`GameComponent_RPGManager.PersonaBootstrap`、`DialogueSummaryService`、`RpgNpcDialogueArchiveManager.Sessions` 全部切为“单 system 消息 + Unified 通道 composer”。
+- 改造：`SocialNewsPromptBuilder`、`GameComponent_RPGManager.PersonaBootstrap`、`DialogueSummaryService`、`RpgNpcDialogueArchiveManager.Sessions` 全部切为"单 system 消息 + Unified 通道 composer"。
 - 改造：图像链路切到 `image_generation` 通道 composer；`template_id` 解析与可用性校验改为 Unified alias 层，保留历史模板 ID 兼容映射。
 - 迁移：`RimChatSettings_RimTalkCompat` 新增一次性迁移门控（`MigrationVersion=2`），首载导入旧 RPG 自定义文本与旧图像模板到 Unified Catalog，迁移后运行时只读 Unified 网关。
 - 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
@@ -1626,7 +1683,7 @@
 - 版本：`About/About.xml` 升级为 `0.7.22`。
 
 0.7.21
-- 新增：提示词工作台右侧“主链分段聚合”预览支持细分次级标题（按主链 section 分段显示），提升长文本可读性与定位效率。
+- 新增：提示词工作台右侧"主链分段聚合"预览支持细分次级标题（按主链 section 分段显示），提升长文本可读性与定位效率。
 - 重构：结构化预览模型新增 `PromptWorkspacePreviewSubsection`，由主链聚合构建器直接输出 section 级预览数据，避免 UI 侧字符串硬解析。
 - 调整：`PromptWorkspaceStructuredPreviewRenderer` 在主链分段块内渲染二级标题条与分段正文，其它预览块行为保持不变。
 - 本地化：新增中英文语言键 `RimChat_PromptWorkspacePreviewBlock_SubSection`。
@@ -1634,7 +1691,7 @@
 - 版本：`About/About.xml` 升级为 `0.7.21`。
 
 0.7.20
-- 修复：提示词工作台校验链路改为“运行时一致”，通过 `TemplateVariableValidationContext` 使用运行时已知变量 + 节点注入变量进行严格校验，消除“校验失败但运行成功”的分裂。
+- 修复：提示词工作台校验链路改为"运行时一致"，通过 `TemplateVariableValidationContext` 使用运行时已知变量 + 节点注入变量进行严格校验，消除"校验失败但运行成功"的分裂。
 - 新增：策略节点注入变量纳入校验与变量目录：`dialogue.strategy_player_negotiator_context_body`、`dialogue.strategy_fact_pack_body`、`dialogue.strategy_scenario_dossier_body`。
 - 调整：工作台右侧预览从只读 chip 渲染切换为轻量结构化块渲染（`PromptWorkspaceStructuredPreviewRenderer`），按最终拼接顺序展示：上下文 -> 槽位节点 -> 主链分段 -> 结尾。
 - 新增：结构化预览模型与构建器（`PromptWorkspaceStructuredPreview` / `PromptWorkspacePreviewBlock`），覆盖分段模式与节点编排模式。
@@ -1649,9 +1706,9 @@
 - 新增：Unified Prompt 节点编排模型（`PromptUnifiedNodeLayoutConfig`），按频道持久化 `NodeId + Slot + Order + Enabled`，并保留节点文本与布局分离。
 - 新增：5 个固定节点槽位（头部元信息后、主链前、主链后、动态数据后、结尾契约前），运行时按 `slot -> order -> nodeId` 稳定注入。
 - 兼容：旧配置自动补全节点布局元数据，默认顺序对齐历史硬编码行为；迁移后写回自定义 unified catalog。
-- 重构：`BuildFullSystemPrompt / BuildRPGFullSystemPrompt / BuildDiplomacyStrategySystemPrompt` 从固定顺序改为“骨架 + 槽位注入器”。
+- 重构：`BuildFullSystemPrompt / BuildRPGFullSystemPrompt / BuildDiplomacyStrategySystemPrompt` 从固定顺序改为"骨架 + 槽位注入器"。
 - 新增：`ResolvedPromptNodePlacement` 与 `BuildPromptWorkspaceLayoutPreview(...)`，工作台可查看完整预览与节点落点顺序。
-- 工作台：节点模式升级为“槽位分组列表 + 拖拽重排 + 启停 + 槽位切换 + 上下移动兜底”，并支持按节点布局恢复频道默认。
+- 工作台：节点模式升级为"槽位分组列表 + 拖拽重排 + 启停 + 槽位切换 + 上下移动兜底"，并支持按节点布局恢复频道默认。
 - 本地化：新增节点名、槽位名、节点编排标题等中英文语言键，避免新增硬编码 UI 文案。
 - 文档：同步更新 `Index.md`、`Api.md`、`config.md`、`VersionLog.txt`、`VersionLog_en.txt`。
 - 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
@@ -1679,12 +1736,12 @@
 - 版本：`About/About.xml` 升级为 `0.7.17`。
 
 0.7.16
-- 重构：`system.custom.*` 从“默认模板 + 派系覆盖”升级为“默认模板 + 条件规则集”，新增统一 `Faction Rule / Pawn Rule` 模型，并保留旧 `FactionScopedPromptVariableOverrides` 作为只读迁移入口。
+- 重构：`system.custom.*` 从"默认模板 + 派系覆盖"升级为"默认模板 + 条件规则集"，新增统一 `Faction Rule / Pawn Rule` 模型，并保留旧 `FactionScopedPromptVariableOverrides` 作为只读迁移入口。
 - 新增：运行时规则命中链固定为 `pawn exact -> pawn conditional -> faction -> default -> empty`，同层按 `Priority -> Specificity -> Order` 稳定排序。
 - 新增：`UserDefinedPromptVariableRuleMatcher` 与拆分后的 `UserDefinedPromptVariableService`，统一负责规则匹配、评分、迁移、校验、引用扫描与运行时渲染。
 - 新增：`pawn.personality` 安全覆盖链，支持 `system.custom.pawn_personality_override` 与 `system.custom.pawn_personality_append`，只影响 prompt 导出值，不修改游戏本体数据。
 - 调整：RimTalk persona copy 渲染路径也接入统一自定义变量服务，确保人格覆盖链在主 prompt 与 persona copy 两条链路上一致生效。
-- 调整：用户变量编辑器升级为“基础信息 / 默认模板 / 规则列表”，规则列表拆分为 `Faction Rules` 与 `Pawn Rules` 页签；变量浏览器新增“空白变量 + 官方示例变量”创建入口。
+- 调整：用户变量编辑器升级为"基础信息 / 默认模板 / 规则列表"，规则列表拆分为 `Faction Rules` 与 `Pawn Rules` 页签；变量浏览器新增"空白变量 + 官方示例变量"创建入口。
 - 校验：新增对 `RaceDefName / XenotypeDefName / TraitDefName / AgeStage / Gender / PlayerControlled` 的白名单校验，并继续保留 Scriban、未知变量、循环依赖校验。
 - 文档：同步更新 `About/About.xml`、`Api.md`、`config.md`、`spec/Index.md`、`VersionLog.txt`、`VersionLog_en.txt`。
 - 验证：执行 `build.ps1` 构建与部署通过（`1 warning`、`0 errors`）。
@@ -1718,20 +1775,20 @@
 
 0.7.12
 - 修复：手动输入 `{{ foo.bar }}`、半成品变量或非法命名空间变量时，Prompt 设置页不再因严格命名空间校验抛 `ArgumentException` 而整页报错。
-- 调整：编辑态变量校验只会把 `ctx/pawn/world/dialogue/system` 五个命名空间下的路径送进 Scriban validation context；非法命名空间现在按“未知变量”处理。
+- 调整：编辑态变量校验只会把 `ctx/pawn/world/dialogue/system` 五个命名空间下的路径送进 Scriban validation context；非法命名空间现在按"未知变量"处理。
 - 兼容：运行时 strict 命名空间合同不变，真正渲染时仍然禁止非法变量进入正式链路。
 - 验证：执行 `build.ps1` 构建与部署通过。
 - 版本：`About/About.xml` 升级为 `0.7.12`。
 
 0.7.11
-- 修复：Prompt Workspace 右侧“变量”页现在直接把 token 写入当前 section 文本框，不再绕旧 RimTalk 兼容插入链，恢复工作台内的变量插入。
+- 修复：Prompt Workspace 右侧"变量"页现在直接把 token 写入当前 section 文本框，不再绕旧 RimTalk 兼容插入链，恢复工作台内的变量插入。
 - 修复：`TryInsertVariableTokenToPromptWorkspace(...)` 不再依赖过时的 `selectedTab == 2` 条件，改为按当前 workspace 的有效 channel/section 上下文判断是否可插入。
 - 兼容：旧 RimTalk 页和其他变量插入入口保持原行为；Prompt Workspace 预览缓存与变量独占行逻辑不变。
 - 验证：执行 `build.ps1` 构建与部署通过。
 - 版本：`About/About.xml` 升级为 `0.7.11`。
 
 0.7.10
-- 优化：Prompt Workbench 右侧预览新增“按文本+宽度”布局缓存，滚动、鼠标悬停与同帧重复重绘时不再反复分词、分段和逐段测高。
+- 优化：Prompt Workbench 右侧预览新增"按文本+宽度"布局缓存，滚动、鼠标悬停与同帧重复重绘时不再反复分词、分段和逐段测高。
 - 优化：当前通道 aggregate 预览文本改为在工作台侧缓存，只有 section 内容、根通道、prompt channel 或整份 section catalog 真正变化时才重建。
 - 兼容：变量独占行、tooltip、高亮与中间编辑器行为保持不变，仅降低预览界面的重复计算开销。
 - 验证：执行 `build.ps1` 构建与部署通过。
@@ -1739,16 +1796,16 @@
 
 0.7.9
 - 调整：Prompt Workbench 右侧预览改为只读分段渲染，命中 `{{ ... }}` 变量时会强制前后断开，让变量独占一行。
-- 修复：预览里的长变量不再按分片子串拆成多行高亮；连续变量现在按“一颗变量一行”显示，避免同一变量被拆体。
+- 修复：预览里的长变量不再按分片子串拆成多行高亮；连续变量现在按"一颗变量一行"显示，避免同一变量被拆体。
 - 兼容：中间正文编辑器仍沿用原有 chip 编辑逻辑，变量插入、编辑、校验与存储格式不变。
 - 验证：执行 `build.ps1` 构建与部署通过。
 - 版本：`About/About.xml` 升级为 `0.7.9`。
 
 0.7.8
-- 调整：变量悬浮信息结构改为“名称 / 数据类型 / 描述 / 典型值（3个）”，移除旧的作用域 + 单示例展示。
+- 调整：变量悬浮信息结构改为"名称 / 数据类型 / 描述 / 典型值（3个）"，移除旧的作用域 + 单示例展示。
 - 修复：Prompt 变量 tooltip 元数据现在补齐 `dialogue.summary/guidance/intent_hint/template_line/example_line/examples/action_names` 的专属说明键，变量浏览器与工作台胶囊悬浮提示不再回退为通用英文占位说明。
-- 修复：`ctx.channel` 与 `ctx.mode` 的典型值改为按变量精确配置；少于 3 个代表值时只显示实际数量，空样例时改为本地化“暂无典型值”，不再伪造三条 `n/a`。
-- 改进：`PromptVariableTooltipCatalog` 现在会优先读取变量专属说明，并为缺少专属元数据的变量推断数据类型与 3 个典型值，减少“意义不明”的泛化说明。
+- 修复：`ctx.channel` 与 `ctx.mode` 的典型值改为按变量精确配置；少于 3 个代表值时只显示实际数量，空样例时改为本地化"暂无典型值"，不再伪造三条 `n/a`。
+- 改进：`PromptVariableTooltipCatalog` 现在会优先读取变量专属说明，并为缺少专属元数据的变量推断数据类型与 3 个典型值，减少"意义不明"的泛化说明。
 - 同步：RimTalk 变量浏览器与 Prompt Workbench token 悬浮说明统一复用同一套 tooltip 元数据。
 - 本地化：新增中英文 tooltip 标签 `Data Type / Typical Values`。
 - 验证：执行 `build.ps1` 构建与部署通过。
@@ -1772,7 +1829,7 @@
 - 调整：`PromptWorkbench` 入口改为打开独立大尺寸窗口，不再受设置页内容区域尺寸限制。
 - 新增：`Dialog_PromptWorkbenchLarge`，以约屏幕 `90%` 的初始尺寸承载提示词分段工作区，并按屏幕边界自动约束。
 - 调整：重复点击提示词入口时复用已打开的大窗口，避免叠加多个同类窗口。
-- 调整：提示词分段工作区按“左预设 / 中编辑 / 右侧栏”重分配比例，主编辑区与右侧信息区更贴近大窗口双栏布局。
+- 调整：提示词分段工作区按"左预设 / 中编辑 / 右侧栏"重分配比例，主编辑区与右侧信息区更贴近大窗口双栏布局。
 - 修复：`PromptWorkbenchChipEditor` 在变量 token 跨行时改为按分片子串绘制，消除高亮文本重叠混淆。
 - 调整：主文本输入框最小高度锁定为当前可视区高度，内容较短时也保持固定展开，避免只显示单行输入区域。
 - 修复：`Dialog_PromptWorkbenchLarge` 禁用 `closeOnAccept`，主文本框按回车改为正常插入换行，不再触发窗口关闭。
@@ -1783,12 +1840,12 @@
 0.7.4
 - 优化：`PromptWorkbenchChipEditor` 增加变量 token 分段缓存，仅在文本变化时重新扫描变量，减少编辑与滚动阶段的重复正则开销。
 - 优化：变量 tooltip 改为按 `variableName` 缓存，避免每帧重复拼接翻译文本，降低胶囊悬停场景的分配压力。
-- 修复：跨行变量 token 由“单矩形同一行约束”改为“多段胶囊分片绘制”，变量过长自动换行后仍保持连续高亮。
+- 修复：跨行变量 token 由"单矩形同一行约束"改为"多段胶囊分片绘制"，变量过长自动换行后仍保持连续高亮。
 - 验证：执行 `build.ps1` 构建与部署通过（`0 warning`、`0 errors`）。
 - 版本：`About/About.xml` 升级为 `0.7.4`。
 
 0.7.3
-- 优化：重写变量列表渲染路径，改为“缓存分组行 + 可视区域绘制”，滚动时只绘制当前视口附近的行，显著降低大变量集下的 UI 卡顿。
+- 优化：重写变量列表渲染路径，改为"缓存分组行 + 可视区域绘制"，滚动时只绘制当前视口附近的行，显著降低大变量集下的 UI 卡顿。
 - 优化：新增变量 tooltip 缓存，避免列表滚动/悬停时重复构造同一变量说明文本，减少每帧字符串分配与翻译开销。
 - 优化：变量快照刷新与过滤结果重建时统一失效行缓存，保证搜索/刷新后仍保持正确分组与可点击行为。
 - 验证：执行 `build.ps1` 构建与部署通过。
@@ -1803,12 +1860,12 @@
 
 0.7.1
 - 修复：`设置 -> 提示词分段` 页签重新接回稳定的 `DrawPromptSectionWorkspace` 工作区主链，不再停留在只显示说明文字和同名按钮的旧启动页。
-- 修复：点击“提示词分段”时不再只是重复设置 `selectedTab = 2` 导致界面原地刷新无变化；现在进入页签即可直接编辑原生 `channel -> section` 内容。
+- 修复：点击"提示词分段"时不再只是重复设置 `selectedTab = 2` 导致界面原地刷新无变化；现在进入页签即可直接编辑原生 `channel -> section` 内容。
 - 验证：执行 `build.ps1` 构建与部署，确认提示词分段页能够正常渲染工作区而不是空响应启动页。
 - 版本：`About/About.xml` 升级为 `0.7.1`。
 
 0.7.0
-- 重构：Prompt Compat 正式收口为“只在加载/导入时解析的 legacy 壳”；`RimChatSettings` 的正式 live 状态现在只保留 `PromptSectionCatalog + Summary/Persona/Bridge` 相关字段，旧 `EnableRimTalkPromptCompat / CompatTemplate / RimTalkDiplomacy / RimTalkRpg` 不再参与保存与 UI。
+- 重构：Prompt Compat 正式收口为"只在加载/导入时解析的 legacy 壳"；`RimChatSettings` 的正式 live 状态现在只保留 `PromptSectionCatalog + Summary/Persona/Bridge` 相关字段，旧 `EnableRimTalkPromptCompat / CompatTemplate / RimTalkDiplomacy / RimTalkRpg` 不再参与保存与 UI。
 - 新增：`PromptSectionSchemaCatalog`、`PromptSectionAggregateBuilder` 与 `PromptPersistenceService.SectionAggregates`，外交与 RPG 主链现在统一按 `root channel -> prompt channel -> 8 sections` 生成 canonical aggregate，并在层级化 builder 中只插入一次。
 - 新增：`Prompt/Default/PromptSectionCatalog_Default.json` 成为默认分段资产主入口；读取顺序改为先新文件、后单版本回退旧 `RimTalkPromptEntries_Default.json`。
 - 新增：`LegacyPromptMigrationReport` / `LegacyPromptMigrationEntry` 与覆盖式报告文件 `Prompt/Reports/LegacyPromptMigrationReport.json`；settings / preset / bundle / custom store 的 legacy 导入现在统一写 Player.log 摘要与最新报告。
@@ -1819,16 +1876,16 @@
 - 版本：`About/About.xml` 升级为 `0.7.0`。
 
 0.6.35
-- 重构：RimTalk prompt 兼容层继续降级为“导入/迁移专用”，`Prompt/Custom`、preset、bundle、变量目录的正式链路统一改为 `PromptSectionCatalog + provider`，不再把 `RimTalkDiplomacy / RimTalkRpg / CompatTemplate` 当正式运行时状态保存。
+- 重构：RimTalk prompt 兼容层继续降级为"导入/迁移专用"，`Prompt/Custom`、preset、bundle、变量目录的正式链路统一改为 `PromptSectionCatalog + provider`，不再把 `RimTalkDiplomacy / RimTalkRpg / CompatTemplate` 当正式运行时状态保存。
 - 新增：`RimTalkVariableProvider` 与 `RimTalkMemoryPatchVariableProvider` 补齐首批真实变量桥接；旧 `{{context}} / {{prompt}} / {{chat.history}} / {{chat.history_simplified}} / {{json.format}}` 现自动迁移到 `pawn.rimtalk.* / dialogue.rimtalk.* / system.rimtalk.*` 命名空间。
-- 新增：若 RimTalk API 注册了 context/pawn/environment 变量，会自动映射到 `dialogue.rimtalk.* / pawn.rimtalk.* / world.rimtalk.*`，变量浏览器与变量选择器同步显示来源与“运行时依赖缺失”状态。
+- 新增：若 RimTalk API 注册了 context/pawn/environment 变量，会自动映射到 `dialogue.rimtalk.* / pawn.rimtalk.* / world.rimtalk.*`，变量浏览器与变量选择器同步显示来源与"运行时依赖缺失"状态。
 - 调整：prompt preset 导入、preset store 读取、bundle 导入、RPG custom store 读取现在都会自动解析旧 compat 字段并迁移到原生 section catalog；旧 bundle 的 `rimtalk_diplomacy / rimtalk_rpg` 模块会自动折叠进新的 `RpgPrompt` 导入路径。
 - 调整：prompt bundle 导出模块正式移除 RimTalk legacy 模块；preset / bundle / custom store 导出结果不再写出旧 compat 通道字段。
 - 本地化：补充中英文变量来源、依赖状态、RimTalk 桥接变量说明键。
 - 验证：执行 `build.ps1` 构建与部署通过（`1 warning`，`0 errors`）。
 
 0.6.34
-- 重构：引入 `PromptSectionCatalog` 作为新的原生 section 权威模型，`Prompt/Custom`、preset、bundle、settings 现在统一围绕“通道 -> section -> 文本”持久化，不再把 `PromptEntries` / `CompatTemplate` 当正式运行时配置。
+- 重构：引入 `PromptSectionCatalog` 作为新的原生 section 权威模型，`Prompt/Custom`、preset、bundle、settings 现在统一围绕"通道 -> section -> 文本"持久化，不再把 `PromptEntries` / `CompatTemplate` 当正式运行时配置。
 - 调整：`PromptEntryStaticTextCatalog` 改为动态读取 `PromptSectionCatalog`，外交 `dialogue.diplomacy_dialogue.*` 变量不再绑定硬编码常量，运行时只消费 RimChat 原生 section 数据。
 - 新增：legacy 迁移器现在会把旧 `PromptEntries` / `CompatTemplate` 一次性导入原生 section 模型；遇到未知裸变量、`<prompt_context>`、`=== PREVIEW DIAGNOSTICS ===`、`[FILE]` / `[CODE]` 等污染型成品 prompt 时直接拒收并回退默认 section。
 - 调整：settings、RPG custom store、preset、bundle 全部改为先归一化 `PromptSectionCatalog`，再把 legacy compat 结构清空；旧结构仅保留导入适配职责，不再作为正式运行链路状态。
@@ -1848,18 +1905,18 @@
 0.6.32
 - 修复：Prompt Workbench 预设激活链改为先完整写入当前 payload 对应的 custom 配置，再刷新编辑器，避免 `Default -> Migrated -> Default` 后正文区与预览区仍停留在迁移内容。
 - 修复：`Prompt/Custom/PawnDialoguePrompt_Custom.json` 现在会按当前预设显式重建 RimTalk/RPG 兼容字段，切换预设时不再把旧文件中的兼容层状态重新读回覆盖新预设。
-- 修复：当预设 payload 对应的 custom 文本为空时，旧 custom 文件会被删除，不再因为残留文件导致默认预设被“反激活”。
+- 修复：当预设 payload 对应的 custom 文本为空时，旧 custom 文件会被删除，不再因为残留文件导致默认预设被"反激活"。
 - 验证：执行 `build.ps1` 构建与部署通过（`0 warnings`，`0 errors`）。
 - 版本：`About/About.xml` 升级为 `0.6.32`。
 
 0.6.25
 - 调整：提示词工作台变量胶囊文字颜色改为 `new Color(184f/255f, 230f/255f, 184f/255f, 1f)`，统一为浅绿色字体显示。
-- 调整：提示词工作台在已聚焦的“条目内容（Scriban）”编辑框中插入变量时，会自动补齐 token 前后缺失空格，避免胶囊与相邻文本紧贴。
-- 调整：回滚提示词工作台变量胶囊的新描边样式，恢复为更接近旧版的纯底色胶囊观感；同时保留 tooltip 与“不遮挡相邻字符”的修复。
-- 修复：提示词工作台“条目内容（Scriban）”编辑框保持固定高度与框内纵向滚动，同时恢复变量 token 胶囊高亮与 tooltip；胶囊层改为低遮挡高亮，不再让 `{{ ctx.mode }}` 等标签遮住相邻字符。
+- 调整：提示词工作台在已聚焦的"条目内容（Scriban）"编辑框中插入变量时，会自动补齐 token 前后缺失空格，避免胶囊与相邻文本紧贴。
+- 调整：回滚提示词工作台变量胶囊的新描边样式，恢复为更接近旧版的纯底色胶囊观感；同时保留 tooltip 与"不遮挡相邻字符"的修复。
+- 修复：提示词工作台"条目内容（Scriban）"编辑框保持固定高度与框内纵向滚动，同时恢复变量 token 胶囊高亮与 tooltip；胶囊层改为低遮挡高亮，不再让 `{{ ctx.mode }}` 等标签遮住相邻字符。
 - 调整：提示词工作台正文编辑区改为固定高度文本框，内容在框内自动换行并纵向滚动，不再随正文长度向外扩张。
 - 调整：`PromptWorkbenchChipEditor` 保留变量胶囊高亮与 tooltip，同时收敛为固定可视区域 + 垂直滚动交互。
-- 调整：工作台正文区 fallback 文本框与胶囊编辑器统一为“固定高度 + 自动换行 + 纵向滚动”。
+- 调整：工作台正文区 fallback 文本框与胶囊编辑器统一为"固定高度 + 自动换行 + 纵向滚动"。
 - 修复：切换不同提示词条目时重置正文滚动位置，避免沿用上一条目的滚动偏移造成错位阅读。
 - 版本：`About/About.xml` 升级为 `0.6.25`。
 
@@ -1867,29 +1924,29 @@
 - 新增：Prompt 工作台条目编辑器接入 `PromptWorkbenchChipEditor`，有效变量 token 以统一底色胶囊显示。
 - 新增：`PromptVariableTokenScanner` + `PromptTokenSegment`，严格识别 `{{ namespace.path }}` 且仅白名单变量可转胶囊。
 - 新增：`PromptVariableTooltipCatalog`，统一输出变量名/作用域/说明/示例值的静态详情元数据。
-- 调整：工作台编辑器交互支持“单击选中胶囊、双击编辑 token、Backspace/Delete 删除整 token”。
+- 调整：工作台编辑器交互支持"单击选中胶囊、双击编辑 token、Backspace/Delete 删除整 token"。
 - 调整：工作台右侧变量列表 tooltip 改为与胶囊详情一致的结构，并显示示例值。
 - 本地化：新增变量详情标签语言键（中英双语）。
 - 版本：`About/About.xml` 升级为 `0.6.24`。
 
 0.6.23
-- 新增：`Prompt/Default/RimTalkPromptEntries_Default.json` 作为“全通道默认条目正文”唯一主源，按 `PromptChannel + SectionId` 映射 8 段默认内容。
+- 新增：`Prompt/Default/RimTalkPromptEntries_Default.json` 作为"全通道默认条目正文"唯一主源，按 `PromptChannel + SectionId` 映射 8 段默认内容。
 - 新增：`RimTalkPromptEntryDefaultsProvider`（含强类型配置模型）加载并缓存默认条目内容；缺失文件时回退内置 fallback。
 - 调整：工作台条目规范化时，空内容条目会自动按通道+段位填充默认正文（不再只保留空壳结构）。
-- 调整：工作台“恢复默认（↺）”改为恢复“完整 8 段结构 + 默认正文”，按当前 scoped 通道生效。
+- 调整：工作台"恢复默认（↺）"改为恢复"完整 8 段结构 + 默认正文"，按当前 scoped 通道生效。
 - 调整：entry-driven 渲染变量先按 `PromptVariableCatalog` 全量预置为空，再覆盖上下文值，降低 strict Scriban 缺变量风险。
-- 变更（破坏式）：停用保存阶段“条目 -> 旧字段”回写入口（`SaveSystemPromptConfig` / `SaveRpgPromptTextsToCustom` 不再调用 `SyncLegacyPromptFieldsFromEntryChannels`）。
+- 变更（破坏式）：停用保存阶段"条目 -> 旧字段"回写入口（`SaveSystemPromptConfig` / `SaveRpgPromptTextsToCustom` 不再调用 `SyncLegacyPromptFieldsFromEntryChannels`）。
 - 版本：`About/About.xml` 升级为 `0.6.23`。
 - 验证：RimWorld 1.6 / .NET Framework 4.8 下执行 build 流程（`build.ps1`）通过（`0 errors`，`0 warnings`）。
 
 0.6.22
-- 新增：提示词条目区新增“恢复默认（↺）”按钮，按当前通道一键重建默认条目结构。
+- 新增：提示词条目区新增"恢复默认（↺）"按钮，按当前通道一键重建默认条目结构。
 - 调整：顶部复制按钮改为稳定符号 `C`，并增加提示文本。
 - 调整：复制默认条目时会清空 `SectionId`，复制出的条目可删除。
 - 调整：不可删除的默认条目不再显示删除符号。
-- 修复：提示词条目“向下调整顺序（▼）”生效逻辑修正，避免点击无变化。
+- 修复：提示词条目"向下调整顺序（▼）"生效逻辑修正，避免点击无变化。
 - 调整：提示词工作台默认条目（标准 SectionId 条目）删除按钮改为禁用，默认条目不允许删除，避免误删核心段落。
-- 修复：提示词工作台条目列表在实验工作台模式下改为“按当前下拉通道过滤显示”，每次仅展示该通道的一组条目，避免跨通道重复堆叠。
+- 修复：提示词工作台条目列表在实验工作台模式下改为"按当前下拉通道过滤显示"，每次仅展示该通道的一组条目，避免跨通道重复堆叠。
 - 修复：条目新增/复制默认写入当前下拉通道，并且上下移动只在当前通道内部重排，不会扰动其他通道。
 - 修复：删除条目后选中态会自动回落到当前通道可见条目，变量插入与编辑器目标通道保持一致。
 - 兼容：保留外交与 RPG 根通道的隔离存储；各子通道配置互不覆盖。
@@ -1903,7 +1960,7 @@
 - 验证：RimWorld 1.6 / .NET Framework 4.8 下执行 build 流程（`build.ps1`）通过（`0 errors`）。
 
 0.6.20
-- 调整：提示词工作台头部“外交/RPG”双按钮改为单一下拉通道选择，支持外交对话请求、RPG 对话请求、外交策略建议请求、外交主动来信、RPG主动推送、社交圈新闻生成、人格初始化生成、对话摘要生成、RPG 归档压缩总结、图像生成。
+- 调整：提示词工作台头部"外交/RPG"双按钮改为单一下拉通道选择，支持外交对话请求、RPG 对话请求、外交策略建议请求、外交主动来信、RPG主动推送、社交圈新闻生成、人格初始化生成、对话摘要生成、RPG 归档压缩总结、图像生成。
 - 优化：切换下拉通道时自动对焦到该通道的首个条目，减少跨通道编辑时的手动定位成本。
 - 本地化：同步更新中英文通道标签与默认种子名称文案，避免 UI 显示与通道语义不一致。
 - 验证：RimWorld 1.6 / .NET Framework 4.8 下执行 build 流程（`build.ps1`）通过（`0 errors`）。
@@ -1915,11 +1972,11 @@
 - 验证：RimWorld 1.6 / .NET Framework 4.8 下 build 通过（`0 errors`），并同步更新 `spec/Index.md` 文档。
 
 0.6.18
-- 修复：Prompt Workbench 的 RimTalk 条目编辑改为稳定编辑缓存路径，解决“红框区域可点但编辑结果不生效/被回滚”的问题。
-- 修复：`启用 RimTalk 兼容层` 现真正接入运行时构建链路；关闭时回退标准分层 Prompt，开启时仅注入“已启用且匹配提示词通道”的条目。
+- 修复：Prompt Workbench 的 RimTalk 条目编辑改为稳定编辑缓存路径，解决"红框区域可点但编辑结果不生效/被回滚"的问题。
+- 修复：`启用 RimTalk 兼容层` 现真正接入运行时构建链路；关闭时回退标准分层 Prompt，开启时仅注入"已启用且匹配提示词通道"的条目。
 - 新增：RimTalk 条目新增 `PromptChannel` 字段与通道目录，支持外交策略/主动外交/主动RPG/社交圈推文/人格初始化/摘要生成/RPG归档压缩/图像生成等可选通道。
 - 迁移：旧条目会自动归一化到有效通道，并自动补齐缺失的默认通道条目（按通道种子策略设置默认启用状态），保持旧存档兼容。
-- 本地化：中英文语言键同步新增“兼容层说明文案 + 提示词通道标签 + 默认种子名称”。
+- 本地化：中英文语言键同步新增"兼容层说明文案 + 提示词通道标签 + 默认种子名称"。
 - 调整：版本提升到 0.6.18，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 
 0.6.17
@@ -1948,28 +2005,28 @@
 - 调整：版本提升到 0.6.15，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 
 0.6.14
-- 修复：提示词条目列表增加更大点击热区（整行可选）、顶部新增复制按钮，减少因命中区域过小导致的“按钮无响应”。
-- 修复：提示词条目编辑区在窄宽度下将“条目角色/条目位置”自动切换为纵向布局，避免按钮被挤出可点击区域。
-- 修复：工作台变量面板每行恢复显式“插入”按钮，同时保留整行点击插入，降低误判为无响应的概率。
+- 修复：提示词条目列表增加更大点击热区（整行可选）、顶部新增复制按钮，减少因命中区域过小导致的"按钮无响应"。
+- 修复：提示词条目编辑区在窄宽度下将"条目角色/条目位置"自动切换为纵向布局，避免按钮被挤出可点击区域。
+- 修复：工作台变量面板每行恢复显式"插入"按钮，同时保留整行点击插入，降低误判为无响应的概率。
 - 兼容：仅调整工作台交互与布局，不改存档 schema，不改旧提示词文件格式。
 - 调整：版本提升到 0.6.14，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 0.6.13
-- 修复：从 RPG 设置页与 RimTalk 迁移页打开提示词工作台时，入口改为显式进入 RPG 通道，避免点击后总是回到外交通道的“无反应/错页”体感。
+- 修复：从 RPG 设置页与 RimTalk 迁移页打开提示词工作台时，入口改为显式进入 RPG 通道，避免点击后总是回到外交通道的"无反应/错页"体感。
 - 修复：预设激活链路增加失败分支与错误提示（含失败原因），不再出现点击激活按钮后静默失败。
-- 优化：预设新建/复制/重命名/删除/导入/导出均补充即时消息反馈，降低“按钮点击无反应”感知。
+- 优化：预设新建/复制/重命名/删除/导入/导出均补充即时消息反馈，降低"按钮点击无反应"感知。
 - 兼容：仅调整 UI 入口与提示反馈，不改存档 schema，不改旧提示词文件格式，保持旧版本提示词文件可读。
 - 调整：版本提升到 0.6.13，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 0.6.12
-- 修复：提示词工作台变量面板改为 RimTalk 风格交互（搜索 + 分组列表 + 整行点击插入），不再依赖 RimChat 旧版“列表+详情”布局。
+- 修复：提示词工作台变量面板改为 RimTalk 风格交互（搜索 + 分组列表 + 整行点击插入），不再依赖 RimChat 旧版"列表+详情"布局。
 - 修复：工作台变量面板渲染链路改为独立 Rect 绘制，移除 Listing_Standard 嵌套导致的点击区域偏移风险，恢复变量区稳定交互。
-- 修复：提示词条目列表交互对齐 RimTalk（行内启用勾选、行内删除、上下移动），提升条目区可操作性并减少“按钮无效”体感。
-- 修复：预设列表点击后会立即激活并应用当前预设，避免“选中预设但编辑区不切换”的无响应表现。
+- 修复：提示词条目列表交互对齐 RimTalk（行内启用勾选、行内删除、上下移动），提升条目区可操作性并减少"按钮无效"体感。
+- 修复：预设列表点击后会立即激活并应用当前预设，避免"选中预设但编辑区不切换"的无响应表现。
 - 兼容：仅调整 UI 与交互逻辑，不改旧存档读取路径；旧提示词文件与旧字段保持兼容。
 - 调整：版本提升到 0.6.12，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 0.6.11
-- 修复：提示词工作台布局按 RimTalk 高保真重排，主区域改为“左窄栏 + 右主区（编辑区 + 侧栏）”，修复编辑区过窄与三栏比例失衡问题。
-- 修复：左侧预设/条目区重排为接近 RimTalk 的紧凑结构，并移除工作台左下不属于 RimTalk 工作流的通用“保存/重置/导入/导出配置”按钮组。
-- 修复：`RimTalkPromptEntryConfig` 新增 `CustomRole` 字段；工作台“自定义角色”输入框改为正确绑定 `CustomRole`，不再错误覆写 `Role`。
+- 修复：提示词工作台布局按 RimTalk 高保真重排，主区域改为"左窄栏 + 右主区（编辑区 + 侧栏）"，修复编辑区过窄与三栏比例失衡问题。
+- 修复：左侧预设/条目区重排为接近 RimTalk 的紧凑结构，并移除工作台左下不属于 RimTalk 工作流的通用"保存/重置/导入/导出配置"按钮组。
+- 修复：`RimTalkPromptEntryConfig` 新增 `CustomRole` 字段；工作台"自定义角色"输入框改为正确绑定 `CustomRole`，不再错误覆写 `Role`。
 - 兼容：仅调整 UI 绘制与条目字段绑定，不改变旧存档读取路径；旧提示词文件缺失 `CustomRole` 时自动回退为空字符串。
 - 调整：版本提升到 0.6.11，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 0.6.10
@@ -1981,13 +2038,13 @@
 - 兼容：保留旧路径 UI/CommsToggleIcon 作为回退，兼容旧资源结构与旧分发包。
 - 调整：版本提升到 0.6.9，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 0.6.8
-- 优化：RimTalk 条目列表行高度提升并改为“双行信息（名称 + 角色/位置）”，显著降低条目名称与状态信息遮挡问题。
+- 优化：RimTalk 条目列表行高度提升并改为"双行信息（名称 + 角色/位置）"，显著降低条目名称与状态信息遮挡问题。
 - 优化：条目列表新增完整 tooltip，长文本会截断显示但可悬停查看完整内容，保证可读与可选中。
-- 优化：条目编辑器“启用/角色/位置”区域改为自适应宽度布局，避免窄宽度下按钮重叠与点击区域冲突。
+- 优化：条目编辑器"启用/角色/位置"区域改为自适应宽度布局，避免窄宽度下按钮重叠与点击区域冲突。
 - 优化：补齐 `RimChat_Import` / `RimChat_Export` 中英文语言键，修复工作台顶部按钮回退显示键名导致的文本截断。
 - 调整：版本提升到 0.6.8，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 0.6.7
-- 优化：提示词工作台右侧“变量”面板重构为“列表 + 选中详情”交互，变量条目支持点击选择高亮，不再只有“插入”按钮交互。
+- 优化：提示词工作台右侧"变量"面板重构为"列表 + 选中详情"交互，变量条目支持点击选择高亮，不再只有"插入"按钮交互。
 - 优化：变量行插入按钮宽度改为按文案动态计算，搜索标签宽度自适应，减少窄面板下 token 文本被截断。
 - 优化：新增变量详情区，显示完整 token 与分组/描述信息，降低长变量名与长描述的可读性损失。
 - 性能：RimTalk 变量快照改为节流缓存（1.2 秒刷新）+ 搜索结果缓存，避免每帧反射抓取与重复排序导致的帧率波动。
@@ -2006,10 +2063,10 @@
 - 调整：版本提升到 0.6.5，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 
 0.6.3
-- 新增：RimTalk 子通道改为“变量条目式编辑器”，引入条目列表 + 条目详情（名称/角色/位置/InChat 深度/内容）工作流，界面交互对齐 RimTalk 高级提示词编辑习惯。
+- 新增：RimTalk 子通道改为"变量条目式编辑器"，引入条目列表 + 条目详情（名称/角色/位置/InChat 深度/内容）工作流，界面交互对齐 RimTalk 高级提示词编辑习惯。
 - 新增：`RimTalkChannelCompatConfig` 扩展 `PromptEntries` 存储结构；支持新增/复制/删除/上下移动条目，并在编辑时实时回写。
 - 兼容：保留旧 `CompatTemplate` 路径，加载旧配置时自动迁移为默认条目；条目内容会自动合成为 `CompatTemplate`，确保旧版本读取不破坏。
-- 新增：变量浏览器插入逻辑升级为“优先插入当前选中条目”，无选中条目时回退插入兼容模板。
+- 新增：变量浏览器插入逻辑升级为"优先插入当前选中条目"，无选中条目时回退插入兼容模板。
 - UI/本地化：补充 RimTalk 条目编辑器新增中英语言键（列表标题、空态、角色/位置标签、默认条目名）。
 - 调整：版本提升到 0.6.3，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、Api.md、config.md、spec/Index.md。
 
@@ -2023,8 +2080,8 @@
 
 0.6.1
 - 新增：RimTalk 严格隔离开关（`RimTalkAutoPushSessionSummary`、`RimTalkAutoInjectCompatPreset`），默认均为关闭。
-- 调整：RimTalk 兼容桥仅在开启“自动推送摘要”时才会写入 RimTalk 全局摘要变量。
-- 调整：RimTalk 兼容桥仅在开启“自动注入预设”时才会创建/更新 `RimChat Compat Variables` 条目；关闭时会主动禁用已存在兼容条目。
+- 调整：RimTalk 兼容桥仅在开启"自动推送摘要"时才会写入 RimTalk 全局摘要变量。
+- 调整：RimTalk 兼容桥仅在开启"自动注入预设"时才会创建/更新 `RimChat Compat Variables` 条目；关闭时会主动禁用已存在兼容条目。
 - UI/本地化：RimTalk 独立页新增隔离开关与隔离提示，并同步中英文语言键。
 - 兼容：旧存档与旧提示词自定义文件保持可读；缺失新字段时自动回退为安全默认（关闭）。
 - 调整：版本提升到 0.6.1，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
@@ -2033,14 +2090,14 @@
 - 调整：版本提升到 0.6.0，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt。
 
 0.5.29
-- 新增：通讯台外交对话窗口（`Dialog_DiplomacyDialogue`）派系列表标题右侧新增齿轮按钮，可打开“隐藏派系显示”多选弹窗。
+- 新增：通讯台外交对话窗口（`Dialog_DiplomacyDialogue`）派系列表标题右侧新增齿轮按钮，可打开"隐藏派系显示"多选弹窗。
 - 新增：支持对隐藏派系执行多选显示（全选/清空/确定/取消）；确定后所选隐藏派系并入当前窗口派系列表，保持与普通派系一致的外交对话功能。
 - 新增：存档级持久化字段 `manuallyVisibleHiddenFactions`（`GameComponent_DiplomacyManager`），旧存档缺失字段时自动回退为空并清理无效引用。
 - 兼容：不改动现有提示词文件结构与旧存档主流程；未选择隐藏派系时原派系列表行为与排序不变。
 - 调整：版本提升到 0.5.29，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 
 0.5.28
-- 修复：`Faction.TryAffectGoodwillWith` 的补丁在检测到“自然好感下降”（reason 含 `natural/decay/drift/baseline/goodwillnatur`）时，不再注册 NPC/PawnRPG 主动对话触发，避免被动关系回归引发主动来信。
+- 修复：`Faction.TryAffectGoodwillWith` 的补丁在检测到"自然好感下降"（reason 含 `natural/decay/drift/baseline/goodwillnatur`）时，不再注册 NPC/PawnRPG 主动对话触发，避免被动关系回归引发主动来信。
 - 兼容：未改动存档结构与提示词文件格式；旧存档与旧提示词文件保持兼容。
 - 调整：版本提升到 0.5.28，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md。
 
@@ -2049,9 +2106,9 @@
 - 调整：图片 API 设置页 UI/UX 对齐主 API 配置页交互风格（下拉模式选择 + 占位输入 + 测试反馈色）。
 - 新增：图片 API 连通性测试按钮（与主 API 同款），支持同步/异步链路探测与鉴权失败提示。
 - 调整：图片 API 连通性测试改为协程异步请求，不再使用阻塞式轮询。
-- 修复：非 ARK 图片源在首轮请求遇到 `5xx` 或尺寸相关错误时会自动回退“去掉 size 字段”重试，降低硅基流动等兼容接口的发图失败率。
+- 修复：非 ARK 图片源在首轮请求遇到 `5xx` 或尺寸相关错误时会自动回退"去掉 size 字段"重试，降低硅基流动等兼容接口的发图失败率。
 - 修复：`SiliconFlow` 图片预设改为 OpenAI 图片协议体（`/v1/images/generations` 兼容形态），避免误用 ARK 字段导致服务端 500。
-- 优化：ComfyUI 异步提交遇到 `ckpt_name not in list` 校验失败时，改为明确提示“图片模型需填写 checkpoints 目录中实际文件名”，并提供本地化提示文案。
+- 优化：ComfyUI 异步提交遇到 `ckpt_name not in list` 校验失败时，改为明确提示"图片模型需填写 checkpoints 目录中实际文件名"，并提供本地化提示文案。
 - 调整：图片 API 页改为 Provider 预设驱动（火山ARK/OpenAI兼容/SiliconFlow/本地ComfyUI/自定义），默认自动填充 endpoint/模式/鉴权，减少用户配置项。
 - 新增：仅在 `Custom` 预设下显示高级项开关（模式/鉴权/路径/轮询），普通用户默认无需配置底层参数。
 - 新增：图片 API 配置新增可持久化字段（`Mode/SchemaPreset/AuthMode/ResponseUrlPath/ResponseB64Path/Async*Path/Poll*`），旧存档缺失字段自动回退默认值。
@@ -2063,7 +2120,7 @@
 - 调整：版本提升到 0.5.22，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 
 0.5.21
-- 新增：手动 RPG 对话窗口左下角新增“历史”按钮，点击后在屏幕中间空白区域打开会话历史面板（仅当前会话）。
+- 新增：手动 RPG 对话窗口左下角新增"历史"按钮，点击后在屏幕中间空白区域打开会话历史面板（仅当前会话）。
 - 新增：会话历史按时间正序展示详细对话记录，并在对应 NPC 回复下内联展示触发行为（行为名 + 成功/失败/错误 + 原因）。
 - 新增：历史面板支持任意时机打开（打字中/等待中可查看）；点击面板外仅关闭面板，不关闭 RPG 对话窗口。
 - 保留：右下角原有对话翻页历史导航不变，作为快捷翻页入口继续可用。
@@ -2072,8 +2129,8 @@
 - 调整：版本提升到 0.5.21，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md。
 
 0.5.20
-- 调整：外交输入框在 AI 锁定期间不再显示“对方仍在回复中，请稍候...”占位文案，仅保留底部 typing 状态层。
-- 调整：`send_image` 的 caption 策略改为“AI 优先 + 本地模板兜底”；当 AI 未返回 caption 时，不再回退模板名称。
+- 调整：外交输入框在 AI 锁定期间不再显示"对方仍在回复中，请稍候..."占位文案，仅保留底部 typing 状态层。
+- 调整：`send_image` 的 caption 策略改为"AI 优先 + 本地模板兜底"；当 AI 未返回 caption 时，不再回退模板名称。
 - 新增：图片 API 页新增可持久化配置 `SendImageCaptionStylePrompt` 与 `SendImageCaptionFallbackTemplate`，支持占位符 `{leader}/{faction}/{template_name}`。
 - 调整：系统提示词 `SEND_IMAGE TEMPLATE RULE` 追加 caption 规则，要求优先填写 `parameters.caption`，风格遵循设置并跟随当前游戏语言。
 - 兼容：不改 `send_image` 动作契约，不删除旧语言键；旧存档与旧提示词文件继续可读。
@@ -2081,7 +2138,7 @@
 - 调整：版本提升到 0.5.20，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 
 0.5.19
-- 新增：外交相册改为缩略图卡片网格，显示来源徽标（聊天图/自拍图）与尺寸信息，支持右键“复制图片路径”。
+- 新增：外交相册改为缩略图卡片网格，显示来源徽标（聊天图/自拍图）与尺寸信息，支持右键"复制图片路径"。
 - 修复：对话内联图片右键菜单触发改为 `ContextClick + MouseDown(右键)` 双兜底，并严格限定在图片可视区域命中。
 - 新增：自拍参数窗口支持注入开关（服饰/体型/发型/武器/植入物/状态，默认全开）；发送时隐藏拼接完整人物信息到最终请求。
 - 新增：`AlbumImageEntry` 增加可选字段 `sourceType`，手动保存链路写入 `chat/selfie`；旧存档缺失字段自动回退并兼容展示。
@@ -2089,9 +2146,9 @@
 - 调整：版本提升到 0.5.19，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 
 0.5.18
-- 新增：外交窗口主标签栏新增“相册/自拍”按钮；相册仅展示“手动保存到相册”的图片，不自动收录所有生成图。
-- 新增：聊天内联图片支持右键“保存到相册”；保存逻辑为复制到存档相册目录并自动防重名，随后写入持久化相册索引。
-- 新增：相册窗口（列表视图），支持按钮与右键菜单“打开图片保存目录”。
+- 新增：外交窗口主标签栏新增"相册/自拍"按钮；相册仅展示"手动保存到相册"的图片，不自动收录所有生成图。
+- 新增：聊天内联图片支持右键"保存到相册"；保存逻辑为复制到存档相册目录并自动防重名，随后写入持久化相册索引。
+- 新增：相册窗口（列表视图），支持按钮与右键菜单"打开图片保存目录"。
 - 新增：自拍参数窗口（Prompt/Size/Watermark/Caption）与自拍预览窗口；自拍主体固定为当前谈判殖民者，预览后可手动保存到相册。
 - 兼容：新增 `albumEntries` 存档字段，旧存档缺失时自动初始化为空；不改动旧提示词文件格式与既有 `send_image` 协议。
 - 本地化：补充中英语言键（相册/自拍入口、窗口文案、保存与失败提示、目录操作提示）。
@@ -2103,18 +2160,18 @@
 - 兼容：不新增存档字段；旧 `Prompt/Custom/PawnDialoguePrompt_Custom.json` 缺失新字段时自动回退默认值。
 - 调整：版本提升到 0.5.17，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.16
-- 新增：Prompt -> Faction Prompts 面板支持“新增模板/移除模板”，新增时可从全部 FactionDef（含 mod 派系）中选择绑定。
+- 新增：Prompt -> Faction Prompts 面板支持"新增模板/移除模板"，新增时可从全部 FactionDef（含 mod 派系）中选择绑定。
 - 规则：同一派系只允许一条模板；若已存在则自动定位现有模板，不创建重复项。
-- 规则：仅允许移除“自定义新增模板”；默认模板（来自 Prompt/Default/FactionPrompts_Default.json）不可移除。
+- 规则：仅允许移除"自定义新增模板"；默认模板（来自 Prompt/Default/FactionPrompts_Default.json）不可移除。
 - 兼容：移除自定义模板后不会被自动补回；导入配置后会自动补齐默认模板，继续保持默认模板保护规则。
-- 兼容：缺失 mod 派系模板会保留并标记为“缺失”，可继续导出，避免旧存档/旧提示词数据丢失。
+- 兼容：缺失 mod 派系模板会保留并标记为"缺失"，可继续导出，避免旧存档/旧提示词数据丢失。
 - 本地化：新增中英语言键（新增/移除模板、默认不可删提示、缺失派系标签、已存在自动定位提示）。
 - 调整：版本提升到 0.5.16，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.15
 - 修复：图片 API 页改为整页纵向滚动，低分辨率下可完整访问图片模板编辑区（ID/名称/描述/正文/新增/删除）。
 - 新增：`FactionDialogueSession` 增加运行态计数 `pendingImageRequests`（不写存档），用于统一发图等待门控。
 - 调整：`send_image` 发起时增加图片等待计数，回调（成功/失败）后释放计数，防止负数并保持旧存档兼容。
-- 调整：外交输入门控统一为“AI 请求等待/图片请求等待/NPC 逐字机任一存在即锁定”，发送按钮与键盘发送共用同一判定。
+- 调整：外交输入门控统一为"AI 请求等待/图片请求等待/NPC 逐字机任一存在即锁定"，发送按钮与键盘发送共用同一判定。
 - 修复：会话结束态优先级提升；结束后输入区仅显示结束原因，不再显示 typing；若图片回调晚到，仍会追加到历史消息。
 - 调整：版本提升到 0.5.15，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.14
@@ -2123,7 +2180,7 @@
 - 兼容：旧存档中已保存的低尺寸（如 `1024x1024`）会在运行时自动归一化为新默认尺寸，不改动存档结构与提示词文件格式。
 - 调整：版本提升到 0.5.14，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.13
-- 调整：外交输入框在“对方正在输入”锁定期间，不再保留或显示玩家正在输入中的草稿文本。
+- 调整：外交输入框在"对方正在输入"锁定期间，不再保留或显示玩家正在输入中的草稿文本。
 - 调整：锁定预览统一显示本地化等待提示 RimChat_DiplomacyInputLockedByTyping，避免出现锁定态草稿残留。
 - 兼容：未变更存档结构与提示词文件格式，旧存档可直接兼容。
 - 调整：版本提升到 0.5.13，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md。
@@ -2134,25 +2191,25 @@
 - 调整：版本提升到 `0.5.12`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`。
 0.5.11
 - 新增：实现外交发图框架，新增动作 `send_image`，通过独立 ARK REST 图片链路执行（当前仅支持 `response_format=url`）。
-- 新增：独立“图片API”设置页，支持独立 endpoint/apiKey/model/default size/watermark/timeout，不复用聊天 API 配置。
+- 新增：独立"图片API"设置页，支持独立 endpoint/apiKey/model/default size/watermark/timeout，不复用聊天 API 配置。
 - 新增：全局外交图片模板池（`id/name/text/description/enabled`）与可视化编辑器，提供默认模板并对旧存档自动补齐默认项。
 - 新增：`send_image` 参数契约全链路接入（必填 `template_id`；可选 `extra_prompt/caption/size/watermark`），覆盖解析白名单、资格校验、提示词动作目录、问号 tooltip 状态列表。
 - 新增：发图提示词组装强制注入 `模板正文 + extra_prompt + LeaderProfile`，包含首领身份、种族/性别、体型/发型/胡须、可见服饰、派系类型/科技/关系/背景；缺失首领时自动回退派系级描述。
 - 新增：外交聊天内联图片卡片消息（`DialogueMessageType.Image`），存档持久化图片本地路径与来源 URL，并按存档维度缓存图片文件。
 - 新增：外交动作执行链新增 `TryHandleSendImageAction(...)` 拦截，与 presence/social 同层，且限制每轮最多 1 张图片。
-- 新增：失败策略为“保留文本回复 + 追加本地化系统失败提示”；URL 下载成功后自动回写为内联图片消息。
+- 新增：失败策略为"保留文本回复 + 追加本地化系统失败提示"；URL 下载成功后自动回写为内联图片消息。
 - 调整：版本提升到 `0.5.11`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
 0.5.10
 - 新增：检测到 RimTalk 运行时可用时，RPG 人格引导链路会优先尝试从 RimTalk 模板复制人格到 RimChat（默认模板：`pawn.personality`）。
-- 规则：仅对 RimChat 人格为空的“殖民地人类 Pawn”生效，不覆盖玩家已手动编辑的人格。
+- 规则：仅对 RimChat 人格为空的"殖民地人类 Pawn"生效，不覆盖玩家已手动编辑的人格。
 - 回退：RimTalk 模板渲染失败或返回空文本时，自动回退现有 AI 生成人格重试链路与兜底文本，不中断流程。
-- 新增：RimTalk 设置页（RPG 通道）增加“人格复制模板”编辑项，支持 `pawn.personality` 与 `{{pawn.personality}}`。
-- 新增：RimTalk 设置页（RPG 通道）增加手动按钮“立即复制全部 RimTalk 人格”，可一键把殖民地全部 Pawn 的 RimTalk 人格同步到 RimChat。
+- 新增：RimTalk 设置页（RPG 通道）增加"人格复制模板"编辑项，支持 `pawn.personality` 与 `{{pawn.personality}}`。
+- 新增：RimTalk 设置页（RPG 通道）增加手动按钮"立即复制全部 RimTalk 人格"，可一键把殖民地全部 Pawn 的 RimTalk 人格同步到 RimChat。
 - 新增：`RimTalkPersonaCopyTemplate` 接入默认/自定义配置持久化链路（`Prompt/Default/PawnDialoguePrompt_Default.json` 与 `Prompt/Custom/PawnDialoguePrompt_Custom.json`）。
 - 调整：版本提升到 `0.5.10`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
 0.5.8
 - 新增：NPC 主动对话设置拆分为两个独立开关：`EnableNpcInitiatedDialogue`（外交主动）与 `EnablePawnRpgInitiatedDialogue`（PawnRPG 主动），默认均为开启。
-- 新增：设置界面支持分别控制“外交主动对话 / PawnRPG 主动对话”，并补齐中英文本地化语言键。
+- 新增：设置界面支持分别控制"外交主动对话 / PawnRPG 主动对话"，并补齐中英文本地化语言键。
 - 调整：PawnRPG 主动链路门控从旧共享开关改为独立开关（仍保留 `EnableRPGDialogue` 总体 RPG 通道门控）。
 - 兼容：旧存档加载时若不存在 `EnablePawnRpgInitiatedDialogue` 字段，会自动继承旧 `EnableNpcInitiatedDialogue` 值，保持旧配置语义。
 - 调整：版本提升到 0.5.8，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
@@ -2166,20 +2223,20 @@
 - 兼容：日志仅内存保留（最多 2000 条，自动清理 65 分钟前记录；窗口固定显示最近 60 分钟），不引入存档字段变化。
 - 调整：版本提升到 0.5.7，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.6
-- 新增：PawnRPG 主动对话支持“手动主角名单”（按存档独立保存），普通主动调度与调试强制触发都只会在名单内选目标。
+- 新增：PawnRPG 主动对话支持"手动主角名单"（按存档独立保存），普通主动调度与调试强制触发都只会在名单内选目标。
 - 新增：GameComponent_PawnRpgDialoguePushManager 持久化主角名单（Pawn 引用 + thingID 兜底），旧存档缺失字段自动补默认值。
 - 新增：NPC 主动对话设置 增加 PawnRPG 主角管理 UI（添加/移除/清空）与人数上限配置 PawnRpgProtagonistCap（默认 20），并补齐中英文本地化。
-- 调整：PawnRPG 目标选择保持原关系/好感评分逻辑，但候选集合改为“主角名单内可用 Pawn”。
+- 调整：PawnRPG 目标选择保持原关系/好感评分逻辑，但候选集合改为"主角名单内可用 Pawn"。
 - 调整：主角名单为空时，PawnRPG 主动链路严格不投递（不回退旧自动选人），并写可读日志提示。
 - 调整：版本提升到 0.5.6，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.5
-- 修复：延迟外交事件执行改为“成功后移除”，失败不再立即丢弃；新增最多 3 次延迟重试，降低偶发执行失败导致事件永久失效的问题。
-- 修复：request_raid 在策略/入场模式不可执行或执行失败时，强制追加一次原版自动策略/自动入场兜底，提升“已安排袭击但不触发”的命中率。
+- 修复：延迟外交事件执行改为"成功后移除"，失败不再立即丢弃；新增最多 3 次延迟重试，降低偶发执行失败导致事件永久失效的问题。
+- 修复：request_raid 在策略/入场模式不可执行或执行失败时，强制追加一次原版自动策略/自动入场兜底，提升"已安排袭击但不触发"的命中率。
 - 兼容：延迟袭击事件新增 raidStrategyDefName/arrivalModeDefName 存档字段，在 Def 引用失配时可按名称回填，降低旧存档与模组变动场景下的失败概率。
 - 调整：版本提升到 0.5.5，并同步更新 About/About.xml、VersionLog.txt、VersionLog_en.txt、spec/Index.md、Api.md、config.md。
 0.5.4
-- 新增：提示词包导入支持“按模块勾选 + 导入预览”（系统/外交/RPG/社交圈/派系/RimTalk-外交/RimTalk-RPG），未勾选模块保持不变。
-- 新增：提示词包导出支持“全量导出 + 按模块导出”双模式；按模块导出写入 bundle `v2` 的 `IncludedModules` 元数据。
+- 新增：提示词包导入支持"按模块勾选 + 导入预览"（系统/外交/RPG/社交圈/派系/RimTalk-外交/RimTalk-RPG），未勾选模块保持不变。
+- 新增：提示词包导出支持"全量导出 + 按模块导出"双模式；按模块导出写入 bundle `v2` 的 `IncludedModules` 元数据。
 - 兼容：导入继续兼容历史 `v1` bundle；旧文件默认映射为全模块，RimTalk 通道配置可从旧 RPG 字段自动重建。
 - 新增：RimTalk 设置提升为顶级独立标签页，支持外交/RPG 通道独立配置、变量搜索分组与一键插入模板。
 - 调整：RimTalk 注入改为按通道读取配置（`diplomacy` / `rpg`），不再共用单模板和单注入上限。
@@ -2190,7 +2247,7 @@
 - 调整：移除 RPG 页内旧 RimTalk 工具路径，仅保留共享 helper，避免双入口维护分叉。
 - 调整：同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
 0.5.3
-- 修复：`request_raid` 自动点数从 `DefaultThreatPointsNow * 0.5` 调整为原版 `RaidEnemy` 基线（`StorytellerUtility.DefaultParmsNow`），缓解“袭击人数过少”问题。
+- 修复：`request_raid` 自动点数从 `DefaultThreatPointsNow * 0.5` 调整为原版 `RaidEnemy` 基线（`StorytellerUtility.DefaultParmsNow`），缓解"袭击人数过少"问题。
 - 兼容：当 Storyteller 基线不可用时，自动回退 `DefaultThreatPointsNow`，并保留最小兜底点数，避免异常场景生成过低袭击点数。
 - 新增：袭击点数支持全局配置 `RaidPointsMultiplier`、`MinRaidPoints`，并支持按派系 DefName 覆盖 `RaidPointsFactionOverrides`。
 - 修复：延迟袭击执行阶段若找不到可执行策略，不再直接失败，改为回退原版 `RaidEnemy` 策略/入场自动解析。
@@ -2208,7 +2265,7 @@
 0.5.0
 - 新增：RPG 对话入口扩展到全部 Pawn Def（通过 PatchOperation 批量注入 `CompPawnDialogue`，并自动补齐缺失 `comps` 节点，避免重复注入）。
 - 调整：手动 RPG 对话入口移除 `Humanlike` 硬限制，保留存活/可达/同图/冷却等安全条件。
-- 新增：非言语目标（动物/婴儿/机械）回复格式强约束为“叫声（内心想法）”；若模型未按结构输出，显示层自动兜底修正。
+- 新增：非言语目标（动物/婴儿/机械）回复格式强约束为"叫声（内心想法）"；若模型未按结构输出，显示层自动兜底修正。
 - 新增：RPG 请求构建阶段按目标类别追加非言语输出约束模板（模板外置到 `Prompt/Default/PawnDialoguePrompt_Default.json`）。
 - 新增：设置项 `EnableRPGNonVerbalPawnSpeech`（默认开启），并在 RPG 动态注入面板提供开关与中英文本地化。
 - 保持：其他 mod 非人种族（不属于动物/婴儿/机械）维持正常自然对话；RPG actions 执行链路不变。
@@ -2237,7 +2294,7 @@
 - 新增：`Custom` provider 运行时 URL 解析统一入口；仅匹配 `cloud.siliconflow.*` 主机并映射到 `api.siliconflow.cn`。
 - 新增：`BaseUrl` 模式下保守补全聊天端点（空路径/`/`/`/v1` 自动补到 `/v1/chat/completions`）；非标准路径保持原值并标记提示。
 - 调整：API 设置页 `Custom` 配置行新增 URL 模式切换（`Base URL` / `Full Endpoint`），并补充中英文提示语言键。
-- 调整：`Custom FullEndpoint` 连通性测试改为“先测 models，再回退 chat endpoint”，避免已可对话配置被误判失败。
+- 调整：`Custom FullEndpoint` 连通性测试改为"先测 models，再回退 chat endpoint"，避免已可对话配置被误判失败。
 - 调整：版本提升到 `0.4.9`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
 
 0.4.9
@@ -2264,25 +2321,25 @@
 0.4.5
 - 调整：`ReplaceCommsConsole` 默认值改为关闭（新配置默认走原版联络界面入口）。
 - 调整：设置序列化回填默认值 `ReplaceCommsConsole` 从 `true` 改为 `false`，新档与缺省配置统一。
-- 调整：UI 设置区“恢复默认”时，通讯台替换选项默认恢复为关闭。
+- 调整：UI 设置区"恢复默认"时，通讯台替换选项默认恢复为关闭。
 - 保持：玩家仍可在设置页或地图右下快捷按钮手动开启通讯台覆盖。
 - 调整：版本提升到 `0.4.5`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
 
 0.4.4
 - 新增：在原版派系联络根菜单加入「使用 RimChat 联络」入口（仅在 `ReplaceCommsConsole = false` 时显示）。
 - 新增：点击该入口会关闭原版联络树窗口并打开 `Dialog_DiplomacyDialogue(faction, negotiator)`，复用当前联络上下文。
-- 新增：入口插入策略优先放在“退出/挂断”前一项；若未识别到退出项则追加到末尾。
+- 新增：入口插入策略优先放在"退出/挂断"前一项；若未识别到退出项则追加到末尾。
 - 保持：`ReplaceCommsConsole = true` 时不改变现有通讯台覆盖流程。
 - 新增：中英文语言键 `RimChat_UseRimChatContact`。
 - 调整：版本提升到 `0.4.4`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`Api.md`、`config.md`。
 
 0.4.3
 - 新增：外交分层 prompt 动态注入 `player_pawn_profile`、`player_royalty_summary`、`faction_settlement_summary` 三个节点。
-- 新增：玩家小人来源策略为“窗口谈判者优先，缺失回退社交最高殖民者”，主动外交通道同样生效。
+- 新增：玩家小人来源策略为"窗口谈判者优先，缺失回退社交最高殖民者"，主动外交通道同样生效。
 - 新增：帝国派系场景下注入荣誉点、最高头衔、许可可用性与不可用原因摘要，并加入 `create_quest/request_aid` 软约束指引。
 - 新增：策略建议上下文同步注入玩家小人和帝国限制摘要，保持与主对话一致。
 - 新增：提示词模板变量扩展 `player_pawn_profile`、`player_royalty_summary`、`faction_settlement_summary`，中英文语言键同步。
-- 修复：`faction_settlement_summary` 由“关键据点摘要”改为“全量据点列表”，确保 NPC 派系据点信息完整显示。
+- 修复：`faction_settlement_summary` 由"关键据点摘要"改为"全量据点列表"，确保 NPC 派系据点信息完整显示。
 - 调整：版本提升到 `0.4.3`，并同步更新 `About/About.xml`、`spec/Index.md`、`Api.md`、`config.md`。
 
 0.4.2
@@ -2299,13 +2356,13 @@
 - 调整：版本提升到 `0.4.1`，并同步更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`config.md`。
 
 0.4.0
-- 新增：API 配置页标题右侧加入版本小按钮，显示“版本: x.y.z”，版本号从当前语言版本日志首行读取。
+- 新增：API 配置页标题右侧加入版本小按钮，显示"版本: x.y.z"，版本号从当前语言版本日志首行读取。
 - 新增：点击版本按钮可打开可滚动版本日志窗口；中文/繁中读取 VersionLog.txt，其他语言读取 VersionLog_en.txt。
 - 新增：API 配置页加入绿色 GitHub 小按钮，点击直达仓库主页：https://github.com/yancy22737-sudo/RimChat
 - 调整：同步版本号到 `0.4.0`，并更新 `About/About.xml`、`VersionLog.txt`、`VersionLog_en.txt`、`spec/Index.md`、`config.md`。
 
 0.3.165
-- 调整：外交对话输入区下方 blocked 状态文案在“视觉换行超过一行”时改为自动上下滚动显示，移除可见滚动条。
+- 调整：外交对话输入区下方 blocked 状态文案在"视觉换行超过一行"时改为自动上下滚动显示，移除可见滚动条。
 - 新增：blocked 状态自动滚动采用上下往返（ping-pong）轨迹，速度 `18 px/s`，触顶/触底各停顿 `0.6s`。
 - 新增：blocked 状态自动滚动状态在文本变更、非 blocked 状态显示、窗口关闭时自动复位，避免偏移残留。
 - 保持：状态优先级仍为 `waiting > error > blocked`，typing/error 分支渲染行为不变。
@@ -2340,18 +2397,18 @@
 - 调整：版本提升到 `0.3.161`，并同步更新 `README.md`。
 
 0.3.160
-- 调整：移除外交提示词页中“全局对话提示词”次级编辑框，仅保留“全局系统提示词”主编辑框（对应你标绿框的第一个区域）。
-- 调整：移除 MOD 设置中“礼物设置”折叠行显示（对应你标绿框的第二个区域）。
+- 调整：移除外交提示词页中"全局对话提示词"次级编辑框，仅保留"全局系统提示词"主编辑框（对应你标绿框的第一个区域）。
+- 调整：移除 MOD 设置中"礼物设置"折叠行显示（对应你标绿框的第二个区域）。
 - 修复：外交 action 紧凑目录改为优先使用配置文件中的 `Description/Requirement`，不再固定写死 `make_peace ... offer peace` 文案。
-- 修复：`make_peace` 条件合并规则新增“高真诚度”硬约束（紧凑目录始终包含 `very high sincerity only`），并对旧版自定义 prompt 的 legacy 文案做迁移升级。
-- 调整：`SystemPromptConfig` 最小默认与 `Prompt/Default/DiplomacyDialoguePrompt_Default.json` 的 `make_peace` 条件文本同步为“战时 + 高真诚度”。
+- 修复：`make_peace` 条件合并规则新增"高真诚度"硬约束（紧凑目录始终包含 `very high sincerity only`），并对旧版自定义 prompt 的 legacy 文案做迁移升级。
+- 调整：`SystemPromptConfig` 最小默认与 `Prompt/Default/DiplomacyDialoguePrompt_Default.json` 的 `make_peace` 条件文本同步为"战时 + 高真诚度"。
 - 日志检查结论：`out.log` 中旧文案 `- make_peace(cost?) [already at war]: offer peace` 来自代码里的固定紧凑目录文案与旧 custom 配置优先级，不是你修改未保存；本次已修正链路。
 - 调整：版本提升到 `0.3.160`，同步更新 `README.md`。
 - 验证：执行 `build.ps1` 构建与部署通过。
 
 0.3.159
 - 修复：外交窗口在 AI 等待阶段切换 faction session 时，旧会话不再在 `PreClose` 被取消 pending 请求；切回后可继续收到回填回复并续聊。
-- 修复：外交窗口关闭语义新增“普通关闭/切换关闭”区分；切换关闭时跳过会话收尾摘要提交与 presence 缓存锁定，避免误中断会话连续性。
+- 修复：外交窗口关闭语义新增"普通关闭/切换关闭"区分；切换关闭时跳过会话收尾摘要提交与 presence 缓存锁定，避免误中断会话连续性。
 - 修复：外交等待状态词单行绘制路径改为稳定截断渲染，并补齐字体/锚点/颜色状态复位，避免等待词偶发不显示。
 - 修复：RPG 对话 `Enter/KeypadEnter` 发送判定前移到 `TextField` 前执行，并增加 `rawType==KeyDown` 兜底，解决回车被输入控件吞掉导致无法发送。
 - 调整：版本提升到 `0.3.159`，同步更新 `README.md`。
@@ -2364,7 +2421,7 @@
 - 验证：执行 `build.ps1` 构建与部署通过。
 
 0.3.157
-- 修复：本地模型链路新增“连接错误/超时”细分处理；当 `UnityWebRequest.ConnectionError` 命中 timeout 语义时，用户提示改为 `RimChat_ErrorTimeout`，不再统一落入“无法连接本地服务”。
+- 修复：本地模型链路新增"连接错误/超时"细分处理；当 `UnityWebRequest.ConnectionError` 命中 timeout 语义时，用户提示改为 `RimChat_ErrorTimeout`，不再统一落入"无法连接本地服务"。
 - 新增：本地模型连接错误有限重试（默认 2 次尝试，短退避+抖动），覆盖 timeout/连接重置等瞬态错误。
 - 调整：本地模型请求超时从 `60s` 提升至 `180s`（云端仍保持 `60s`），降低长上下文/模型忙时的误判断连。
 - 验证：端口 `127.0.0.1:4315` 健康检查通过，`/v1/models` 与 `/v1/chat/completions` 可达；执行 `build.ps1` 构建与部署通过（1 warning，0 error）。
@@ -2376,13 +2433,13 @@
 
 0.3.155
 - 新增：外交对话窗口中，当 AI 主动结束当前对话（`exit_dialogue` / `go_offline` / `set_dnd` 及文本回退触发）时，播放专用结束音效 `quick-short-shutdown-sound.mp3`。
-- 新增：结束音效触发增加“未结束 -> 已结束”状态门控，避免重复动作导致同轮多次播放。
+- 新增：结束音效触发增加"未结束 -> 已结束"状态门控，避免重复动作导致同轮多次播放。
 - 新增：音效 Def `RimChat_DiplomacyConversationEndedByAi`（`clipPath=quick-short-shutdown-sound`），统一由外交 Presence 执行链调用。
 - 验证：执行 `build.ps1` 构建与部署通过（1 warning，0 error）。
 
 0.3.154
 - 新增：本地模型请求单飞队列（并发上限 1），本地链路改为串行执行，降低 Player2 峰值并发压力。
-- 新增：`AIChatServiceAsync` 本地 5xx 容错重试（`500/502/503/504`），采用“短退避 -> 长退避（含抖动）”策略，重试耗尽后走原错误返回。
+- 新增：`AIChatServiceAsync` 本地 5xx 容错重试（`500/502/503/504`），采用"短退避 -> 长退避（含抖动）"策略，重试耗尽后走原错误返回。
 - 保持：既有 `HTTP 400 user input rejected` 降级重试逻辑保留，且与 5xx 重试互不覆盖。
 - 新增：内部诊断指纹日志（受现有 Debug Internals 开关控制），记录 `requestId/attempt/channel/model/host/messageCount/jsonBytes/elapsedMs/httpCode` 及 5xx 重试决策摘要。
 - 重构：新增 `AIChatServiceAsync.LocalControl.cs` partial，拆分本地并发控制、重试策略与诊断辅助逻辑，避免主文件继续膨胀。
@@ -2393,7 +2450,7 @@
 - 修复：`DeclareWar` / `MakePeace` 改为 goodwill 驱动结算，优先按目标值调节并校验结果，移除 goodwill 派系路径上 `SetRelationDirect` 引发的日志报错风险。
 - 调整：关系目标固定为写死阈值（议和 `0`，宣战 `-80`）；仅在最终关系达成时才记录成功与冷却，失败路径不再误报成功。
 - 新增：社交圈入队结果结构 `SocialPostEnqueueResult` 与失败原因枚举，`EnqueuePublicPost` / `TryCreateKeywordDialoguePost` 增加可观测结果通道并保持原 `bool` 兼容接口。
-- 调整：社交圈提示语义拆分为“已入队 / 已生成 / 失败原因”；关键词与显式 `publish_public_post` 统一走同一反馈链路（严格 AI 结果，无本地兜底）。
+- 调整：社交圈提示语义拆分为"已入队 / 已生成 / 失败原因"；关键词与显式 `publish_public_post` 统一走同一反馈链路（严格 AI 结果，无本地兜底）。
 - 新增：社交圈异步回调在生成成功/失败时回写会话系统消息，失败附带标准化原因文本（解析失败、AI失败、草稿无效等）。
 - 调整：`Typed JSON parse failed` 日志增加来源上下文（`domain_aggregate` / `default_system_prompt_file:*`），并在 fallback 成功时降级为信息日志；仅不可恢复场景保留 warning。
 - 文档：同步更新 `README.md`、`VersionLog_en.txt`，并将模组版本提升到 `0.3.153`。
@@ -2401,8 +2458,8 @@
 
 0.3.152
 - 修复：RPG 与外交对话窗口显式关闭默认 `Enter` 接受行为（`closeOnAccept = false`），并显式保留 `Esc` 关闭行为（`closeOnCancel = true`），解决按回车误关窗。
-- 修复：外交窗口回车发送改为“输入框聚焦 + 非空 + 可发送”才触发；`Alt+Enter` 仅换行；小键盘回车与主回车行为一致。
-- 修复：RPG 窗口在保持单行输入的前提下，回车发送改为“输入框聚焦 + 非空”才触发；`Alt+Enter` 不发送。
+- 修复：外交窗口回车发送改为"输入框聚焦 + 非空 + 可发送"才触发；`Alt+Enter` 仅换行；小键盘回车与主回车行为一致。
+- 修复：RPG 窗口在保持单行输入的前提下，回车发送改为"输入框聚焦 + 非空"才触发；`Alt+Enter` 不发送。
 - 修复：两窗口新增 IME 组合输入保护（`Input.compositionString`），候选确认阶段按回车不发送、不关窗。
 - 调整：`RimChat.csproj` 增加 `UnityEngine.InputLegacyModule.dll` 引用，用于 IME 组合状态检测。
 - 文档：同步更新 `README.md`、`VersionLog_en.txt`，并将模组版本提升到 `0.3.152`。
@@ -2436,19 +2493,19 @@
 - 验证：执行 `build.ps1` 编译与部署通过（0 warning，0 error）。
 
 0.3.147
-- 修复：RPG 对话分页测高改为“基础测高 × 渲染缩放比”的保守策略（与 `size=34` 显示更贴近），解决长文本溢出但不触发分页的问题。
+- 修复：RPG 对话分页测高改为"基础测高 × 渲染缩放比"的保守策略（与 `size=34` 显示更贴近），解决长文本溢出但不触发分页的问题。
 - 修复：同一条超长文本在输入框已显示（非打字阶段）时，分页导航不再丢失。
 - 验证：执行 `build.ps1` 编译与部署通过。
 
 0.3.146
 - 修复：RPG 对话分页测高逻辑改为使用与实际渲染一致的 `<size=34>` 文本口径，不再使用旧的粗略倍率估算。
-- 修复：分页测高增加安全边距，避免第一页文本溢出到底部输入区造成“中间段落像丢失”的错觉。
+- 修复：分页测高增加安全边距，避免第一页文本溢出到底部输入区造成"中间段落像丢失"的错觉。
 - 验证：执行 `build.ps1` 编译与部署通过。
 
 0.3.145
 - 新增：社交圈新闻在成功落地为结构化新闻卡后，会同步推送右侧 `Letter` 通知，按情绪强度映射为中立/正向/威胁事件。
 - 新增：社交圈新闻 `Letter` 增加中英文语言键 `RimChat_SocialNewsLetterTitle` / `RimChat_SocialNewsLetterBody`，避免硬编码文案。
-- 修复：RPG 独立人格自动生成触发链改为“加载自举 + 运行时巡检补偿”，不再只依赖一次性加载流程。
+- 修复：RPG 独立人格自动生成触发链改为"加载自举 + 运行时巡检补偿"，不再只依赖一次性加载流程。
 - 修复：人格生成路径补齐 `AIChatServiceAsync.Instance` 空值与可用性保护，避免实例未就绪时中断触发。
 - 文档：同步更新 README.md、VersionLog_en.txt，并将模组版本提升到 `0.3.145`。
 
@@ -2459,10 +2516,10 @@
 - 文档：同步更新 README.md / Api.md 里的旧接口描述（移除 `TryLikeSocialPost` 与旧 incident 影响链描述），并将模组版本提升到 `0.3.144`。
 
 0.3.143
-- 重做：社交圈从“随机公告流”改为“事实驱动的世界新闻流”，调度器现在优先扫描世界事件台账、战报、领袖记忆、外交摘要与公开声明，不再凭空捏造自动帖子。
+- 重做：社交圈从"随机公告流"改为"事实驱动的世界新闻流"，调度器现在优先扫描世界事件台账、战报、领袖记忆、外交摘要与公开声明，不再凭空捏造自动帖子。
 - 新增：社交圈新闻生成链改为 `SocialNewsSeed -> LLM 严格 JSON -> 结构化新闻卡片`，LLM 返回缺字段、坏 JSON、超时或未配置时会直接丢弃该条，不写入半成品。
 - 新增：`PublicSocialPost` 持久化扩展为新闻结构字段（来源类型/键、标题、导语、起因、传播过程、后续研判、引述、来源标签、可信度标签/值、生成状态）。
-- 调整：社交圈 UI 改为“标题 + 导语 + 起因 + 传播过程 + 后续研判 + 可选引述”的单卡新闻版式，并移除点赞/赞数交互。
+- 调整：社交圈 UI 改为"标题 + 导语 + 起因 + 传播过程 + 后续研判 + 可选引述"的单卡新闻版式，并移除点赞/赞数交互。
 - 新增：社交圈 Prompt 分仓新增世界新闻风格模板、JSON 契约模板、事实模板；设置页同步提供独立编辑入口。
 - 文档：同步更新 README.md、Api.md、config.md、VersionLog_en.txt，并将模组版本提升到 `0.3.143`。
 
@@ -2489,11 +2546,11 @@
 0.3.138
 - 修复：外交在线状态徽章为 Tiny 中文文本预留了更多垂直空间，标题栏与派系列表中的 `在线` / `勿扰` 等状态不再被裁切。
 - 修复：外交输入区上方的红色阻塞提示改为更高、更宽的标签区域，中文提示不会再被截断。
-- 修复：设置页“提示词模板”字段列表增大了行高并改为垂直居中绘制，`事实约束模板`、`响应契约节点模板` 等中文条目可完整显示。
+- 修复：设置页"提示词模板"字段列表增大了行高并改为垂直居中绘制，`事实约束模板`、`响应契约节点模板` 等中文条目可完整显示。
 
 0.3.137
 - 调整：RPG 可见 NPC 对话内容现在会在运行时强制整理为单行，换行、制表与连续空白会在显示、历史写入以及 trace/archive 写入前折叠为空格。
-- 新增：RPG 对话文本在超出显示区域后支持“消息内分页”，并且历史回看时同样可分页。
+- 新增：RPG 对话文本在超出显示区域后支持"消息内分页"，并且历史回看时同样可分页。
 - 调整：RPG 默认提示词/格式约束现已明确要求 NPC 可见对白必须单行输出，同时保持现有尾随 JSON action 契约不变。
 
 0.3.136
@@ -2510,7 +2567,7 @@
 
 0.3.134
 - 修复：`SystemPrompt_Default.json` 在 typed 解析不完整时，`PromptPersistenceService` 现在会走 current-schema 文本 fallback 解析，确保默认外交提示词仍能完整回流到运行时配置与设置页文本缓冲。
-- 修复：占位 `GlobalSystemPrompt` 自愈重建时，不再只恢复单条系统正文；现在会连同当前 schema 下可解析的外交配置字段一起恢复，降低“设置页看不到默认文本 / 运行时未完整生效”的概率。
+- 修复：占位 `GlobalSystemPrompt` 自愈重建时，不再只恢复单条系统正文；现在会连同当前 schema 下可解析的外交配置字段一起恢复，降低"设置页看不到默认文本 / 运行时未完整生效"的概率。
 
 0.3.133
 - 修复：外交 `response_contract` 现在会真正注入 `BLOCKED ACTIONS FOR CURRENT FACTION`，把因好感度投影、冷却或资格限制而被隐藏的动作原因明确展示给模型。
@@ -2519,7 +2576,7 @@
 - 修复：`request_aid` 的固定好感度成本现在会按 `type` 解析为军事/医疗/资源援助，而不再一律按军事援助处理。
 
 0.3.132
-- 修复：启动/加载 `system_prompt_config.json` 时，若检测到 `GlobalSystemPrompt` 仍是“请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。”占位文本，会显式报错并强制从 `Prompt/Default/SystemPrompt_Default.json` 重建。
+- 修复：启动/加载 `system_prompt_config.json` 时，若检测到 `GlobalSystemPrompt` 仍是"请从 SystemPrompt_Default.json 文件加载默认系统提示词配置。"占位文本，会显式报错并强制从 `Prompt/Default/SystemPrompt_Default.json` 重建。
 - 修复：保存自定义系统提示词配置时，禁止把上述占位文本写回 `system_prompt_config.json`；若可重建则先自愈后再保存。
 
 0.3.131
@@ -2551,7 +2608,7 @@
 - 修复：RPG 历史记录不再把纯 JSON 原文当作对白回写到可见聊天记录中。
 
 0.3.125
-- 调整：RPG 输出协议现在统一为“自然对白 + 可选尾随 `{\"actions\":[...]}` JSON 对象”，默认提示词明确禁止旧的 `action/content/text` 顶层 JSON 格式。
+- 调整：RPG 输出协议现在统一为"自然对白 + 可选尾随 `{\"actions\":[...]}` JSON 对象"，默认提示词明确禁止旧的 `action/content/text` 顶层 JSON 格式。
 - 调整：RPG `HTTP 400` 降载重试会追加严格协议提醒，确保重试路径继续遵守同一输出格式，不再因裁剪系统提示而漂移到旧协议。
 - 调整：RPG 解析器移除了旧的顶层 `action` 兼容入口，只解析 `actions` 数组协议。
 
@@ -2565,7 +2622,7 @@
 - 调整：人格画像归一化与兜底文本已同步适配新模板，按 Pawn 性别统一输出 `He/She/They` 代词。
 
 0.3.122
-- 修复：新增的 RPG 可见记忆 Def（`RimChat_PleasantChatMemory`、`RimChat_DeepConversationMemory`、`RimChat_SlightedMemory`）补齐了 `description` 与默认 `label`，消除 RimWorld 对 “affects mood but doesn't have a description” 的配置错误，确保记忆能正常加载并显示在人物卡中。
+- 修复：新增的 RPG 可见记忆 Def（`RimChat_PleasantChatMemory`、`RimChat_DeepConversationMemory`、`RimChat_SlightedMemory`）补齐了 `description` 与默认 `label`，消除 RimWorld 对 "affects mood but doesn't have a description" 的配置错误，确保记忆能正常加载并显示在人物卡中。
 - 修复：RPG `TryGainMemory` 的可用 Def 判定不再错误要求 `thoughtClass` 必填；现在显式 `Thought_Memory` Def 与未显式填写 `thoughtClass` 的原版 mood memory 都能正确通过。
 - 修复：首条 RPG 回复在模型返回纯 JSON（如 `{ \"text\": \"...\", \"actions\": [...] }`）时，解析器现在会读取 JSON 内的 `text` / `response` 字段，不再出现首条回复空白。
 - 修复：RPG 可见记忆的 DefInjected 语言键改为 `stages.0.label/description`，解决人物卡中显示缺失语言键的问题。
@@ -2578,27 +2635,27 @@
 - 修复：`TryGainMemory` 过去默认使用 `Chitchat` / `DeepTalk` / `Slighted` 等社交意见 thought，这些通常不会出现在人物卡的 mood 记忆栏。现在会把这些旧 token 重映射到可见的 RPG 记忆 Def（以及 `KindWordsMood` / `InsultedMood`），并同步更新默认 prompt 示例。
 
 0.3.120
-- 调整：外交默认 prompt 现在统一为“角色台词 + 单个原始 `{\"actions\":[...]}` JSON 对象”协议，不再使用旧的单 `action/parameters/response` 模板。
+- 调整：外交默认 prompt 现在统一为"角色台词 + 单个原始 `{\"actions\":[...]}` JSON 对象"协议，不再使用旧的单 `action/parameters/response` 模板。
 - 调整：`SystemPrompt_Default.json` 只保留外交侧模板；RPG 角色设定、格式约束、动作可靠性与开场目标改由 `Prompt/Default/RpgPrompts_Default.json` 管理，避免外交/RPG 规则串台。
 - 调整：外交系统提示改为分级退出策略；低信息输入先短答，再在重复或明确骚扰时使用 `exit_dialogue` / `go_offline` / `set_dnd`。
-- 调整：外交提示新增“自然语言禁止提机制，但 parser-facing JSON 允许”的明确说明，并把功能不可用时的处理统一为角色内理由拒绝。
+- 调整：外交提示新增"自然语言禁止提机制，但 parser-facing JSON 允许"的明确说明，并把功能不可用时的处理统一为角色内理由拒绝。
 - 调整：外交默认决策模板、社交圈公开公告约束、`reject_request` 使用边界、任务动作说明与输出语言模板已同步收紧，减少误判恶意、过度公开和协议漂移。
 - 调整：PromptPolicy schema 升级到 `3`；默认预算、关键节点保护与裁剪优先级重排，降低 `response_contract` / `quest_guidance` 被裁掉的概率。
-- 调整：RPG 默认 no-action 可靠性阈值统一为“两次无 gameplay effect”后再补 `TryGainMemory`，与 PromptPolicy 阈值对齐。
+- 调整：RPG 默认 no-action 可靠性阈值统一为"两次无 gameplay effect"后再补 `TryGainMemory`，与 PromptPolicy 阈值对齐。
 - 文档：同步更新 `README.md`、`Api.md`、`config.md`，说明外交/RPG 提示词拆分与新输出协议。
 
 0.3.119
 - 修复：模组初始化时现在会主动加载外部 RPG prompt 文本，避免应从 `Prompt/Default/RpgPrompts_Default.json` 读取时，RPG API prompt 区块仍错误回退到代码内置默认值。
 
 0.3.118
-- 调整：因“预扣固定消耗后好感度会低于 0”而被隐藏的动作，现在会重新出现在 blocked actions 提示区，并附带明确的投影好感度原因，提醒 AI 该动作存在但当前不可执行。
+- 调整：因"预扣固定消耗后好感度会低于 0"而被隐藏的动作，现在会重新出现在 blocked actions 提示区，并附带明确的投影好感度原因，提醒 AI 该动作存在但当前不可执行。
 
 0.3.117
 - 调整：外交 prompt 的动作动态注入现在会在预扣固定消耗后检查好感度；若 `request_caravan`、`request_aid`、`create_quest` 执行后会低于 0，则不再把该动作提供给 LLM。
 - 调整：外交请求类 API 的实际冷却对齐原版，`request_aid` 改为 1 天，`request_caravan` 改为 4 天。
 
 0.3.116
-- 调整：外交对话中的 API 行为改为“成功后才追加固定好感度消耗”，不再依赖 LLM 通过附带好感度动作去模拟这些行为成本。
+- 调整：外交对话中的 API 行为改为"成功后才追加固定好感度消耗"，不再依赖 LLM 通过附带好感度动作去模拟这些行为成本。
 - 调整：固定消耗对齐原版，`request_caravan` 成功后固定 -15，`request_aid` 成功后固定 -25（Military / Medical / Resources 统一按 -25），`create_quest` 成功后固定 -10。
 - 改进：外交提示词规则明确禁止用 `adjust_goodwill` 去重复表达 `request_caravan`、`request_aid`、`create_quest` 的系统固定消耗。
 - 改进：成功外交动作会写入更具体的派系记忆事件文本，包含固定好感度消耗记录与任务发布记录，便于后续读取。
@@ -2609,7 +2666,7 @@
 - 新增：补齐中英双语中与提示词模板编辑器和 RPG 提示词设置相关的缺失语言键（`PromptTemplateEditor`、预览切换、字段标签/说明、`Save`、RPG 分区与注入项），避免界面显示原始 key。
 
 0.3.114
-- 修复：`AIChatService` 与 `AIChatServiceAsync` 的响应解析由脆弱字符串索引改为 `AIJsonContentExtractor`，可容忍空白、换行与转义字符，降低“解析失败/无响应”概率。
+- 修复：`AIChatService` 与 `AIChatServiceAsync` 的响应解析由脆弱字符串索引改为 `AIJsonContentExtractor`，可容忍空白、换行与转义字符，降低"解析失败/无响应"概率。
 - 修复：主页面签窗口 `MainTabWindow_RimChat` 的好感度动画事件改为 `PreOpen` 保证订阅、`PreClose` 取消订阅，解决窗口二次打开后动画失效问题。
 - 修复：`LeaderMemoryManager` 存档名解析增加反射兜底链（含 `ScribeMetaHeaderUtility.loadedGameName` 与字符串成员启发式），降低版本差异导致回退 `Default` 的风险。
 
@@ -2627,7 +2684,7 @@
 - 修复：RPG session 压缩只在会话收口后触发（`FinalizeSession` 后），不再在对话进行中提前压缩。
 - 修复：新增 `isFinalized` 会话字段，防止活动会话被误压缩并支持旧档默认按已结束会话处理。
 - 修复：会话状态自愈，遇到 `summaryState=compressed` 且仍有 `turns` 时自动回退为 `pending` 并保留原文等待重压缩。
-- 修复：压缩成功回调增加保留会话与 finalized 守卫，避免竞态下误压缩“最近完整会话”。
+- 修复：压缩成功回调增加保留会话与 finalized 守卫，避免竞态下误压缩"最近完整会话"。
 
 0.3.111
 - 调整：RPG NPC 档案 JSON 改为 `sessions` 主结构，不再以顶层扁平 `turns` 作为写盘主体。
@@ -2635,44 +2692,44 @@
 - 新增：RPG 对话窗口全链路透传 `sessionId`，窗口关闭时会显式收口并落地该会话。
 - 新增：会话级严格 LLM 压缩策略：仅保留最近一段 `turnCount >= 2` 会话全文，其余会话压缩为一句摘要。
 - 新增：LLM 压缩失败时保持原文不压缩并标记 `summary_failed`，在后续触达/读取/存档时按冷却节流重试。
-- 调整：NPC 个人记忆注入改为“先历史压缩摘要，再最近完整会话细节”。
+- 调整：NPC 个人记忆注入改为"先历史压缩摘要，再最近完整会话细节"。
 - 调整：未决意图提炼仅基于保留的最近完整会话，避免被历史压缩摘要干扰。
 
 0.3.110
 - 新增：落地 Prompt Policy V2，外交/RPG（manual+proactive）统一接入 `decision_policy`、`turn_objective`、`topic_shift_rule`，并支持 RPG `opening_objective` 首轮节点。
 - 新增：`SystemPromptConfig` 接入 `PromptPolicySchemaVersion` 与 `PromptPolicy`（全局预算、节点预算、裁剪优先级、意图动作映射参数）。
 - 新增：RPG 提示词构建改为按请求动态重建，首轮通过 `phase:opening` 控制开场目标；移除 `"Initiate conversation with me."` 注入路径。
-- 调整：`RpgNpcDialogueArchiveManager` 改为“摘要优先 + 少量最近原句”记忆注入，并新增未决意图提炼接口供回合目标节点使用。
-- 新增：RPG 动作链新增“意图驱动动作映射层”（协作承诺/软结束/强拒绝），保留原 no-action 兜底作为最终防线。
+- 调整：`RpgNpcDialogueArchiveManager` 改为"摘要优先 + 少量最近原句"记忆注入，并新增未决意图提炼接口供回合目标节点使用。
+- 新增：RPG 动作链新增"意图驱动动作映射层"（协作承诺/软结束/强拒绝），保留原 no-action 兜底作为最终防线。
 - 新增：提示词高级设置增加 `Prompt Policy` 分区，开放预算与动作映射参数；`PromptTemplates` 增加四个策略模板字段（Decision/Turn/Opening/TopicShift）。
-- 变更：Prompt schema 升级到 V2，默认启用“升级时重置旧 Prompt 自定义覆盖并重建新默认模板”策略。
+- 变更：Prompt schema 升级到 V2，默认启用"升级时重置旧 Prompt 自定义覆盖并重建新默认模板"策略。
 
 0.3.109
-- 调整：首次加载旧存档人格画像的 LLM 请求提示词改为“短句强约束”，要求总文本更精简（6 段模板下每段短语压缩）。
-- 调整：人格画像输入上下文改为“人格专用精简档案”，仅保留背景、特质、核心技能、派系角色与意识形态。
+- 调整：首次加载旧存档人格画像的 LLM 请求提示词改为"短句强约束"，要求总文本更精简（6 段模板下每段短语压缩）。
+- 调整：人格画像输入上下文改为"人格专用精简档案"，仅保留背景、特质、核心技能、派系角色与意识形态。
 - 修复：人格画像输入显式屏蔽健康/需求/心情/伤病/装备/基因/临时事件等非人格信息，降低画像污染风险。
 
 0.3.108
 - 修复：首次加载旧存档的人格画像目标不再排除玩家派系 Pawn，殖民地人形 Pawn（殖民者/囚犯/奴隶）会被纳入自动画像流程。
 - 新增：人格画像引导版本字段 `npcPersonaBootstrapVersion`，当引导逻辑升级时会自动清除旧完成态并重跑一次，避免旧存档被历史 `completed` 标记锁死。
-- 调整：首次画像目标集合保持“地图已生成 Pawn + 可见派系领袖”，并统一按“人形 + 存活 + 未销毁”过滤。
+- 调整：首次画像目标集合保持"地图已生成 Pawn + 可见派系领袖"，并统一按"人形 + 存活 + 未销毁"过滤。
 
 0.3.107
-- 新增：在“首次加载旧存档”时，自动对已存在 NPC（非玩家派系、可交互的人形 Pawn）执行人格画像生成，并写入 Pawn 独立人格字段。
+- 新增：在"首次加载旧存档"时，自动对已存在 NPC（非玩家派系、可交互的人形 Pawn）执行人格画像生成，并写入 Pawn 独立人格字段。
 - 新增：人格画像生成采用异步 LLM 队列（单请求串行、失败重试），避免加载瞬间并发请求。
 - 新增：人格画像写回格式强约束为：`You are a person who ...` 六段模板；异常返回会触发重试并有模板化兜底文本。
 - 新增：`PromptPersistenceService.BuildPawnPersonaBootstrapProfile(Pawn)`，统一复用现有 RPG 深度人物信息拼装作为画像输入上下文。
 - 调整：新增存档级标记 `npcPersonaBootstrapCompleted`，确保该自动画像流程每个存档仅执行一次（新开档默认跳过）。
 
 0.3.106
-- 新增：提示词高级设置新增独立“社交圈 Prompt”分区，集中编辑社交圈规则模板与 `publish_public_post` 动作描述/参数/触发条件，修改流程更清晰。
+- 新增：提示词高级设置新增独立"社交圈 Prompt"分区，集中编辑社交圈规则模板与 `publish_public_post` 动作描述/参数/触发条件，修改流程更清晰。
 - 调整：`PromptTemplates` 通用分区不再重复展示社交圈规则模板入口，避免编辑路径分散。
 - 调整：RimTalk 兼容提示词字段（开关/历史上限/模板）改为仅走 `Prompt/Custom/RpgPrompts_Custom.json` 文件持久化；保留旧 ModSettings 一次性迁移到文件逻辑。
 - 调整：新增社交圈动作默认文案常量收敛（`PublishPublicPostAction*`），减少多处硬编码文本。
 
 0.3.105
-- 修复：RPG“殖民地 Pawn 独立人格”列表改为仅显示玩家殖民地地图上的殖民者/囚犯/奴隶，避免混入世界/临时角色。
-- 新增：提示词模板新增“社交圈动作规则模板”可编辑入口，并注入外交 prompt 指令栈（节点：`social_circle_action_rule`）。
+- 修复：RPG"殖民地 Pawn 独立人格"列表改为仅显示玩家殖民地地图上的殖民者/囚犯/奴隶，避免混入世界/临时角色。
+- 新增：提示词模板新增"社交圈动作规则模板"可编辑入口，并注入外交 prompt 指令栈（节点：`social_circle_action_rule`）。
 - 调整：`SocialCircleActionRuleTemplate` 已接入 `Prompt/Default/SystemPrompt_Default.json` 与 `Prompt/Custom/system_prompt_config.json` 的持久化读写与缺省迁移链路。
 
 0.3.104
@@ -2681,11 +2738,11 @@
 - 修复：社交圈枯萎病影响执行改为调用原版有效事件 DefName `CropBlight`（不再使用无效的 `Blight` 事件名）。
 
 0.3.103
-- 新增：RPG 设置页新增“RPG 兜底模板”“RPG API 模板”分区，`RpgPrompts_Default.json` 中的 fallback/header/marker 与 `ApiActionPrompt` 全部字段均可在设置中编辑。
-- 调整：`Prompt/Custom/RpgPrompts_Custom.json` 扩展为完整 RPG 提示词自定义结构，继续保持“仅写入 Prompt/Custom”的持久化策略。
+- 新增：RPG 设置页新增"RPG 兜底模板""RPG API 模板"分区，`RpgPrompts_Default.json` 中的 fallback/header/marker 与 `ApiActionPrompt` 全部字段均可在设置中编辑。
+- 调整：`Prompt/Custom/RpgPrompts_Custom.json` 扩展为完整 RPG 提示词自定义结构，继续保持"仅写入 Prompt/Custom"的持久化策略。
 - 调整：RPG 提示词构建链路改为优先使用设置中的 RPG API 模板与 fallback 文本（含 action reliability marker/header），默认值仍回退到 `Prompt/Default/RpgPrompts_Default.json`。
 - 新增：提示词高级设置新增 `PromptTemplates` 分区，`FactGrounding/OutputLanguage/RoleFallback/NodeTemplate` 全部模板可在设置内编辑并保存到 `Prompt/Custom/system_prompt_config.json`。
-- 调整：全局提示词分区新增“全局对话提示词”编辑框，与 `GlobalDialoguePrompt` 字段保持一致并参与同一持久化链路。
+- 调整：全局提示词分区新增"全局对话提示词"编辑框，与 `GlobalDialoguePrompt` 字段保持一致并参与同一持久化链路。
 
 0.3.102
 - 新增：`LegacyPromptModSettingsCleanup`，启动时一次性清理 `Config/Mod_*.xml` 中遗留的 prompt 文本字段。
@@ -2696,11 +2753,11 @@
 - 调整：RPG 提示词文本不再通过 `ModSettings` XML 字段持久化，改为仅存储在 `Prompt/Custom/RpgPrompts_Custom.json`。
 - 新增：`RpgPromptCustomStore`，负责 RPG 自定义提示词文件读写与路径解析。
 - 调整：RPG 默认读取链路固定为 `Prompt/Custom/RpgPrompts_Custom.json`（存在时）→ `Prompt/Default/RpgPrompts_Default.json`。
-- 调整：RPG 页面“保存提示词”现在直接写入 `Prompt/Custom` 下的 RPG 自定义文件（角色设定/对话风格/格式约束）。
-- 回退：移除 RPG 设置页临时加入的“从文件加载默认提示词”手动按钮。
+- 调整：RPG 页面"保存提示词"现在直接写入 `Prompt/Custom` 下的 RPG 自定义文件（角色设定/对话风格/格式约束）。
+- 回退：移除 RPG 设置页临时加入的"从文件加载默认提示词"手动按钮。
 
 0.3.100
-- 新增：RPG 设置页增加“从文件加载 RPG 默认提示词”按钮，可立即按 `Prompt/Default/RpgPrompts_Default.json` 覆盖角色设定/对话风格/格式约束。
+- 新增：RPG 设置页增加"从文件加载 RPG 默认提示词"按钮，可立即按 `Prompt/Default/RpgPrompts_Default.json` 覆盖角色设定/对话风格/格式约束。
 - 修复：扩展历史 RPG 提示词迁移识别，旧版多段长模板基线在加载设置时会自动替换为 `RpgPrompts_Default.json` 默认值。
 
 0.3.99
@@ -2716,35 +2773,35 @@
 
 0.3.97
 - 回滚：恢复主动来信原有开场逻辑（含 `proactiveOpening` 种子路径），不再改动该入口行为。
-- 修复：玩家主动 RPG 对话的跨轮记忆改为“摘要化注入”，移除 `RPG-Depart` 摘要中的 NPC 末尾原句直引，避免把上一轮末尾当下一轮开场模板复用。
+- 修复：玩家主动 RPG 对话的跨轮记忆改为"摘要化注入"，移除 `RPG-Depart` 摘要中的 NPC 末尾原句直引，避免把上一轮末尾当下一轮开场模板复用。
 - 修复：对历史 `RPG-Depart` 注入行增加兼容清洗（`Final/Last NPC signal` 字段裁剪），减少旧存量摘要触发逐字复述。
 
 0.3.96
-- 回滚：移除“长间隔逐字复读拦截器”及其二次改写链路，恢复单次生成回复路径。
+- 回滚：移除"长间隔逐字复读拦截器"及其二次改写链路，恢复单次生成回复路径。
 - 修复：主动来信场景不再直接将来信正文当作真实开场台词写入对话，统一改为将其作为上下文并由 LLM 重新生成首句。
 
 0.3.95
-- 修复：新增“长间隔逐字复读拦截器”，当 NPC 回复与历史 NPC 原句完全一致且记忆已过长期阈值时，自动触发一次改写。
-- 修复：该拦截器已接入 RPG 首条回复与后续回复两条链路，统一阻断“隔很久仍逐字复述上一轮最后一句”。
+- 修复：新增"长间隔逐字复读拦截器"，当 NPC 回复与历史 NPC 原句完全一致且记忆已过长期阈值时，自动触发一次改写。
+- 修复：该拦截器已接入 RPG 首条回复与后续回复两条链路，统一阻断"隔很久仍逐字复述上一轮最后一句"。
 - 调整：当改写请求失败时增加本地兜底改写，确保不会原句直出。
 
 0.3.94
-- 修复：RPG 个人记忆注入新增“禁止逐句复述”硬约束，避免下一轮开场机械复述历史原句。
-- 调整：记忆老化超过阈值后切换为“远期记忆模式”，仅注入态度/意图摘要，不再注入逐轮原文文本。
+- 修复：RPG 个人记忆注入新增"禁止逐句复述"硬约束，避免下一轮开场机械复述历史原句。
+- 调整：记忆老化超过阈值后切换为"远期记忆模式"，仅注入态度/意图摘要，不再注入逐轮原文文本。
 - 调整：主动来信上下文改为事件说明，不再携带原始开场文本，减少开场复读。
 
 0.3.93
-- 修复：存在 NPC 个人记忆时，RPG 主动来信对话不再直接使用 `proactiveOpening` 作为固定首句，改为作为上下文交给 AI 生成首句，避免“每次同一句开场”导致断层。
-- 调整：主动来信 + 个人记忆场景下，自动补入“延续个人记忆”的上下文提示，提升首句承接上一轮对话的概率。
+- 修复：存在 NPC 个人记忆时，RPG 主动来信对话不再直接使用 `proactiveOpening` 作为固定首句，改为作为上下文交给 AI 生成首句，避免"每次同一句开场"导致断层。
+- 调整：主动来信 + 个人记忆场景下，自动补入"延续个人记忆"的上下文提示，提升首句承接上一轮对话的概率。
 
 0.3.92
-- 修复：增强 `NPC PERSONAL MEMORY` 连续性约束，新增“禁止关系重置”“最近玩家意图锚点”“敌意关键词标记”，提升跨会话语气承接。
+- 修复：增强 `NPC PERSONAL MEMORY` 连续性约束，新增"禁止关系重置""最近玩家意图锚点""敌意关键词标记"，提升跨会话语气承接。
 - 调整：RPG 记忆注入新增最近一条玩家发言与 NPC 回复摘要，优先驱动首句延续上轮情绪。
 
 0.3.91
-- 修复：RPG NPC 记忆改为“每回合即时落盘”到 `Prompt/NPC/<save>/rpg_npc_dialogues`，不再依赖仅在游戏存档时写入。
+- 修复：RPG NPC 记忆改为"每回合即时落盘"到 `Prompt/NPC/<save>/rpg_npc_dialogues`，不再依赖仅在游戏存档时写入。
 - 修复：NPC 存档键前缀哈希改为基于存档名的稳定哈希，避免同一存档在不同会话生成不同 `Save_<hash>_*` 目录。
-- 修复：RPG 归档参与者选择调整为“始终记录对话目标 Pawn”，并在发起者为非玩家派系时同时归档发起者，解决对话后目录为空场景。
+- 修复：RPG 归档参与者选择调整为"始终记录对话目标 Pawn"，并在发起者为非玩家派系时同时归档发起者，解决对话后目录为空场景。
 - 调整：迁移扫描扩大到 `Save_*_<saveName>` 旧目录模式，自动回迁历史 NPC/领袖记忆文件到当前统一目录。
 
 0.3.90
@@ -2767,10 +2824,10 @@
 0.3.87
 - 修复：当首轮响应缺失 `strategy_suggestions` 时，不再从可见叙述文本抽取策略，避免策略名与按钮内容错配。
 - 调整：策略 follow-up 仅接受严格结构化载荷；若仍失败，改为本地确定性兜底（固定三条策略名 + 本地化回复），不再混入叙述句。
-- 优化：策略短标签改为语言键并调整优先级（先识别社交类，再识别贸易类），减少“资源中转”误判覆盖。
+- 优化：策略短标签改为语言键并调整优先级（先识别社交类，再识别贸易类），减少"资源中转"误判覆盖。
 
 0.3.86
-- 修复：AI 正文中出现“策略建议”可见段落时，解析层会自动裁剪该段落，防止策略内容泄露到聊天展示区。
+- 修复：AI 正文中出现"策略建议"可见段落时，解析层会自动裁剪该段落，防止策略内容泄露到聊天展示区。
 - 调整：策略回退提取改为基于原始响应文本执行，确保隐藏策略仍可生成按钮，不影响正文清理。
 
 0.3.85
@@ -2782,7 +2839,7 @@
 0.3.84
 - 修复：策略 follow-up 误输出 `priority/action/reason` 等错字段时，映射层会自动回收为 `strategy_name/reason/content`，避免策略按钮失效。
 - 修复：JSON 解析器改为仅读取顶层 `action`，不再把 `strategy_suggestions` 内部 `action` 误判为外交动作（消除 `Unknown AI action` 误告警）。
-- 优化：策略按钮显示进一步压缩为“短策略名（短依据）”，并增加代码风格策略名到中文短标签的语义映射（如资源中转/利用口才/风险缓冲）。
+- 优化：策略按钮显示进一步压缩为"短策略名（短依据）"，并增加代码风格策略名到中文短标签的语义映射（如资源中转/利用口才/风险缓冲）。
 - 优化：follow-up prompt 明确禁止输出 `action/priority/risk_assessment/task/plan/macro_advice` 等非 schema 字段。
 
 0.3.83
@@ -2792,7 +2849,7 @@
 
 0.3.82
 - 策略解析加固：新增对非标准建议字段的兼容别名（`task`、`plan`、`reasoning`、`risk_assessment`、`macro_advice` 等），降低有意义但非规范输出被丢弃的概率。
-- 诊断优化：策略 follow-up 日志区分“严格 schema 成功”与“叙述兜底成功”，避免误判为同等级成功。
+- 诊断优化：策略 follow-up 日志区分"严格 schema 成功"与"叙述兜底成功"，避免误判为同等级成功。
 - 日志检查：最新 `out.log` 未出现新的运行时崩溃栈；当前残留为 1 条翻译错误汇总与 1 次历史配置解析 fallback 告警。
 
 0.3.81
@@ -2803,10 +2860,10 @@
 
 0.3.80
 - 重构：`strategy_suggestions` 每项统一为三字段：`strategy_name`、`reason`、`content`。
-- 提示词：强化策略规则，明确要求 `reason` 必须基于事实并解释“事实 -> 策略”的因果关系。
+- 提示词：强化策略规则，明确要求 `reason` 必须基于事实并解释"事实 -> 策略"的因果关系。
 - 提示词：策略补全请求新增结构化 FACT PACK（`[F1]..[F5]`）与最近对话上下文，提升建议可用性与稳定性。
 - 兼容：解析器继续兼容旧字段（`short_label`、`trigger_basis`、`hidden_reply` 等），避免旧模型输出直接失效。
-- 体验：策略按钮与悬浮提示改为对齐“策略名/理由/内容”，并在理由缺少事实标记时自动补足事实依据前缀。
+- 体验：策略按钮与悬浮提示改为对齐"策略名/理由/内容"，并在理由缺少事实标记时自动补足事实依据前缀。
 
 0.3.79
 - 修复：为信件驱动的世界事件扫描增加防御式地图解析，避免 `WorldEventLedgerComponent.ResolvePlayerHomeMapFromLetter` 抛出 `NullReferenceException`。
@@ -2814,31 +2871,31 @@
 - 稳定：对异常信件仅输出告警日志，不再导致组件轮询路径硬崩溃。
 
 0.3.78
-- 界面：策略按钮改为“序号 + 简短标题 + 依据短标签”（`1. 标题 · 依据`），降低选项辨识歧义。
-- 界面：当策略选项可用时显示明确提示“点击将自动发送”，不再无提示空白。
+- 界面：策略按钮改为"序号 + 简短标题 + 依据短标签"（`1. 标题 · 依据`），降低选项辨识歧义。
+- 界面：当策略选项可用时显示明确提示"点击将自动发送"，不再无提示空白。
 - 界面：策略按钮悬浮提示新增隐藏回复预览，点击前可直观看到将发送内容。
 - 稳定：当解析到的策略建议不足 3 条时，自动补齐剩余槽位为安全默认建议，避免策略栏内容不完整。
 - 兼容：策略解析新增字段别名支持（`name`、`description`、`expected_outcome`、`risk_level`），降低非标准 JSON 导致的策略丢弃率。
 - 多语言：清理简中语言文件重复键（`RimChat_DialogueTitle`、`RimChat_SelectFactionPrompt`、`RimChat_RPGDialogueSettings`），减少翻译错误报告。
-- 提示词：策略规则明确禁止在可见对话文本中输出“策略建议”列表，策略仅通过 `strategy_suggestions` JSON 字段返回。
+- 提示词：策略规则明确禁止在可见对话文本中输出"策略建议"列表，策略仅通过 `strategy_suggestions` JSON 字段返回。
 - 统计：放宽 token 异常比率阈值，兼容带缓存/压缩计费的模型返回，减少误判导致的估算回退告警。
 
 0.3.77
 - 修复：外交主请求仅在策略次数可用时才注入策略上下文系统消息（`remaining_uses > 0`），避免无关场景引发角色身份偏移。
-- 修复：策略上下文文案增加身份护栏，明确“谈判员是玩家侧信息，不是你”，并禁止自称谈判员/殖民地助手。
-- 加固：降低外交回复在混合上下文下误扮演玩家殖民者（如“我是Lyle”）的概率。
+- 修复：策略上下文文案增加身份护栏，明确"谈判员是玩家侧信息，不是你"，并禁止自称谈判员/殖民地助手。
+- 加固：降低外交回复在混合上下文下误扮演玩家殖民者（如"我是Lyle"）的概率。
 
 0.3.76
 - 修复：收紧 typed JSON 验收条件；当 `ApiActions`/`DecisionRules` 为空或 `ResponseFormat.JsonTemplate`/`ImportantRules` 为空白时，不再判定为解析成功，转入回退路径。
-- 修复：默认配置加载增加关键段落可用性校验；默认文件若被“半解析”读坏，将回退到最小安全默认。
+- 修复：默认配置加载增加关键段落可用性校验；默认文件若被"半解析"读坏，将回退到最小安全默认。
 - 修复：最小默认配置补齐非空 `RelationChangesTemplate` 与 `ImportantRules`，避免回复合约段落出现空白模板。
 - 处理：已对运行目录 `Prompt/Custom/system_prompt_config.json` 执行缺失字段回填（ApiActions/ResponseFormat/DecisionRules）。
 
 0.3.75
 - 修复：`PromptPersistenceService.LoadConfig()` 增加配置文件时间戳缓存，配置未变化时不再重复解析/回写。
-- 修复：typed JSON 结构完整性判定改为“按 JSON 是否包含对应键”检查，不再因字段为空文本误判为不完整并频繁回退 legacy parser。
+- 修复：typed JSON 结构完整性判定改为"按 JSON 是否包含对应键"检查，不再因字段为空文本误判为不完整并频繁回退 legacy parser。
 - 优化：typed JSON 回退告警按签名去重，避免同类告警刷屏。
-- 优化：Token 用量回退改为“连续异常阈值”后才切估算，降低偶发异常导致的告警噪声。
+- 优化：Token 用量回退改为"连续异常阈值"后才切估算，降低偶发异常导致的告警噪声。
 - 优化：策略 follow-up 提示词改为严格单对象 JSON 输出约束（禁止叙述/markdown），减少 non-JSON 回退路径触发。
 - 修复：补齐 EN/CN 关系友好翻译兼容键（`RimChat_RelationFriend` / `RDiplomacy_RelationFriend`），避免语言键不一致告警。
 
@@ -2847,7 +2904,7 @@
 - 新增：文件/模板来源提示词统一加前缀 [FILE]（包括系统全局提示词、模板渲染结果、RimTalk 兼容模板等）。
 - 调整：节点写入统一通过来源标记入口处理，避免重复前缀。
 0.3.73
-- 修复：增加 typed 反序列化结构完整性校验；若结果缺失关键段落（ApiActions/ResponseFormat/DecisionRules/PromptTemplates），强制回退 legacy parser，避免“读取成功但字段大量为空”。
+- 修复：增加 typed 反序列化结构完整性校验；若结果缺失关键段落（ApiActions/ResponseFormat/DecisionRules/PromptTemplates），强制回退 legacy parser，避免"读取成功但字段大量为空"。
 - 修复：SaveConfig 改为保存前执行 EnsureConfigDefaults 并使用 pretty JSON 写盘，避免坏文件/空字段持续回写。
 - 处理：已再次对运行目录 Prompt/Custom/system_prompt_config.json 进行缺失字段补齐，JsonTemplate / RelationChangesTemplate / ImportantRules / DecisionRules 已恢复。
 0.3.72
@@ -2861,7 +2918,7 @@
 0.3.70
 - 修复：加载配置时若 `PromptTemplates` 字段为空，自动从 `Prompt/Default/SystemPrompt_Default.json` 回填，恢复 Mod 设置中被清空的提示词模板显示。
 - 新增：`PromptPersistenceService` 增加模板字段回填迁移逻辑，检测到缺失值会自动写回配置。
-- 兼容：在保持“单文本源”架构下，避免去重清理后旧配置出现模板空白。
+- 兼容：在保持"单文本源"架构下，避免去重清理后旧配置出现模板空白。
 0.3.69
 - 调整：将回复合约段落中重复提示词标题（ACTIONS/DECISION GUIDELINES/RESPONSE FORMAT 等）统一收敛到共享常量。
 - 调整：`AppendSimpleConfig` 与 `AppendAdvancedConfig` 改为引用统一提示词常量，不再重复内联同文案。
@@ -2889,21 +2946,21 @@
 0.3.64
 - 新增：引入 `PromptTemplateTextConfig`，将共享提示词文本段（`FactGroundingTemplate`、`OutputLanguageTemplate`）外置到运行/默认配置。
 - 新增：加入 `PromptTemplateRenderer`，支持 `{{variable}}` 占位符渲染。
-- 调整：分层提示词构建中的 `fact_grounding` 与 `output_language` 改为“模板优先渲染 + 旧硬编码兜底”。
+- 调整：分层提示词构建中的 `fact_grounding` 与 `output_language` 改为"模板优先渲染 + 旧硬编码兜底"。
 - 调整：默认模板 JSON 新增 `PromptTemplates`；旧版字符串序列化/解析链路与 typed codec 归一化同步兼容。
 0.3.60
-- 调整：移除提示词设置页“默认模板覆盖当前 / 当前配置写回默认”两个双向同步按钮与行为。
+- 调整：移除提示词设置页"默认模板覆盖当前 / 当前配置写回默认"两个双向同步按钮与行为。
 - 调整：删除 PromptPersistenceService 默认模板双向同步接口（GetDefaultTemplatePath、ReloadRuntimeConfigFromDefaultTemplate、SaveRuntimeConfigToDefaultTemplate）。
 - 同步：清理对应中英语言键，并更新 README.md、Api.md、config.md 文档描述。
 0.3.59
 - 修复：对话 Token 统计改为优先在响应 usage 对象内提取，避免误命中回复正文里的同名字段导致计数失真。
 - 新增：Token 统计兼容多种字段名（prompt_tokens/input_tokens/promptTokenCount、completion_tokens/output_tokens/candidatesTokenCount、total_tokens/totalTokenCount）。
-- 新增：服务端 usage 与本地估算差异过大时自动回退估算值，并标记为“估算”。
+- 新增：服务端 usage 与本地估算差异过大时自动回退估算值，并标记为"估算"。
 - 预防：记录 provider usage 与估算值对比日志，便于通过 out.log 快速定位计数异常来源。
 0.3.58
 - 修复：Prompt 运行配置持久化路径迁移到用户配置目录 `Config/RimChat/Prompt/Custom/system_prompt_config.json`，避免部署覆盖导致生效提示词丢失。
 - 新增：启动时自动迁移旧版 Prompt 配置（Mod 目录 / save_data 旧路径）到新持久化路径。
-- 调整：默认模板读取优先用户覆盖文件 `Config/RimChat/Prompt/Default/SystemPrompt_Default.json`；“写回默认”改为写入该持久化覆盖文件。
+- 调整：默认模板读取优先用户覆盖文件 `Config/RimChat/Prompt/Default/SystemPrompt_Default.json`；"写回默认"改为写入该持久化覆盖文件。
 - 新增：`build.ps1` 在部署时备份并还原目标目录 `Prompt/Custom`，为历史版本数据提供额外保护。
 
 0.3.57
@@ -2913,14 +2970,14 @@
 - 新增：策略兜底回复文本增加中英语言键 `RimChat_StrategyFallbackReply1/2/3`。
 
 0.3.56
-- 修复：提示词设置页“预览折叠提示”乱码，改为语言键 `RimChat_PreviewCollapsedHint`。
+- 修复：提示词设置页"预览折叠提示"乱码，改为语言键 `RimChat_PreviewCollapsedHint`。
 - 修复：提示词编辑相关提示与旧派系模板编辑按钮中的乱码字面量，统一改为本地化键。
 - 新增：`build.ps1` 增加编码守卫，构建前扫描 UI 字符串中的典型 mojibake，命中即阻断构建。
 - 优化：构建脚本显式设置 UTF-8 控制台输出，降低工具输出链路的编码漂移风险。
 
 0.3.55
-- 新增：提示词设置页增加“默认模板覆盖当前”，可从 `Prompt/Default/SystemPrompt_Default.json` 直接覆盖当前运行配置。
-- 新增：提示词设置页增加“当前配置写回默认”，可将当前运行配置一键写回默认模板文件。
+- 新增：提示词设置页增加"默认模板覆盖当前"，可从 `Prompt/Default/SystemPrompt_Default.json` 直接覆盖当前运行配置。
+- 新增：提示词设置页增加"当前配置写回默认"，可将当前运行配置一键写回默认模板文件。
 - 新增：`PromptPersistenceService` 提供默认模板同步接口：`GetDefaultTemplatePath`、`ReloadRuntimeConfigFromDefaultTemplate`、`SaveRuntimeConfigToDefaultTemplate`。
 - 同步：补充中英语言键，并更新 `README.md`、`Api.md`、`config.md` 文档，覆盖默认模板调试流程。
 0.3.54
@@ -2930,18 +2987,18 @@
 - 调整：移除 RPG 对话页两个主面板（左导航、右编辑）白色边框。
 - 调整：移除 提示词 页两个主面板（左导航、右编辑）白色边框。
 0.3.52
-- 调整：AI 折叠分区的“恢复默认”按钮仅在分区展开时显示。
+- 调整：AI 折叠分区的"恢复默认"按钮仅在分区展开时显示。
 - 调整：移除 AI 折叠分区标题左侧的 > / v 符号。
 0.3.51
 - 调整：移除 AI 控制顶部快速工具中的搜索栏（输入框 + 定位/清空按钮）。
 - 调整：移除 AI 各分区选项行的白色描边与底部分隔线，减少白框视觉。
-- 视觉：移除“快速工具”摘要卡片的白色外边框。
+- 视觉：移除"快速工具"摘要卡片的白色外边框。
 0.3.50
 - 调整：MaxAPICallsPerHour 默认值改为 0（无限制），安全设置滑条范围改为 0..100，其中 0 表示不限制每小时调用。
-- 调整：移除 AI 控制顶部快速工具中的“行为/在线/主动对话/安全”跳转按钮行。
+- 调整：移除 AI 控制顶部快速工具中的"行为/在线/主动对话/安全"跳转按钮行。
 - 优化：AI 搜索栏支持匹配小项设置（不仅分区名，也可匹配礼物、援助、在线、安全等子项）。
 - 修复：RPG「动态数据注入」页不再重复显示 RimTalk 兼容入口块。
-- 修复：API 页输出语言摘要在“跟随系统”模式下不再重复显示同一语言字段。
+- 修复：API 页输出语言摘要在"跟随系统"模式下不再重复显示同一语言字段。
 0.3.45
 - 鏂板锛氬浜ゅ璇濆彂閫佹寜閽梺澧炲姞浣庡彲瑙嗗害 `?` 鎻愮ず銆?- 鏂板锛氭偓娴?`?` 鍙煡鐪?NPC 娼滃湪澶栦氦 Actions 娓呭崟锛屽苟鏍囨敞鍙敤/鍙楅檺鐘舵€併€?- 鏂板锛歊PG 瀵硅瘽鍙戦€佹寜閽梺澧炲姞浣庡彲瑙嗗害 `?` 鎻愮ず銆?- 鏂板锛氭偓娴?`?` 鍙煡鐪?NPC 娼滃湪 RPG Actions 娓呭崟銆?- 浼樺寲锛歊PG 鍙戦€佹寜閽枃瀛楁敼涓鸿瑷€閿?`RimChat_SendButton`锛岀Щ闄ょ‖缂栫爜鏂囨湰銆?
 0.3.44
@@ -3261,7 +3318,7 @@
 0.3.46
 - 鏂板锛氬弽灏勫紡 `RimTalkCompatBridge`锛岃繍琛屾椂缁戝畾 `RimTalkPromptAPI` 涓?`ScribanParser`锛屾棤缂栬瘧鏈熶緷璧栥€?- 鏂板锛氬浜や細璇濆叧闂悗灏嗘憳瑕佸啓鍏?RimTalk 鍏ㄥ眬鍙橀噺锛坙atest + recent 婊氬姩鍒楄〃锛夈€?- 鏂板锛歊PG 瀵硅瘽绐楀彛鎵嬪姩鍏抽棴鏃剁敓鎴愪細璇濇憳瑕佸苟鍐欏叆 RimTalk锛堜笉鏂板 AI 璇锋眰锛夈€?- 鏂板锛氬浜や笌 RPG 鎻愮ず璇嶉摼璺熬閮ㄨ拷鍔?RimTalk 鍏煎妯℃澘锛屽苟鐢?RimTalk Scriban 娓叉煋锛涘け璐ユ椂鍥為€€鍘熸ā鏉挎枃鏈€?- 鏂板锛氳缃」 `EnableRimTalkPromptCompat`銆乣RimTalkSummaryHistoryLimit`銆乣RimTalkCompatTemplate`锛屽叆鍙ｄ綅浜?RPG 鍔ㄦ€佹敞鍏ュ尯涓斿悓鏃跺奖鍝嶅浜や笌 RPG銆?- 鏂板锛氫腑鑻辨枃璇█閿笌鍙橀噺璇存槑閿€?- 鏇存柊锛氬悓姝ユ枃妗?README/Api/config锛屾ā鍧楃増鏈崌绾у埌 `0.3.46`銆?
 0.3.47
-- 鏂板锛歊PG 鍔ㄦ€佹敞鍏ラ〉澧炲姞 RimTalk 鍙橀噺鏌ョ湅鍣紝鍙祻瑙?RimTalk 宸叉敞鍐屾彃浠跺彉閲忓苟涓€閿彃鍏ュ吋瀹规ā鏉裤€?- 鏂板锛歊PG 鍔ㄦ€佹敞鍏ラ〉澧炲姞 RimTalk 鏉＄洰娣诲姞/鏇存柊鍣紝鍙啓鍏ュ綋鍓嶆縺娲婚璁撅紙鍚嶇О/閿氱偣/瑙掕壊/浣嶇疆/娣卞害/鍐呭锛夈€?- 鏂板锛氭ˉ鎺ュ叕寮€鑳藉姏 `IsRuntimeAvailable`銆乣GetRegisteredVariablesSnapshot`銆乣TryAddOrUpdateUserPromptEntry`銆?- 鏂板锛歊PG 鎻愮ず璇嶉摼璺彲娉ㄥ叆婵€娲?RimTalk 棰勮涓殑 Mod 鏉＄洰娓叉煋鍧楋紙`rimtalk_preset_mod_entries`锛夈€?- 浼樺寲锛氬湪 `StartedNewGame` / `LoadedGame` / `FinalizeInit` 澧炲姞 RimTalk 鍏煎灞傞鐑紝鎻愰珮鍙橀噺涓庡吋瀹规潯鐩敞鍐屾椂鏈虹ǔ瀹氭€с€?- 淇锛氳ˉ鍥炴媶鍒?partial 鍚庣己澶辩殑妗ユ帴鎴愬憳涓庢ā鍨嬬被鍨嬶紝閲嶆柊閫氳繃 RimWorld 1.6 / .NET 4.8 鏋勫缓銆?- 淇锛氭柊澧炩€淩imTalk 鍏煎宸ュ叿鈥濈嫭绔嬭缃叆鍙ｏ紝骞跺湪鈥淩PG 鍔ㄦ€佹暟鎹敞鍏モ€濋〉鎻愪緵璺宠浆鎸夐挳锛岀‘淇濆彉閲忔煡鐪嬩笌鏉＄洰娣诲姞鍙揪銆?
+- 鏂板锛歊PG 鍔ㄦ€佹敞鍏ラ〉澧炲姞 RimTalk 鍙橀噺鏌ョ湅鍣紝鍙祻瑙?RimTalk 宸叉敞鍐屾彃浠跺彉閲忓苟涓€閿彃鍏ュ吋瀹规ā鏉裤€?- 鏂板锛歊PG 鍔ㄦ€佹敞鍏ラ〉澧炲姞 RimTalk 鏉＄洰娣诲姞/鏇存柊鍣紝鍙啓鍏ュ綋鍓嶆縺娲婚璁撅紙鍚嶇О/閿氱偣/瑙掕壊/浣嶇疆/娣卞害/鍐呭锛夈€?- 鏂板锛氭ˉ鎺ュ叕寮€鑳藉姏 `IsRuntimeAvailable`銆乣GetRegisteredVariablesSnapshot`銆乣TryAddOrUpdateUserPromptEntry`銆?- 鏂板锛歊PG 鎻愮ず璇嶉摼璺彲娉ㄥ叆婵€娲?RimTalk 棰勮涓殑 Mod 鏉＄洰娓叉煋鍧楋紙`rimtalk_preset_mod_entries`锛夈€?- 浼樺寲锛氬湪 `StartedNewGame` / `LoadedGame` / `FinalizeInit` 澧炲姞 RimTalk 鍏煎灞傞鐑紝鎻愰珮鍙橀噺涓庡吋瀹规潯鐩敞鍐屾椂鏈虹ǔ瀹氭€с€?- 淇锛氳ˉ鍥炴媶鍒?partial 鍚庣己澶辩殑妗ユ帴鎴愬憳涓庢ā鍨嬬被鍨嬶紝閲嶆柊閫氳繃 RimWorld 1.6 / .NET 4.8 鏋勫缓銆?- 淇锛氭柊澧炩€淩imTalk 鍏煎宸ュ叿鈥濈嫭绔嬭缃叆鍙ｏ紝骞跺湪鈥淩PG 鍔ㄦ€佹暟鎹敞鍏モ€濋〉鎻愪緵璺宠浆鎸夐挳锛岀'淇濆彉閲忔煡鐪嬩笌鏉＄洰娣诲姞鍙揪銆?
 0.3.48
 - 璋冩暣锛歊imTalk 鍏煎宸ュ叿鑱氱劍鈥滆鍙?RimTalk/鎻掍欢鍙橀噺骞舵敞鍏?RimChat RPG 鎻愮ず璇嶆ā鏉库€濄€?- 璋冩暣锛氱Щ闄?RimChat 璁剧疆涓殑鈥滄墜鍔ㄥ啓鍏?RimTalk 棰勮鏉＄洰鈥漊I锛岄伩鍏嶅湪鍏煎宸ュ叿闈㈡澘鐩存帴缂栬緫 RimTalk 棰勮銆?- 淇濈暀锛氭ˉ鎺ュ眰鐜版湁鐨?RimTalk 鍙橀噺/鏉＄洰娉ㄥ唽閫昏緫淇濇寔涓嶅彉銆?
 0.3.49
@@ -3306,7 +3363,7 @@
 
 
 0.5.23
-- 修复：图片 API 设置页不再在每帧强制规范化，避免分辨率输入被立即回退导致“无法编辑分辨率”。
+- 修复：图片 API 设置页不再在每帧强制规范化，避免分辨率输入被立即回退导致"无法编辑分辨率"。
 - 修复：send_image 在提供了无效 template_id 时不再静默回退默认模板，改为明确提示模板不存在，便于定位模板提示词未生效问题。
 
 0.5.24
@@ -3324,21 +3381,21 @@
 0.6.26
 - 修复：Prompt Workbench 首次打开时，`Default` 预设改为直接绑定 canonical 默认内容，不再显示升级迁移出的旧长文本。
 - 新增：当检测到旧版 legacy/custom 提示词与 canonical 默认内容存在实质差异时，自动额外生成 `Migrated` 预设保存旧内容。
-- 修复：工作台首次渲染前会先把 active preset 同步到当前编辑态，避免“左侧选中 Default、右侧正文仍是旧内容”的状态漂移。
+- 修复：工作台首次渲染前会先把 active preset 同步到当前编辑态，避免"左侧选中 Default、右侧正文仍是旧内容"的状态漂移。
 
 0.5.27
 - 新增：send_image 接入 API 统计观测数据源，观测窗口可直接查看图片请求成功/失败、耗时、模型与请求预览。
 - 新增：统计来源类型增加 Send Image，并完成中英文本地化键。
 
 0.6.4
-- 重构：Prompt Workbench 的 `Diplomacy` 与 `RPG` 通道改为与 RimTalk 通道一致的“条目列表 + 条目编辑（Name/Role/Position/InChatDepth/Enabled/Content）”流程。
-- 运行时：外交/RPG 最终系统提示词改为按条目顺序仅拼接“已启用条目”，并使用 RimTalk Scriban 解析链路渲染模板变量。
-- 兼容：新增“新条目 -> 旧字段”回写层；保存/导出时自动同步回 `SystemPrompt_Custom.json` 与 `PawnDialoguePrompt_Custom.json` 旧字段，保持旧存档与旧提示词文件可读。
+- 重构：Prompt Workbench 的 `Diplomacy` 与 `RPG` 通道改为与 RimTalk 通道一致的"条目列表 + 条目编辑（Name/Role/Position/InChatDepth/Enabled/Content）"流程。
+- 运行时：外交/RPG 最终系统提示词改为按条目顺序仅拼接"已启用条目"，并使用 RimTalk Scriban 解析链路渲染模板变量。
+- 兼容：新增"新条目 -> 旧字段"回写层；保存/导出时自动同步回 `SystemPrompt_Custom.json` 与 `PawnDialoguePrompt_Custom.json` 旧字段，保持旧存档与旧提示词文件可读。
 - 迁移：当检测到旧版仅有传统字段（无有效条目）时，自动生成外交/RPG 初始条目，避免升级后提示词丢失。
 
 0.6.6
-- 修复：Prompt Workbench 右侧“变量”页改为复用 RimTalk 变量浏览器（搜索/分组/插入），点击变量可直接写入当前条目。
-- 修复：变量插入逻辑对齐 RimTalk 编辑器行为，优先按光标位置插入；未聚焦编辑器时回退到末尾追加，避免“点击无效”体感。
+- 修复：Prompt Workbench 右侧"变量"页改为复用 RimTalk 变量浏览器（搜索/分组/插入），点击变量可直接写入当前条目。
+- 修复：变量插入逻辑对齐 RimTalk 编辑器行为，优先按光标位置插入；未聚焦编辑器时回退到末尾追加，避免"点击无效"体感。
 - 兼容：legacy 提示词导入种子支持按拼接段标题自动拆分为多个条目（如 `[Section]`、`=== Section ===`），提升条目完整性并保持旧存档/旧提示词文件兼容。
 
 
@@ -3357,7 +3414,7 @@
 
 0.7.24
 - 修复：运行时主入口（外交/策略/RPG）与工作台预览彻底分流，运行时固定 `deterministicPreview=false`，不再注入 `PreviewFaction/preview_*` 占位值。
-- 重构：域配置有效性从“对象不空”升级为“语义完整”校验；要求外交动作全集、`ResponseFormat.JsonTemplate`、关键节点模板（`api_limits/quest_guidance/response_contract`）完整。
+- 重构：域配置有效性从"对象不空"升级为"语义完整"校验；要求外交动作全集、`ResponseFormat.JsonTemplate`、关键节点模板（`api_limits/quest_guidance/response_contract`）完整。
 - 重构：动作源单一化，`ApiActions` 仅来自外交域；移除外交+社交动作合并链路，社交域仅保留模板文案职责。
 - 新增：`SystemPromptDomainConfig.PromptDomainSchemaVersion`（单锚点，当前=1），并在启动时执行一次性幂等迁移记录。
 - 新增：启动期自愈机制；检测坏 custom 后先备份到 `Prompt/Custom/_backup/<timestamp>/`，再用 default-only 路径重建并写回。
@@ -3366,24 +3423,24 @@
 
 0.7.25
 - 调整：按通道重写 Prompt Workbench 默认 output_specification，明确外交/主动外交/RPG/主动RPG/社交/图片/摘要/人格引导/归档压缩的响应格式边界。
-- 修复：将 diplomacy_strategy 默认输出格式收敛为“仅 JSON 且严格匹配 strategy_output_contract”，禁止自然语言与 markdown 混出。
+- 修复：将 diplomacy_strategy 默认输出格式收敛为"仅 JSON 且严格匹配 strategy_output_contract"，禁止自然语言与 markdown 混出。
 - 同步：统一更新 PromptSectionCatalog_Default.json、RimTalkPromptEntries_Default.json、PromptUnifiedCatalog_Default.json 的默认输出格式文案，避免默认源不一致。
 
 0.7.37
-- 新增：统一沉浸拦截器 `ImmersionOutputGuard`，全链路只校验可见对白，自动忽略尾随 `{"actions":[...]}` JSON，命中“括号元信息/机制词/状态面板数值句式”即 fail-fast 阻断。
+- 新增：统一沉浸拦截器 `ImmersionOutputGuard`，全链路只校验可见对白，自动忽略尾随 `{"actions":[...]}` JSON，命中"括号元信息/机制词/状态面板数值句式"即 fail-fast 阻断。
 - 修复：外交解析链路 `AIResponseParser.NormalizeDialogueText` 与显示入口 `Dialog_DiplomacyDialogue.AddAIResponseToSession(...)` 统一接入沉浸拦截；违规文本不再直接入会话展示。
 - 修复：RPG 解析链路 `LLMRpgApiResponse.SanitizeDialogueContent` 与 `Dialog_RPGPawnDialogue.RequestContext.NormalizeVisibleNpcDialogueText(...)` 统一接入沉浸拦截，阻断机制泄漏文本。
 - 覆盖：主动推送入口 `GameComponent_NpcDialoguePushManager.SanitizeModelOutput(...)` 与 `GameComponent_PawnRpgDialoguePushManager.Generation.SanitizeModelOutput(...)` 同步接入同一 Guard，避免跨入口复发。
-- 新增：请求层 `AIChatServiceAsync.ProcessRequestCoroutine(...)` 增加“违规原因标签重试”机制；命中沉浸违规后仅携带原因标签重试 1 次，二次失败返回本地沉浸兜底台词，不放行原文。
+- 新增：请求层 `AIChatServiceAsync.ProcessRequestCoroutine(...)` 增加"违规原因标签重试"机制；命中沉浸违规后仅携带原因标签重试 1 次，二次失败返回本地沉浸兜底台词，不放行原文。
 - 调整：外交/RPG 严格输出契约与 `dialogue.response_contract_body` 回退文案增加硬性沉浸条款（禁止括号元信息、禁止机制词、禁止状态面板数值句式）。
-- 调整：`ImmersionOutputGuard` 的机制词拦截从“单词包含命中”收紧为“机制上下文正则命中”，降低正常对白被误拦截替换的概率。
-- 调整：在 `dialogue.response_contract_body` 的输出规范权威区新增硬规则“不要模仿历史中的元注释风格；历史只提供剧情事实，不提供输出样式。”，用于抑制模型复用历史中的“（无游戏效果）”等破坏沉浸文本样式。
+- 调整：`ImmersionOutputGuard` 的机制词拦截从"单词包含命中"收紧为"机制上下文正则命中"，降低正常对白被误拦截替换的概率。
+- 调整：在 `dialogue.response_contract_body` 的输出规范权威区新增硬规则"不要模仿历史中的元注释风格；历史只提供剧情事实，不提供输出样式。"，用于抑制模型复用历史中的"（无游戏效果）"等破坏沉浸文本样式。
 - 新增：中英文语言键 `RimChat_ImmersionFallback_Diplomacy`、`RimChat_ImmersionFallback_Rpg`，用于二次失败本地兜底台词本地化。
 - 版本：`About/About.xml` 升级为 `0.7.37`。
 
 0.7.45
-- 修复：RPG 请求链路恢复非言语约束注入；`BuildRpgSystemPromptForRequest(...)` 末尾接入 `AppendNonVerbalPromptConstraint(...)`，确保动物/婴儿/机械体在请求阶段与展示阶段保持同一“叫声+心声”合同。
-- 调整：强化 RPG 输出格式约束文案（C# fallback + `Prompt/Default/PawnDialoguePrompt_Default.json`），明确“可见 NPC 回复必须单行且优先一句简短表达”，降低长段落与换行回复概率。
+- 修复：RPG 请求链路恢复非言语约束注入；`BuildRpgSystemPromptForRequest(...)` 末尾接入 `AppendNonVerbalPromptConstraint(...)`，确保动物/婴儿/机械体在请求阶段与展示阶段保持同一"叫声+心声"合同。
+- 调整：强化 RPG 输出格式约束文案（C# fallback + `Prompt/Default/PawnDialoguePrompt_Default.json`），明确"可见 NPC 回复必须单行且优先一句简短表达"，降低长段落与换行回复概率。
 - 保持：不新增本地硬截断与玩家输入改写，继续沿用 `SanitizeDialogueContent` + `NormalizeVisibleNpcDialogueText` 的既有净化与沉浸链路。
 - 版本：`About/About.xml` 升级为 `0.7.45`。
 
@@ -3398,8 +3455,8 @@
 - 调整：高威胁因果触发（WarningThreat + Severity>=3）不再绕过全局共享冷却，统一受 1 小时限流约束。
 - 调整：调试按钮 `DebugForceRandomProactiveDialogue()` 改为走常规触发链路（HandleTriggerContext），同步受全局冷却、玩家忙碌、队列与会话重启冷却约束。
 - 持久化：新增 `npcPushLastGlobalDeliveredTick` 存档字段，确保读档后全局冷却窗口连续有效。
-- 本地化：`RimChat_ItemAirdropSelectionInProgressSystem` 中文文案改为“边缘物流为您服务”，用于空投二阶段异步处理中系统提示。
-- 本地化：`RimChat_ItemAirdropTriggeredSystem` 中文文案改为“您的空投已到货, 待取件：({0}x{1}@{2}银)”，保持占位符渲染格式。
+- 本地化：`RimChat_ItemAirdropSelectionInProgressSystem` 中文文案改为"边缘物流为您服务"，用于空投二阶段异步处理中系统提示。
+- 本地化：`RimChat_ItemAirdropTriggeredSystem` 中文文案改为"您的空投已到货, 待取件：({0}x{1}@{2}银)"，保持占位符渲染格式。
 
 0.7.49
 - 修复：外交动作目录在部分配置下缺失 `request_raid_call_everyone` / `request_raid_waves`。
@@ -3412,13 +3469,13 @@
 - 修复：`pay_prisoner_ransom` 解析去重不再按 `action + reason` 折叠；同轮不同 `target_pawn_load_id` 会全部保留，避免批量覆盖被误判缺失目标。
 - 修复：保留严格 fail-fast，同一目标重复赎金动作在解析层直接丢弃并记录日志，批量执行层仍对重复目标/缺失目标/总价越界进行阻断。
 - 新增：解析层结构化日志，输出 `kept_targets`、`dropped_duplicate_targets` 与 `kept_without_target`，便于复盘模型动作产出。
-- 新增：批量赎金预校验失败日志补充 `expected_targets` 与 `actual_targets` 明细，定位“覆盖不完整”更直接。
+- 新增：批量赎金预校验失败日志补充 `expected_targets` 与 `actual_targets` 明细，定位"覆盖不完整"更直接。
 - 版本：`About/About.xml` 升级为 `0.9.49`。
 
 0.9.50
 - 新增：批量赎金模式引入估算系数 0.8，批量卡片中的囚犯估算叫价统一下调 20%（显示为 `~ X银`）。
-- 调整：批量赎金信息卡改为“囚犯存活证明”格式，字段包含所属派系、已选囚犯、估算叫价、健康度与器官状态。
-- 调整：批量刷新链路中的“当前总叫价”同步使用折后估算值；批量总报价区间与 fail-fast 校验规则保持不变。
+- 调整：批量赎金信息卡改为"囚犯存活证明"格式，字段包含所属派系、已选囚犯、估算叫价、健康度与器官状态。
+- 调整：批量刷新链路中的"当前总叫价"同步使用折后估算值；批量总报价区间与 fail-fast 校验规则保持不变。
 - 本地化：同步更新中英文 `RimChat_RansomBatchCardBody` 与 `RimChat_RansomBatchListLine` 文案与占位符。
 - 版本：`About/About.xml` 升级为 `0.9.50`。
 
@@ -3439,12 +3496,12 @@
 - 新增：`ImmersionOutputGuard.ReasoningLeakage`，阻断无标签思维链、规则复述和分析口吻混入可见对白。
 - 调整：外交控制器、RPG 控制器与主动推送链路统一消费 `DialogueResponseEnvelope` 或其规范化结果，不再依赖原始字符串自由切分。
 - 调整：thought-chain 默认改为全通道关闭；配置与节点仅保留迁移兼容，不再作为运行时输出安全机制。
-- 调整：RPG / 外交通道默认提示词合同改为结构化 JSON 主协议；旧“对白 + 尾随 actions JSON”仅保留最小输入兼容。
+- 调整：RPG / 外交通道默认提示词合同改为结构化 JSON 主协议；旧"对白 + 尾随 actions JSON"仅保留最小输入兼容。
 - 文档：同步 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog_en.txt`。
 
 0.9.88
 - 调整：外交在线状态强制时长改为固定值，`go_offline` 固定 2 小时，`set_dnd` 固定 4 小时，不再读取 `PresenceForcedOfflineHours`。
 - 根修：`RefreshPresenceOnDialogueOpen(...)` 增加强制态到期直达在线分支；强制离线/免打扰到期后立即恢复 `Online`，不再先回到排班判定。
-- 兼容：旧存档中的强制态长计时在刷新时按“当前时间 + 新上限”即时截断（离线 2h、免打扰 4h）。
+- 兼容：旧存档中的强制态长计时在刷新时按"当前时间 + 新上限"即时截断（离线 2h、免打扰 4h）。
 - UI：保留 `PresenceForcedOfflineHours` 滑条，但文案明确其不再影响 `go_offline/set_dnd` 强制时长。
 - 文档：同步 `doc/Index.md`、`doc/Api.md`、`doc/config.md`。

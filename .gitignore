@@ -12,10 +12,14 @@
 *.tmp
 *.cache
 
+# Windows reserved device names (cannot be deleted normally)
+nul
+
 # Local AI tooling metadata
 .agents/
 .trae/
 .claude/
+.codebuddy/
 __pycache__/
 *.pyc
 .gitnexus

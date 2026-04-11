@@ -454,17 +454,7 @@ namespace RimChat.Memory
 
         private static string EscapeJson(string value)
         {
-            if (string.IsNullOrEmpty(value))
-            {
-                return string.Empty;
-            }
-
-            return value
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r")
-                .Replace("\t", "\\t");
+            return RimChat.Util.JsonEscapeHelper.EscapeString(value);
         }
     }
 }

@@ -59,7 +59,15 @@ namespace RimChat.Comp
             if (thingClass == null || !typeof(Pawn).IsAssignableFrom(thingClass))
                 return false;
 
-            return true;
+            // Inject CompPawnDialogue for all Pawn subclasses with a known race type.
+            // Runtime eligibility (whether dialogue actually works) is handled by
+            // PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace.
+            // VehiclePawn and other non-standard Pawn subclasses lack RaceProps
+            // classification and are excluded here.
+            if (def.race.Humanlike || def.race.IsMechanoid || def.race.ToolUser || def.race.Animal)
+                return true;
+
+            return false;
         }
 
         private static bool HasDialogueComp(ThingDef def)

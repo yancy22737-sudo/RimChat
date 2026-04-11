@@ -23,6 +23,8 @@ namespace RimChat.DiplomacySystem
         private List<string> pawnPersonaPromptValuesByIdWorkingList;
 
         // Legacy fields are loaded once for migration only (read-only on load).
+        // These use LookMode.Reference to consume legacy Pawn-keyed XML nodes from old saves.
+        // Pawn keys that resolve to null (destroyed/recycled) are safely skipped in MigrateLegacyPawnDictionaries.
         private Dictionary<Pawn, int> legacyPawnDialogueCooldownUntilTick;
         private List<Pawn> legacyCooldownKeysWorkingList;
         private List<int> legacyCooldownValuesWorkingList;
@@ -106,21 +108,33 @@ namespace RimChat.DiplomacySystem
 
             if (Scribe.mode != LoadSaveMode.Saving)
             {
-                Scribe_Collections.Look(
-                    ref legacyPawnDialogueCooldownUntilTick,
-                    "pawnDialogueCooldownUntilTick",
-                    LookMode.Reference,
-                    LookMode.Value,
-                    ref legacyCooldownKeysWorkingList,
-                    ref legacyCooldownValuesWorkingList);
+                // Consume legacy Pawn-keyed dictionaries from old saves.
+                // LookMode.Reference is required to match the original save format.
+                // Pawns that no longer exist resolve to null and are skipped in migration.
+                try
+                {
+                    Scribe_Collections.Look(
+                        ref legacyPawnDialogueCooldownUntilTick,
+                        "pawnDialogueCooldownUntilTick",
+                        LookMode.Reference,
+                        LookMode.Value,
+                        ref legacyCooldownKeysWorkingList,
+                        ref legacyCooldownValuesWorkingList);
 
-                Scribe_Collections.Look(
-                    ref legacyPawnPersonaPrompts,
-                    "pawnPersonaPrompts",
-                    LookMode.Reference,
-                    LookMode.Value,
-                    ref legacyPawnPersonaPromptKeysWorkingList,
-                    ref legacyPawnPersonaPromptValuesWorkingList);
+                    Scribe_Collections.Look(
+                        ref legacyPawnPersonaPrompts,
+                        "pawnPersonaPrompts",
+                        LookMode.Reference,
+                        LookMode.Value,
+                        ref legacyPawnPersonaPromptKeysWorkingList,
+                        ref legacyPawnPersonaPromptValuesWorkingList);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"[RimChat] Failed to load legacy pawn data, clearing for compatibility: {ex.Message}");
+                    legacyPawnDialogueCooldownUntilTick = null;
+                    legacyPawnPersonaPrompts = null;
+                }
             }
 
             ExposeData_NpcPersonaBootstrap();

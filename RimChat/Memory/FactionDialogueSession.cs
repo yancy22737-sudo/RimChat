@@ -32,6 +32,8 @@ namespace RimChat.Memory
         public string conversationEndReason = "";
         public int conversationEndedTick = 0;
         public int reinitiateAvailableTick = 0;
+        [NonSerialized]
+        public int messageVersion = 0;
 
         // AI requeststate (不save到存档, 重启后需要重新request)
         public string pendingRequestId = null;
@@ -129,6 +131,7 @@ namespace RimChat.Memory
             msg.SetTimestampFromCurrentGameTick();
             messages.Add(msg);
             lastInteractionTick = Find.TickManager.TicksGame;
+            messageVersion++;
             if (isPlayer)
             {
                 isConversationEndedByNpc = false;
@@ -166,6 +169,7 @@ namespace RimChat.Memory
             msg.SetTimestampFromCurrentGameTick();
             messages.Add(msg);
             lastInteractionTick = Find.TickManager.TicksGame;
+            messageVersion++;
 
             if (messages.Count > 100)
             {
@@ -215,6 +219,7 @@ namespace RimChat.Memory
             msg.SetTimestampFromCurrentGameTick();
             messages.Add(msg);
             lastInteractionTick = Find.TickManager.TicksGame;
+            messageVersion++;
 
             if (messages.Count > 100)
             {

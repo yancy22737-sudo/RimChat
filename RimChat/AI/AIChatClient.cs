@@ -19,6 +19,7 @@ namespace RimChat.AI
         public string content;
     }
 
+    [Obsolete("Use AIChatServiceAsync instead. This client uses TaskCompletionSource + LongEventHandler which can deadlock and blocks background threads with Thread.Sleep.")]
     public sealed class AIChatClientResponse
     {
         public bool Success { get; set; }
@@ -33,6 +34,7 @@ namespace RimChat.AI
         public bool IsEstimatedTokens { get; set; } = true;
     }
 
+    [Obsolete("Use AIChatServiceAsync instead. This client uses TaskCompletionSource + LongEventHandler which can deadlock and blocks background threads with Thread.Sleep.")]
     public class AIChatClient
     {
         private static readonly Regex[] PromptTokensRegexes =
@@ -146,6 +148,16 @@ namespace RimChat.AI
                     else
                     {
                         request.SetRequestHeader("Authorization", $"Bearer {apiKey}");
+                    }
+                }
+
+                // Add provider-specific extra headers (e.g. player2-game-key for Player2)
+                var extraHeaders = provider.GetExtraHeaders();
+                if (extraHeaders != null)
+                {
+                    foreach (var header in extraHeaders)
+                    {
+                        request.SetRequestHeader(header.Key, header.Value);
                     }
                 }
 
@@ -351,12 +363,13 @@ namespace RimChat.AI
                 if (RimChatMod.Instance.InstanceSettings.LocalConfig != null && RimChatMod.Instance.InstanceSettings.LocalConfig.IsValid())
                 {
                     string localBaseUrl = RimChatMod.Instance.InstanceSettings.LocalConfig.GetNormalizedBaseUrl();
+                    bool isPlayer2Local = RimChatMod.Instance.InstanceSettings.LocalConfig.IsPlayer2Local();
                     return new ApiConfig
                     {
-                        Provider = AIProvider.Custom,
-                        BaseUrl = ApiConfig.EnsureChatCompletionsEndpoint(localBaseUrl),
-                        SelectedModel = "Custom",
-                        CustomModelName = RimChatMod.Instance.InstanceSettings.LocalConfig.ModelName,
+                        Provider = isPlayer2Local ? AIProvider.Player2 : AIProvider.Custom,
+                        BaseUrl = isPlayer2Local ? localBaseUrl.TrimEnd('/') + "/v1/chat/completions" : ApiConfig.EnsureChatCompletionsEndpoint(localBaseUrl),
+                        SelectedModel = isPlayer2Local ? "Default" : "Custom",
+                        CustomModelName = isPlayer2Local ? "" : RimChatMod.Instance.InstanceSettings.LocalConfig.ModelName,
                         ApiKey = "",
                         IsEnabled = true
                     };
@@ -390,11 +403,7 @@ namespace RimChat.AI
 
         private string EscapeJson(string str)
         {
-            return str.Replace("\\", "\\\\")
-                      .Replace("\"", "\\\"")
-                      .Replace("\n", "\\n")
-                      .Replace("\r", "\\r")
-                      .Replace("\t", "\\t");
+            return RimChat.Util.JsonEscapeHelper.EscapeString(str);
         }
 
         public bool IsConfigured()

@@ -18,8 +18,22 @@ namespace RimChat.NpcDialogue
             AccessTools.Field(typeof(Letter), "label");
         private static readonly System.Reflection.FieldInfo ChoiceTitleField =
             AccessTools.Field(typeof(ChoiceLetter), "title");
+        private static readonly System.Reflection.FieldInfo LetterLoadIDField =
+            AccessTools.Field(typeof(Letter), "loadID");
+
+        private static int nextUniqueLoadID = 700001;
 
         private int factionLoadId = -1;
+
+        /// <summary>
+        /// Assign the next unique loadID and return it.
+        /// Called by LoadedObjectDirectoryPatch_FixLegacyLetterLoadID before
+        /// RegisterLoaded to prevent "Letter_0" duplicate key crashes on legacy saves.
+        /// </summary>
+        public static int AssignNextUniqueLoadID()
+        {
+            return nextUniqueLoadID++;
+        }
 
         public void Setup(Faction faction, TaggedString labelText, TaggedString bodyText, LetterDef letterDef)
         {
@@ -55,6 +69,10 @@ namespace RimChat.NpcDialogue
         {
             base.ExposeData();
             Scribe_Values.Look(ref factionLoadId, "factionLoadId", -1);
+            // Legacy loadID=0 fix is now handled by
+            // LoadedObjectDirectoryPatch_FixLegacyLetterLoadID which runs
+            // before RegisterLoaded, preventing the "Letter_0" duplicate key
+            // crash at the source instead of trying to fix it after the fact.
         }
 
         private Faction ResolveFaction()

@@ -6,6 +6,7 @@
     <Nullable>disable</Nullable>
     <AssemblyName>RimChat</AssemblyName>
     <RootNamespace>RimChat</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

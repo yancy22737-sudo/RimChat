@@ -80,11 +80,22 @@ namespace RimChat.PawnRpgPush
         public override void ExposeData()
         {
             base.ExposeData();
-            Scribe_Collections.Look(ref npcPushStates, "pawnRpgNpcPushStates", LookMode.Deep);
-            Scribe_Collections.Look(ref threatStates, "pawnRpgThreatStates", LookMode.Deep);
-            Scribe_Collections.Look(ref queuedTriggers, "pawnRpgQueuedTriggers", LookMode.Deep);
-            Scribe_Collections.Look(ref proactiveProtagonists, "pawnRpgProactiveProtagonists", LookMode.Deep);
-            Scribe_Values.Look(ref lastColonyDeliveredTick, "pawnRpgLastColonyDeliveredTick", -ColonyDeliveryCooldownTicks);
+            try
+            {
+                Scribe_Collections.Look(ref npcPushStates, "pawnRpgNpcPushStates", LookMode.Deep);
+                Scribe_Collections.Look(ref threatStates, "pawnRpgThreatStates", LookMode.Deep);
+                Scribe_Collections.Look(ref queuedTriggers, "pawnRpgQueuedTriggers", LookMode.Deep);
+                Scribe_Collections.Look(ref proactiveProtagonists, "pawnRpgProactiveProtagonists", LookMode.Deep);
+                Scribe_Values.Look(ref lastColonyDeliveredTick, "pawnRpgLastColonyDeliveredTick", -ColonyDeliveryCooldownTicks);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error loading PawnRpg data from save: {ex.Message}\n{ex.StackTrace}");
+                npcPushStates ??= new List<PawnRpgNpcPushState>();
+                threatStates ??= new List<PawnRpgThreatState>();
+                queuedTriggers ??= new List<QueuedPawnRpgTrigger>();
+                proactiveProtagonists ??= new List<PawnRpgProtagonistEntry>();
+            }
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {

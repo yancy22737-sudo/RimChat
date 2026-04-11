@@ -10,7 +10,9 @@ namespace RimChat.Dialogue
     internal static class PawnDialogueRoutingPolicy
     {
         /// <summary>
-        /// Check if a pawn's race is eligible for RPG dialogue (Humanlike, ToolUser, or Mechanoid).
+        /// Check if a pawn's race is eligible for RPG dialogue.
+        /// Uses capability-based whitelist: Humanlike, Mechanoid and Animal always eligible;
+        /// ToolUser requires story/skills subsystems (excludes VehiclePawn etc.).
         /// </summary>
         internal static bool IsRpgDialogueEligibleRace(Pawn pawn)
         {
@@ -19,9 +21,49 @@ namespace RimChat.Dialogue
                 return false;
             }
 
-            return pawn.RaceProps.Humanlike
-                || pawn.RaceProps.ToolUser
-                || pawn.RaceProps.IsMechanoid;
+            // Humanlike, Mechanoid and Animal always have the required subsystems
+            if (pawn.RaceProps.Humanlike || pawn.RaceProps.IsMechanoid || pawn.RaceProps.Animal)
+            {
+                return true;
+            }
+
+            // ToolUser may include non-standard Pawn subclasses (e.g. VehiclePawn)
+            // that lack story/skills — verify capability before allowing
+            if (pawn.RaceProps.ToolUser && pawn.story != null && pawn.skills != null)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Return a reason key explaining why a pawn's race is not eligible for RPG dialogue.
+        /// Returns null if the race IS eligible.
+        /// </summary>
+        internal static string GetIneligibleRaceReason(Pawn pawn)
+        {
+            if (pawn?.RaceProps == null)
+            {
+                return "RimChat_Converse_Disabled_NoRace";
+            }
+
+            if (pawn.RaceProps.Humanlike || pawn.RaceProps.IsMechanoid || pawn.RaceProps.Animal)
+            {
+                return null;
+            }
+
+            if (pawn.RaceProps.ToolUser)
+            {
+                if (pawn.story == null || pawn.skills == null)
+                {
+                    return "RimChat_Converse_Disabled_IncompatibleRace";
+                }
+                return null;
+            }
+
+            // Pawn has RaceProps but none of the known categories
+            return "RimChat_Converse_Disabled_IncompatibleRace";
         }
 
         internal static bool ShouldUseRpgDialogue(Pawn initiator, Pawn target, out string reason)

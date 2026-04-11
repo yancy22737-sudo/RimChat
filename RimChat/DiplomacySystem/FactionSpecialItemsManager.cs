@@ -159,6 +159,50 @@ namespace RimChat.DiplomacySystem
                 {
                     revealedFactions = new HashSet<int>();
                 }
+
+                FixDuplicateSlotIds();
+            }
+        }
+
+        private void FixDuplicateSlotIds()
+        {
+            var usedIds = new HashSet<int>();
+            int nextId = FactionSpecialItemSlot.GetNextUniqueId();
+
+            foreach (var itemSet in factionItems.Values)
+            {
+                if (itemSet == null) continue;
+
+                if (itemSet.DiscountItem != null)
+                {
+                    FixSlotId(itemSet.DiscountItem, usedIds, ref nextId);
+                }
+
+                if (itemSet.ScarceItem != null)
+                {
+                    FixSlotId(itemSet.ScarceItem, usedIds, ref nextId);
+                }
+            }
+
+            FactionSpecialItemSlot.SetNextUniqueId(nextId);
+        }
+
+        private void FixSlotId(FactionSpecialItemSlot slot, HashSet<int> usedIds, ref int nextId)
+        {
+            int id = slot.GetUniqueIdForFix();
+            
+            if (usedIds.Contains(id))
+            {
+                slot.SetUniqueId(nextId++);
+                Log.Message($"[RimChat] Fixed duplicate FactionSpecialItemSlot ID: {id} -> {slot.GetUniqueIdForFix()}");
+            }
+            else
+            {
+                usedIds.Add(id);
+                if (id >= nextId)
+                {
+                    nextId = id + 1;
+                }
             }
         }
 

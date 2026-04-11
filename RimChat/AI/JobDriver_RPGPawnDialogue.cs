@@ -46,6 +46,7 @@ namespace RimChat.AI
             {
                 Pawn target = TargetPawn;
                 return target == null ||
+                       target.Downed ||
                        !PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(pawn, target, out _) ||
                        !pawn.CanReach(target, PathEndMode.InteractionCell, Danger.Deadly);
             });
@@ -89,12 +90,13 @@ namespace RimChat.AI
                 Pawn target = TargetPawn;
                 if (initiator != null && target != null && initiator.Spawned && target.Spawned && initiator.Map == target.Map)
                 {
-                    if (!RestUtility.Awake(target))
+                    if (!RestUtility.Awake(target) || target.Downed)
                     {
                         return;
                     }
 
-                    if (PawnCombatStateUtility.IsEitherPawnInCombatOrDrafted(initiator, target))
+                    if (PawnCombatStateUtility.IsEitherPawnInCombat(initiator, target) ||
+                        PawnCombatStateUtility.IsEitherPawnDrafted(initiator, target))
                     {
                         return;
                     }

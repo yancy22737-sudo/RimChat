@@ -304,12 +304,12 @@ namespace RimChat.UI
                 return "colonist";
             }
 
-            if (pawn.Faction != null && pawn.Faction.PlayerRelationKind == FactionRelationKind.Ally)
+            if (pawn.Faction.PlayerRelationKind == FactionRelationKind.Ally)
             {
                 return "ally";
             }
 
-            if (pawn.Faction != null && pawn.Faction.PlayerRelationKind == FactionRelationKind.Hostile)
+            if (pawn.Faction.PlayerRelationKind == FactionRelationKind.Hostile)
             {
                 return "hostile";
             }
@@ -329,12 +329,17 @@ namespace RimChat.UI
                 return "neutral";
             }
 
-            if (pawn.Faction != null && pawn.Faction.PlayerRelationKind == FactionRelationKind.Ally)
+            if (pawn.Faction.IsPlayer)
+            {
+                return "colonist";
+            }
+
+            if (pawn.Faction.PlayerRelationKind == FactionRelationKind.Ally)
             {
                 return "friendly";
             }
 
-            if (pawn.Faction != null && pawn.Faction.PlayerRelationKind == FactionRelationKind.Hostile)
+            if (pawn.Faction.PlayerRelationKind == FactionRelationKind.Hostile)
             {
                 return "hostile";
             }

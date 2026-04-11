@@ -1785,19 +1785,34 @@ namespace RimChat.Config
                 {
                     if (provider == AIProvider.None) continue;
 
-                    providerOptions.Add(new FloatMenuOption(provider.GetLabel(), () =>
+                    if (provider == AIProvider.Player2)
                     {
-                        config.Provider = provider;
-                        if (provider == AIProvider.Custom)
+                        // Player2 cloud redirects to local mode with guidance
+                        providerOptions.Add(new FloatMenuOption(provider.GetLabel(), () =>
                         {
-                            config.SelectedModel = "Custom";
-                        }
-                        else
+                            UseCloudProviders = false;
+                            LocalConfig.BaseUrl = "http://localhost:4315";
+                            Find.WindowStack.Add(new Dialog_MessageBox(
+                                "RimChat_Player2RedirectMessage".Translate(),
+                                "OK".Translate()));
+                        }));
+                    }
+                    else
+                    {
+                        providerOptions.Add(new FloatMenuOption(provider.GetLabel(), () =>
                         {
-                            config.SelectedModel = "";
-                        }
-                        NormalizeCloudConfigUrl(config);
-                    }));
+                            config.Provider = provider;
+                            if (provider == AIProvider.Custom)
+                            {
+                                config.SelectedModel = "Custom";
+                            }
+                            else
+                            {
+                                config.SelectedModel = "";
+                            }
+                            NormalizeCloudConfigUrl(config);
+                        }));
+                    }
                 }
                 Find.WindowStack.Add(new FloatMenu(providerOptions));
             }
@@ -1903,9 +1918,16 @@ namespace RimChat.Config
 
         private void ShowModelSelectionMenu(ApiConfig config)
         {
+            // Player2 does not support model listing; model is selected server-side
+            if (config.Provider == AIProvider.Player2)
+            {
+                config.SelectedModel = "Default";
+                return;
+            }
+
             bool allowBaseUrlOverride = config.Provider != AIProvider.DeepSeek;
             bool hasBaseUrlOverride = allowBaseUrlOverride && !string.IsNullOrWhiteSpace(config.BaseUrl);
-            bool requiresApiKey = config.Provider != AIProvider.Custom && !hasBaseUrlOverride;
+            bool requiresApiKey = config.Provider != AIProvider.Custom && config.Provider.RequiresApiKey() && !hasBaseUrlOverride;
             if (requiresApiKey && string.IsNullOrWhiteSpace(config.ApiKey))
             {
                 Find.WindowStack.Add(new FloatMenu(new List<FloatMenuOption>
@@ -2048,6 +2070,25 @@ namespace RimChat.Config
         private static void SetModelListAuthHeader(UnityWebRequest request, AIProvider provider, string apiKey)
         {
             string trimmedKey = apiKey?.Trim();
+
+            // Player2 requires both Bearer token and game-key header
+            if (provider == AIProvider.Player2)
+            {
+                if (!string.IsNullOrWhiteSpace(trimmedKey))
+                {
+                    request.SetRequestHeader("Authorization", $"Bearer {trimmedKey}");
+                }
+                var extraHeaders = provider.GetExtraHeaders();
+                if (extraHeaders != null)
+                {
+                    foreach (var header in extraHeaders)
+                    {
+                        request.SetRequestHeader(header.Key, header.Value);
+                    }
+                }
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(trimmedKey))
             {
                 return;
@@ -2060,6 +2101,16 @@ namespace RimChat.Config
             }
 
             request.SetRequestHeader("Authorization", $"Bearer {trimmedKey}");
+
+            // Add provider-specific extra headers
+            var extraHdrs = provider.GetExtraHeaders();
+            if (extraHdrs != null)
+            {
+                foreach (var header in extraHdrs)
+                {
+                    request.SetRequestHeader(header.Key, header.Value);
+                }
+            }
         }
 
         private static List<string> BuildModelListRequestCandidates(string requestUrl, string providerFallbackUrl, AIProvider provider)
@@ -2345,12 +2396,27 @@ namespace RimChat.Config
             LocalConfig.BaseUrl = ApiConfig.NormalizeUrl(Widgets.TextField(urlRect, LocalConfig.BaseUrl));
             x += 285f;
 
-            Rect modelLabelRect = new Rect(x, y, 70f, height);
-            Widgets.Label(modelLabelRect, "RimChat_ModelLabel".Translate());
-            x += 75f;
+            // Player2 local uses server-side model selection; no model name needed
+            if (LocalConfig.IsPlayer2Local())
+            {
+                Rect modelLabelRect = new Rect(x, y, 70f, height);
+                Widgets.Label(modelLabelRect, "RimChat_ModelLabel".Translate());
+                x += 75f;
 
-            Rect modelRect = new Rect(x, y, 200f, height);
-            LocalConfig.ModelName = Widgets.TextField(modelRect, LocalConfig.ModelName);
+                Rect defaultLabelRect = new Rect(x, y, 200f, height);
+                GUI.color = Color.gray;
+                Widgets.Label(defaultLabelRect, "Default (Player2)");
+                GUI.color = Color.white;
+            }
+            else
+            {
+                Rect modelLabelRect = new Rect(x, y, 70f, height);
+                Widgets.Label(modelLabelRect, "RimChat_ModelLabel".Translate());
+                x += 75f;
+
+                Rect modelRect = new Rect(x, y, 200f, height);
+                LocalConfig.ModelName = Widgets.TextField(modelRect, LocalConfig.ModelName);
+            }
         }
 
         private void DrawConnectionTestButton(Listing_Standard listing)
@@ -2451,6 +2517,26 @@ namespace RimChat.Config
             string chatFallbackUrl = string.Empty;
             bool allowChatFallback = false;
             string url = ResolveCloudModelListTestUrl(config, out runtimeHint, out chatFallbackUrl, out allowChatFallback);
+
+            // Player2 has no models endpoint; test connectivity via chat completions directly
+            if (config.Provider == AIProvider.Player2)
+            {
+                string chatUrl = config.GetEffectiveEndpoint();
+                CloudProbeResult p2Probe = ProbeCloudEndpoint(config, chatUrl, "POST", BuildConnectionTestChatBody(config));
+                if (p2Probe.IsSuccess || p2Probe.IsChatFallbackReachable)
+                {
+                    connectionTestStatus = "RimChat_ConnectionSuccess".Translate();
+                }
+                else
+                {
+                    string p2Reason = p2Probe.HasResponseCode
+                        ? $"HTTP {p2Probe.ResponseCode}"
+                        : p2Probe.Error;
+                    if (string.IsNullOrWhiteSpace(p2Reason)) p2Reason = "Unknown error";
+                    connectionTestStatus = "RimChat_ConnectionFailed".Translate(p2Reason);
+                }
+                return;
+            }
 
             if (string.IsNullOrWhiteSpace(url))
             {
@@ -2558,10 +2644,11 @@ namespace RimChat.Config
                 return null;
             }
 
+            // Prefer enabled configs that are valid
             ApiConfig ready = CloudConfigs.FirstOrDefault(cfg =>
                 cfg != null &&
                 cfg.IsEnabled &&
-                !string.IsNullOrWhiteSpace(cfg.ApiKey));
+                cfg.IsValid());
             if (ready != null)
             {
                 return ready;
@@ -2579,6 +2666,7 @@ namespace RimChat.Config
                 return false;
             }
 
+            // All cloud providers require an API key
             if (string.IsNullOrWhiteSpace(config.ApiKey))
             {
                 validationKey = "RimChat_EnterApiKey";
@@ -2639,6 +2727,12 @@ namespace RimChat.Config
 
         private static string BuildConnectionTestChatBody(ApiConfig config)
         {
+            // Player2 does not accept a model field; it selects the model server-side
+            if (config.Provider == AIProvider.Player2)
+            {
+                return "{\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}]}";
+            }
+
             string model = config.GetEffectiveModelName();
             if (string.IsNullOrWhiteSpace(model))
             {
@@ -2664,12 +2758,33 @@ namespace RimChat.Config
         private void TestLocalConnection()
         {
             string baseUrl = LocalConfig.GetNormalizedBaseUrl().TrimEnd('/');
+            bool isPlayer2Local = LocalConfig.IsPlayer2Local();
+
+            // Player2 local: test via health check then chat endpoint with game-key header
+            if (isPlayer2Local)
+            {
+                string healthUrl = baseUrl + "/v1/health";
+                bool healthOk = TryTestUrl(healthUrl, "GET", null);
+                if (!healthOk)
+                {
+                    connectionTestStatus = "RimChat_ConnectionFailed".Translate("Player2 local app not running");
+                    return;
+                }
+
+                string chatUrl = baseUrl + "/v1/chat/completions";
+                string chatBody = "{\"messages\":[{\"role\":\"user\",\"content\":\"ping\"}]}";
+                bool chatOk = TryTestUrlWithHeaders(chatUrl, "POST", chatBody, AIProvider.Player2.GetExtraHeaders());
+                connectionTestStatus = chatOk
+                    ? "RimChat_ConnectionSuccess".Translate()
+                    : "RimChat_ConnectionFailed".Translate("Player2 chat endpoint unreachable");
+                return;
+            }
             
             // Try Ollama endpoint first
             string testUrl = baseUrl + "/api/tags";
             bool success = TryTestUrl(testUrl, "GET", null);
             
-            // If Ollama fails, try Player2 endpoint
+            // If Ollama fails, try OpenAI-compatible models endpoint
             if (!success)
             {
                 testUrl = baseUrl + "/v1/models";
@@ -2690,6 +2805,44 @@ namespace RimChat.Config
             else
             {
                 connectionTestStatus = "RimChat_ConnectionFailed".Translate("RimChat_LocalServiceNotFound".Translate());
+            }
+        }
+
+        private bool TryTestUrlWithHeaders(string url, string method, string body, Dictionary<string, string> extraHeaders)
+        {
+            try
+            {
+                using (var request = new UnityWebRequest(url, method))
+                {
+                    request.downloadHandler = new DownloadHandlerBuffer();
+                    request.timeout = 5;
+
+                    if (body != null)
+                    {
+                        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(body);
+                        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+                        request.SetRequestHeader("Content-Type", "application/json");
+                    }
+
+                    if (extraHeaders != null)
+                    {
+                        foreach (var header in extraHeaders)
+                        {
+                            request.SetRequestHeader(header.Key, header.Value);
+                        }
+                    }
+
+                    var operation = request.SendWebRequest();
+                    while (!operation.isDone) { System.Threading.Thread.Sleep(50); }
+
+                    long responseCode = request.responseCode;
+                    if (responseCode == 401 || responseCode == 403) return false;
+                    return responseCode > 0 && responseCode != 404;
+                }
+            }
+            catch
+            {
+                return false;
             }
         }
         

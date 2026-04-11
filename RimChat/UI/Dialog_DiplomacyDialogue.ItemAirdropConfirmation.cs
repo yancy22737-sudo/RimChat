@@ -71,9 +71,12 @@ namespace RimChat.UI
             if (!resolved || !validated)
             {
                 string fallbackReason = string.IsNullOrWhiteSpace(validateReason) ? resolveReason : validateReason;
+                Log.Warning($"[RimChat] Airdrop context validation failed: resolved={resolved}, validated={validated}, resolveReason={resolveReason}, validateReason={validateReason}, faction={currentFaction?.Name ?? "null"}, defName={currentFaction?.def?.defName ?? "null"}");
                 outcome = ActionExecutionOutcome.Failure(action, fallbackReason ?? "RimChat_DialogueRequestUnavailable".Translate().ToString());
                 return true;
             }
+
+            Log.Message($"[RimChat] Airdrop context validation passed: faction={currentFaction?.Name}, defName={currentFaction?.def?.defName}, need={actionSnapshot.Parameters?["need"] ?? "null"}");
 
             var lease = new DialogueRequestLease(
                 requestContext.DialogueSessionId,

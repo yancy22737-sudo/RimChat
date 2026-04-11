@@ -1,3 +1,5 @@
+using System.Linq;
+using RimChat.Util;
 using RimWorld;
 using Verse;
 
@@ -52,7 +54,20 @@ namespace RimChat.Memory
 
         public void ExposeData()
         {
-            Scribe_References.Look(ref faction, "faction");
+            string factionId = faction?.GetUniqueLoadID() ?? string.Empty;
+            Scribe_Values.Look(ref factionId, "factionId", string.Empty);
+            // Remove legacy <faction> reference node from old saves without registering
+            // in CrossRefHandler — prevents "Not all loadIDs consumed" on dead factions.
+            LegacyScribeHelper.RemoveLegacyReferenceNode("faction");
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                if (!string.IsNullOrEmpty(factionId))
+                {
+                    faction = Find.FactionManager.AllFactions.FirstOrDefault(f => f.GetUniqueLoadID() == factionId);
+                }
+                // If factionId is empty, faction remains null and will be cleaned up
+                // by CleanupInvalidPresenceStates() in LoadedGame().
+            }
             Scribe_Values.Look(ref status, "status", FactionPresenceStatus.Online);
             Scribe_Values.Look(ref lastResolvedTick, "lastResolvedTick", 0);
             Scribe_Values.Look(ref cacheUntilTick, "cacheUntilTick", 0);
