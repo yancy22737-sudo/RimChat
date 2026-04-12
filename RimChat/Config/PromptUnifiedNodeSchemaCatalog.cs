@@ -34,7 +34,13 @@ namespace RimChat.Config
             new PromptUnifiedNodeSchemaItem("rpg_role_setting_fallback", "RimChat_PromptNode_RpgRoleFallback", "RPG Role Fallback"),
             new PromptUnifiedNodeSchemaItem("rpg_relationship_profile", "RimChat_PromptNode_RpgRelationshipProfile", "RPG Relationship Profile"),
             new PromptUnifiedNodeSchemaItem("rpg_kinship_boundary", "RimChat_PromptNode_RpgKinshipBoundary", "RPG Kinship Boundary"),
-            new PromptUnifiedNodeSchemaItem("thought_chain_node_template", "RimChat_PromptNode_ThoughtChainNode", "Thought Chain Node")
+            new PromptUnifiedNodeSchemaItem("thought_chain_node_template", "RimChat_PromptNode_ThoughtChainNode", "Thought Chain Node"),
+            new PromptUnifiedNodeSchemaItem("diplomacy_state_override", "RimChat_PromptNode_DiplomacyStateOverride", "Diplomacy State Override"),
+            new PromptUnifiedNodeSchemaItem("diplomacy_alive_feeling", "RimChat_PromptNode_DiplomacyAliveFeeling", "Diplomacy Alive Feeling"),
+            new PromptUnifiedNodeSchemaItem("rpg_body_emotion_override", "RimChat_PromptNode_RpgBodyEmotionOverride", "RPG Body Emotion Override"),
+            new PromptUnifiedNodeSchemaItem("rpg_state_anchor", "RimChat_PromptNode_RpgStateAnchor", "RPG State Anchor"),
+            new PromptUnifiedNodeSchemaItem("rpg_survival_instinct", "RimChat_PromptNode_RpgSurvivalInstinct", "RPG Survival Instinct"),
+            new PromptUnifiedNodeSchemaItem("rpg_alive_feeling", "RimChat_PromptNode_RpgAliveFeeling", "RPG Alive Feeling")
         };
 
         private static readonly Dictionary<string, string[]> AllowedNodesByChannel =
@@ -53,7 +59,9 @@ namespace RimChat.Config
                     "api_limits_node_template",
                     "quest_guidance_node_template",
                     "response_contract_node_template",
-                    "thought_chain_node_template"
+                    "thought_chain_node_template",
+                    "diplomacy_state_override",
+                    "diplomacy_alive_feeling"
                 },
                 [RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue] = new[]
                 {
@@ -67,7 +75,9 @@ namespace RimChat.Config
                     "api_limits_node_template",
                     "quest_guidance_node_template",
                     "response_contract_node_template",
-                    "thought_chain_node_template"
+                    "thought_chain_node_template",
+                    "diplomacy_state_override",
+                    "diplomacy_alive_feeling"
                 },
                 [RimTalkPromptEntryChannelCatalog.RpgDialogue] = new[]
                 {
@@ -81,7 +91,11 @@ namespace RimChat.Config
                     "rpg_relationship_profile",
                     "rpg_kinship_boundary",
                     "response_contract_node_template",
-                    "thought_chain_node_template"
+                    "thought_chain_node_template",
+                    "rpg_body_emotion_override",
+                    "rpg_state_anchor",
+                    "rpg_survival_instinct",
+                    "rpg_alive_feeling"
                 },
                 [RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue] = new[]
                 {
@@ -95,7 +109,11 @@ namespace RimChat.Config
                     "rpg_relationship_profile",
                     "rpg_kinship_boundary",
                     "response_contract_node_template",
-                    "thought_chain_node_template"
+                    "thought_chain_node_template",
+                    "rpg_body_emotion_override",
+                    "rpg_state_anchor",
+                    "rpg_survival_instinct",
+                    "rpg_alive_feeling"
                 },
                 [RimTalkPromptEntryChannelCatalog.DiplomacyStrategy] = new[]
                 {

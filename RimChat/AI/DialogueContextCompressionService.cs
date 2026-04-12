@@ -551,6 +551,14 @@ namespace RimChat.AI
             return false;
         }
 
+        private static readonly string[] ProtocolViolationPrefixes = new[]
+        {
+            "DIALOGUE_PROTOCOL_VIOLATION=",
+            "RPG_CONTRACT_VIOLATION=",
+            "TEXT_INTEGRITY_VIOLATION=",
+            "IMMERSION_VIOLATION="
+        };
+
         private static List<DialogueCompressionTurn> ConvertFromChatMessages(IEnumerable<ChatMessageData> messages)
         {
             var result = new List<DialogueCompressionTurn>();
@@ -567,6 +575,12 @@ namespace RimChat.AI
                     continue;
                 }
 
+                // Filter protocol violation retry messages from persistent history
+                if (IsProtocolViolationMessage(message.content))
+                {
+                    continue;
+                }
+
                 result.Add(new DialogueCompressionTurn
                 {
                     Role = role,
@@ -575,6 +589,30 @@ namespace RimChat.AI
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Detect protocol violation retry messages that should not be persisted
+        /// into compressed dialogue history. These are transient correction signals
+        /// injected by the retry pipeline and must not leak into future turns.
+        /// </summary>
+        private static bool IsProtocolViolationMessage(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return false;
+            }
+
+            string trimmed = content.TrimStart();
+            for (int i = 0; i < ProtocolViolationPrefixes.Length; i++)
+            {
+                if (trimmed.StartsWith(ProtocolViolationPrefixes[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string NormalizeRole(string role)

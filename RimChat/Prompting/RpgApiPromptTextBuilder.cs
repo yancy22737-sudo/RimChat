@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using RimChat.Config;
 using RimChat.Memory;
@@ -37,7 +38,13 @@ namespace RimChat.Prompting
 
             for (int i = 0; i < config.SharedActionLines.Count; i++)
             {
-                sb.AppendLine(config.SharedActionLines[i]);
+                string line = config.SharedActionLines[i];
+                if (IsLineExcluded(line, config.ExcludeActionNames))
+                {
+                    continue;
+                }
+
+                sb.AppendLine(line);
             }
 
             sb.AppendLine();
@@ -51,7 +58,8 @@ namespace RimChat.Prompting
             }
 
             RpgApiActionPromptConfig config = ResolveConfig(overrideConfig);
-            string actionNames = string.Join(", ", config.CompactActionNames);
+            List<string> filteredNames = FilterExcludedNames(config.CompactActionNames, config.ExcludeActionNames);
+            string actionNames = string.Join(", ", filteredNames);
             string examples = BuildTryGainMemoryExamples();
 
             sb.AppendLine(config.CompactHeader);
@@ -69,6 +77,42 @@ namespace RimChat.Prompting
             sb.AppendLine(config.CompactActionFieldsHint);
             sb.AppendLine(config.CompactClosureGuidance);
             sb.AppendLine();
+        }
+
+        /// <summary>
+        /// Check if a SharedActionLine starts with an excluded action name.
+        /// Lines like "- ReduceResistance: ..." match when "ReduceResistance" is excluded.
+        /// </summary>
+        private static bool IsLineExcluded(string line, HashSet<string> excludeNames)
+        {
+            if (string.IsNullOrWhiteSpace(line) || excludeNames == null || excludeNames.Count == 0)
+            {
+                return false;
+            }
+
+            // Extract action name from lines like "- ActionName: description"
+            string trimmed = line.TrimStart(' ', '-', '\t');
+            int colonIndex = trimmed.IndexOf(':');
+            if (colonIndex <= 0)
+            {
+                return false;
+            }
+
+            string actionName = trimmed.Substring(0, colonIndex).Trim();
+            return excludeNames.Contains(actionName);
+        }
+
+        /// <summary>
+        /// Filter out excluded action names from the compact name list.
+        /// </summary>
+        private static List<string> FilterExcludedNames(List<string> names, HashSet<string> excludeNames)
+        {
+            if (names == null || excludeNames == null || excludeNames.Count == 0)
+            {
+                return names ?? new List<string>();
+            }
+
+            return names.Where(name => !excludeNames.Contains(name)).ToList();
         }
 
         private static RpgApiActionPromptConfig ResolveConfig(RpgApiActionPromptConfig overrideConfig)

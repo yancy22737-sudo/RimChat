@@ -4278,7 +4278,7 @@ namespace RimChat.Persistence
             List<string> values = pawn.health.hediffSet.hediffs
                 .Where(h => h != null && h.Visible)
                 .Take(6)
-                .Select(h => h.LabelCap)
+                .Select(h => ResolveHediffLabelWithContext(h, pawn))
                 .Where(label => !string.IsNullOrWhiteSpace(label))
                 .ToList();
 
@@ -4286,6 +4286,85 @@ namespace RimChat.Persistence
             {
                 sb.AppendLine($"Visible Conditions: {string.Join(", ", values)}");
             }
+        }
+
+        /// <summary>
+        /// Cross-validate Hediff labels against Need levels to prevent hallucination.
+        /// When a Hediff describes a deficit but the corresponding Need has recovered,
+        /// append a contextual note so the LLM does not act on stale state.
+        /// </summary>
+        private static string ResolveHediffLabelWithContext(Hediff hediff, Pawn pawn)
+        {
+            if (hediff == null)
+            {
+                return string.Empty;
+            }
+
+            string label = hediff.LabelCap;
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                return string.Empty;
+            }
+
+            string labelLower = label.ToLowerInvariant();
+            string note = ResolveHediffNeedNote(labelLower, pawn);
+            return string.IsNullOrEmpty(note) ? label : $"{label}({note})";
+        }
+
+        /// <summary>
+        /// Detect Hediff-Need conflicts. Returns a short annotation when a Hediff
+        /// label implies a deficit but the corresponding Need has recovered.
+        /// </summary>
+        private static string ResolveHediffNeedNote(string labelLower, Pawn pawn)
+        {
+            if (pawn?.needs == null)
+            {
+                return string.Empty;
+            }
+
+            // Malnutrition vs Food need
+            if (labelLower.Contains("营养不良") || labelLower.Contains("malnutrition"))
+            {
+                float food = GetNeedLevel(pawn, NeedDefOf.Food);
+                if (food > 0.4f)
+                {
+                    return "eating";
+                }
+            }
+
+            // Exhaustion vs Rest need
+            if (labelLower.Contains("极度疲劳") || labelLower.Contains("exhaustion"))
+            {
+                float rest = GetNeedLevel(pawn, NeedDefOf.Rest);
+                if (rest > 0.4f)
+                {
+                    return "resting";
+                }
+            }
+
+            // Hypothermia/Heatstroke vs Comfort range (check current temperature comfort)
+            if (labelLower.Contains("失温") || labelLower.Contains("hypothermia")
+                || labelLower.Contains("中暑") || labelLower.Contains("heatstroke"))
+            {
+                float comfort = GetNeedLevel(pawn, DefDatabase<NeedDef>.GetNamedSilentFail("Comfort"));
+                if (comfort > 0.4f)
+                {
+                    return "comfortable";
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static float GetNeedLevel(Pawn pawn, NeedDef needDef)
+        {
+            if (needDef == null)
+            {
+                return -1f;
+            }
+
+            Need need = pawn.needs.TryGetNeed(needDef);
+            return need?.CurLevelPercentage ?? -1f;
         }
 
         private void AppendRpgSkills(StringBuilder sb, Pawn pawn)

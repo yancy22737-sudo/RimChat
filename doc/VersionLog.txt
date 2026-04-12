@@ -1,6 +1,76 @@
+﻿0.9.1009
+- 提示词沉浸感与格式优化七模块修复（沉浸感优先，token节省为辅）：
+  1. [P0] Hediff-Need状态融合：新增ResolveHediffLabelWithContext方法，当Hediff标签（如"营养不良"）与对应Need已恢复（如饮食>40%）矛盾时，附加上下文注释（如"eating"），防止LLM基于过时Hediff标签产生幻觉；
+  2. [P0] 协议违规重试消息历史泄漏：ConvertFromChatMessages新增IsProtocolViolationMessage过滤器，阻止DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION前缀的重试消息进入压缩后的持久化历史，避免后续对话轮次中出现格式指令泄漏；
+  3. [P1] Action Space条件性剪枝：新增ApplyActionExclusions方法，基于DialogueScenarioContext的社会身份信号自动排除不适用的动作——非囚犯NPC排除ReduceResistance/ReduceWill/Recruit，非玩家阵营领袖排除RomanceAttempt/MarriageProposal/Date；
+  4. [P1] FOV信息过滤：新增IsPawnPrivyToColonyInfo检查，当对话中另一方不属于玩家阵营成员时（囚犯/敌对/外邦），抑制殖民地库存和警报数据，防止全知信息泄漏；
+  5. [P2] action_rules格式指令去重：移除与api_limits/quest_guidance/response_contract重复的格式约束，精简为一条最小化原则+承诺-动作绑定；
+  6. [P2] rpg_state_anchor压缩：从~800字符压缩至~400字符，保留核心约束（实力感知/行为一致性/矛盾自纠），去除冗余示例；
+  7. [P2] thought_chain精简：从16条思考项压缩至8条核心条目，去除与repetition_reinforcement重复的细节约束条目；新增TurnCount到RpgPromptTurnContextRuntime为后续分层渲染预留；
+- 版本：About/About.xml modVersion 提升到 0.9.1009。
+
+0.9.1008。
+
+0.9.1007
+- 根修：character_persona 升级未实际生效——旧存档序列化数据覆盖文件默认值，导致"保持语气稳定"旧文本仍在运行时出现：
+  1. C# 常量 CurrentAnyPersona 更新为新文本；新增 LegacyCurrentAnyPersona 精确匹配升级路径；
+  2. UnifiedCatalogMigrationTargetVersion 5→6，新增 ApplyCharacterPersonaStateAnchorMigration 一次性迁移（覆盖 any/diplomacy/rpg 所有频道）；
+  3. PromptSectionCatalog_Default.json / RimTalkPromptEntries_Default.json any 频道 character_persona 同步更新；
+  4. TryUpgradeLegacyAnyDefaults 新增旧 CurrentAnyPersona → 新 CurrentAnyPersona 精确匹配升级行。
+- 版本：About/About.xml modVersion 提升到 0.9.1009
+- 提示词沉浸感与格式优化七模块修复（沉浸感优先，token节省为辅）：
+  1. [P0] Hediff-Need状态融合：新增ResolveHediffLabelWithContext方法，当Hediff标签（如"营养不良"）与对应Need已恢复（如饮食>40%）矛盾时，附加上下文注释（如"eating"），防止LLM基于过时Hediff标签产生幻觉；
+  2. [P0] 协议违规重试消息历史泄漏：ConvertFromChatMessages新增IsProtocolViolationMessage过滤器，阻止DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION前缀的重试消息进入压缩后的持久化历史，避免后续对话轮次中出现格式指令泄漏；
+  3. [P1] Action Space条件性剪枝：新增ApplyActionExclusions方法，基于DialogueScenarioContext的社会身份信号自动排除不适用的动作——非囚犯NPC排除ReduceResistance/ReduceWill/Recruit，非玩家阵营领袖排除RomanceAttempt/MarriageProposal/Date；
+  4. [P1] FOV信息过滤：新增IsPawnPrivyToColonyInfo检查，当对话中另一方不属于玩家阵营成员时（囚犯/敌对/外邦），抑制殖民地库存和警报数据，防止全知信息泄漏；
+  5. [P2] action_rules格式指令去重：移除与api_limits/quest_guidance/response_contract重复的格式约束，精简为一条最小化原则+承诺-动作绑定；
+  6. [P2] rpg_state_anchor压缩：从~800字符压缩至~400字符，保留核心约束（实力感知/行为一致性/矛盾自纠），去除冗余示例；
+  7. [P2] thought_chain精简：从16条思考项压缩至8条核心条目，去除与repetition_reinforcement重复的细节约束条目；新增TurnCount到RpgPromptTurnContextRuntime为后续分层渲染预留；
+- 版本：About/About.xml modVersion 提升到 0.9.1009。
+
+0.9.1008
+- 根修：AI无视自身可观测状态（如正在进食却声称面前什么都没有），对话惯性覆盖系统注入事实——系统性修复：
+  1. rpg_state_anchor 新增[自身行为一致性]段：声明 Recent Job State 和 Needs 数据为真实可观测状态，优先级高于之前对话中的自我描述；对话历史与数据矛盾时，之前输出为错误，必须承认并纠正；
+  2. rpg_state_anchor [矛盾自纠规则]扩展：从仅覆盖派系关系扩展到覆盖所有系统注入事实（派系关系、据点实力、自身可观测状态）；
+  3. 锚定矛盾示例新增"自己正在吃东西却声称面前什么都没有"，将对话惯性导致的自身行为否认明确列为角色扮演失败；
+  4. UnifiedCatalogMigrationTargetVersion 6→7，新增 ApplyRpgStateAnchorSelfActionMigration 一次性迁移（覆盖 any/rpg/proactive_rpg 频道）；
+  5. PromptUnifiedDefaults.cs C# fallback / PromptUnifiedCatalog_Default.json JSON 默认值同步更新。
+
+0.9.1008。
+
+0.9.1007。
+
+0.9.1006
+- 根修：AI无视已更新的派系关系/实力状态，持续使用过时语气（盟友仍威胁、弱势仍虚张声势、被指出矛盾后更固执）——四重系统性修复：
+  1. 新增 rpg_state_anchor 提示词节点（Order 236），动态注入 {{ world.current_faction_profile }} 与 {{ world.faction_settlement_summary }}，强制 AI 锚定当前派系关系与据点实力；
+  2. rpg_state_anchor 包含矛盾自纠规则（三选一：承认修正/符合性格的解释/角色内转移），禁止固守与事实矛盾的立场；
+  3. 修改 character_persona section（any + rpg_dialogue + proactive_rpg）："保持语气稳定、立场连续，不在单轮内突然人设反转" → "保持角色核心性格稳定，但态度必须根据关系变化和客观事实及时调整；当关系/实力/处境已变，继续使用旧语气视为角色扮演失败"；
+  4. RPG 通道 character_persona 新增[状态锚点]段："人设不是铠甲——保持核心性格稳定，但当关系/实力/处境已变时，态度必须同步调整"。
+- 版本：About/About.xml modVersion 提升到 0.9.1006。
+
+0.9.1005
+- 根修：AI角色在极端生存需求下仍死守敌意/骄傲立场（如严重营养不良时扔掉食物嘲讽对方）——三重系统性修复：
+  1. BuildStyleGuidelines prisoner 分支新增"求生本能覆盖骄傲"规则：极端需求下不拒绝/丢弃生存物资；
+  2. hostile（socialIdentity + relationshipStatus）从绝对强硬改为条件性强硬：当玩家满足基本需求时可表现出不情愿的有限软化，不再对帮助自己生存的人升级敌意；
+  3. 新增 rpg_survival_instinct 提示词节点（Order 236），明确极端需求判定阈值（饮食<15%、休息<10%、健康<30%）、行为规则（不拒绝/丢弃生存物资、不对帮助者升级敌意、允许嘴硬但身体诚实）、需求缓解后最低善意底线。
+- 新增：rpg_survival_instinct 节点注册到 SchemaCatalog、PromptUnifiedDefaults fallback、PromptPersistenceService 渲染分支。
+- 版本：About/About.xml modVersion 提升到 0.9.1005。
+
+0.9.1004
+- 根修：新提示词节点（rpg_body_emotion_override、rpg_alive_feeling、diplomacy_state_override、diplomacy_alive_feeling）在旧存档中不渲染——ResolveUnifiedNodeTemplate fallback 从 string.Empty 改为 CreateFallback().ResolveNode()，与已有节点模式一致，确保旧存档也能从 Default JSON 回退到正确内容。
+- 根修：新节点 Order 值为 1000（default），排在 thought_chain(9999) 之后导致位置错误——为4个新节点分配 Order 235/236，放在 response_contract(230) 之后、thought_chain(9999) 之前。
+- 根修：BuildStyleGuidelines 忽略 personalityTraits 变量——新增 AppendTraitStyleGuidelines 方法，为15个关键特质（Masochist、Kind、Bloodlust、Psychopath 等）和2组矛盾特质对生成具体对话行为约束。
+- 版本：About/About.xml modVersion 提升到 0.9.1004。
+
+0.9.1003
+- 新增：4个提示词节点——外交状态覆盖(diplomacy_state_override)、外交活人感(diplomacy_alive_feeling)、RPG身体情绪覆盖(rpg_body_emotion_override)、RPG活人感(rpg_alive_feeling)，为对话注入状态一致性与活人感约束。
+- 增强：6个Section内容扩展——外交/rpg/主动模式的 character_persona 和 repetition_reinforcement 加入立场修正、人设不是铠甲、身体锚点、情绪连贯等指令。
+- 增强：DiplomacyDialogue 事实约束模板新增【状态一致性】指令，要求输出与强制状态覆盖块一致。
+- 版本：About/About.xml modVersion 提升到 0.9.1003。
+
 0.9.1002
-- 增强：右键对话选项兼容性提升——新增运行时兜底注入机制（Pawn_FloatMenuOptions_FallbackPatch），确保动态创建的Pawn类型也能显示对话选项；移除商队Pawn过滤，商队成员现在可以对话；放宽RaceProps空值检查，改为显示禁用按钮而非隐藏。
-- 新增：快速行动菜单添加"结束会话"选项，玩家可主动结束外交对话。
+- 增强：右键对话选项兼容性提升——新增运行时兆底注入机制。
+- 新增：快速行动菜单添加“结束会话”选项。
 - 版本：About/About.xml modVersion 提升到 0.9.1002。
 
 0.9.1001

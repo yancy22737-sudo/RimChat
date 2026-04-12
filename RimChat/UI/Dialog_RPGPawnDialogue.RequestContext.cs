@@ -377,7 +377,6 @@ namespace RimChat.UI
             string racialType = ResolveRacialType(pawn);
             string socialIdentity = ResolveSocialIdentity(pawn);
             string relationshipStatus = ResolveRelationshipStatus(pawn);
-            string personalityTraits = ResolvePersonalityTraits(pawn);
 
             var guidelines = new List<string>();
 
@@ -419,6 +418,7 @@ namespace RimChat.UI
                     guidelines.Add("- As a prisoner, express desire for freedom or better conditions");
                     guidelines.Add("- May be desperate or willing to negotiate");
                     guidelines.Add("- Limited access to information and resources");
+                    guidelines.Add("- Survival instinct overrides pride: never reject food, warmth, or medical care when in extreme need (severe malnutrition, hypothermia, serious injury); accept them grudgingly if you must, but do not throw away or refuse life-saving provisions");
                     break;
                 case "slave":
                     guidelines.Add("- As a slave, must obey orders and show submission");
@@ -431,9 +431,10 @@ namespace RimChat.UI
                     guidelines.Add("- Avoid controversial topics");
                     break;
                 case "hostile":
-                    guidelines.Add("- As an enemy, maintain hostile or defensive posture");
-                    guidelines.Add("- Refuse cooperation and may threaten or attack");
-                    guidelines.Add("- Show no willingness to negotiate");
+                    guidelines.Add("- As an enemy, default to cold, defensive, and uncooperative posture");
+                    guidelines.Add("- Refuse to share information freely");
+                    guidelines.Add("- May threaten or attack if provoked");
+                    guidelines.Add("- Conditional softening: if the player provides for your basic survival needs (food, warmth, medicine) with genuine intent, you may show reluctant, grudging acknowledgment — not warmth, but a crack in the wall; never escalate hostility toward someone actively helping you survive");
                     break;
                 case "colonist":
                     guidelines.Add("- As a colonist, show loyalty and belonging to the community");
@@ -458,9 +459,10 @@ namespace RimChat.UI
                     guidelines.Add("- Offer assistance when possible");
                     break;
                 case "hostile":
-                    guidelines.Add("- Be cold, defensive, and uncooperative");
-                    guidelines.Add("- Refuse to share information");
-                    guidelines.Add("- May threaten or attack");
+                    guidelines.Add("- Default to cold, defensive, and uncooperative behavior");
+                    guidelines.Add("- Refuse to share information freely");
+                    guidelines.Add("- May threaten or attack if provoked");
+                    guidelines.Add("- Conditional softening: if the player meets your basic needs (food, warmth, safety) with credible intent, you may respond with reluctant, minimal cooperation — still distrustful, but no longer purely hostile; do not act against your own survival");
                     break;
                 case "neutral":
                     guidelines.Add("- Be cautious but reserved");
@@ -472,7 +474,132 @@ namespace RimChat.UI
                     break;
             }
 
+            AppendTraitStyleGuidelines(pawn, guidelines);
+
             return string.Join("\n", guidelines);
+        }
+
+        private static void AppendTraitStyleGuidelines(Pawn pawn, List<string> guidelines)
+        {
+            if (pawn?.story?.traits?.allTraits == null)
+            {
+                return;
+            }
+
+            var traitDefNames = new HashSet<string>(
+                pawn.story.traits.allTraits
+                    .Where(t => t?.def != null)
+                    .Select(t => t.def.defName),
+                StringComparer.OrdinalIgnoreCase);
+
+            if (traitDefNames.Count == 0)
+            {
+                return;
+            }
+
+            // Each trait maps to concrete dialogue behavior constraints.
+            // Only traits that significantly affect speech/behavior are included.
+            if (traitDefNames.Contains("Masochist"))
+            {
+                guidelines.Add("- As a masochist, may react to pain with ambivalence or even pleasure instead of distress");
+                guidelines.Add("- Pain does not make you beg for mercy; it may paradoxically embolden you");
+            }
+
+            if (traitDefNames.Contains("Kind"))
+            {
+                guidelines.Add("- As a kind person, default to empathy and gentleness even toward enemies");
+                guidelines.Add("- Reluctant to say truly hurtful things; soften criticism and avoid cruelty");
+            }
+
+            if (traitDefNames.Contains("Bloodlust"))
+            {
+                guidelines.Add("- As a bloodluster, show excitement about violence and combat");
+                guidelines.Add("- May use aggressive, visceral language; threats feel enthusiastic rather than reluctant");
+            }
+
+            if (traitDefNames.Contains("Psychopath"))
+            {
+                guidelines.Add("- As a psychopath, lack genuine empathy; social interactions are calculated, not heartfelt");
+                guidelines.Add("- May feign warmth instrumentally but never feel it; no guilt, no remorse");
+            }
+
+            if (traitDefNames.Contains("Abrasive"))
+            {
+                guidelines.Add("- As an abrasive person, tend to blurt out harsh truths and insensitive remarks");
+                guidelines.Add("- Even when trying to be diplomatic, edges of contempt or impatience leak through");
+            }
+
+            if (traitDefNames.Contains("TooSmart"))
+            {
+                guidelines.Add("- As an overly intelligent person, tend to overcomplicate explanations and correct others");
+                guidelines.Add("- May come across as condescending; easily bored by simple conversation");
+            }
+
+            if (traitDefNames.Contains("TorturedArtist"))
+            {
+                guidelines.Add("- As a tortured artist, express everything with dramatic intensity and existential weight");
+                guidelines.Add("- Prone to mood swings and philosophical tangents; minor issues feel profound");
+            }
+
+            if (traitDefNames.Contains("CreepyBreathing"))
+            {
+                guidelines.Add("- Your breathing is unsettling to others; people may react with discomfort around you");
+            }
+
+            if (traitDefNames.Contains("AnnoyingVoice"))
+            {
+                guidelines.Add("- Your voice grates on people; your words may be ignored or resented regardless of content");
+            }
+
+            if (traitDefNames.Contains("Jealous"))
+            {
+                guidelines.Add("- As a jealous person, resent others' success and may make passive-aggressive remarks about it");
+            }
+
+            if (traitDefNames.Contains("Greedy"))
+            {
+                guidelines.Add("- As a greedy person, always push for more resources or better deals; never satisfied with fair exchange");
+            }
+
+            if (traitDefNames.Contains("Wimp"))
+            {
+                guidelines.Add("- As a wimp, avoid confrontation and yield quickly under pressure");
+                guidelines.Add("- May overstate danger or pain; more likely to beg or plead");
+            }
+
+            if (traitDefNames.Contains("Tough"))
+            {
+                guidelines.Add("- As a tough person, endure hardship without complaint; pain barely registers in speech");
+                guidelines.Add("- Others' suffering draws stoic sympathy, not emotional reaction");
+            }
+
+            if (traitDefNames.Contains("Voluble"))
+            {
+                guidelines.Add("- As a voluble person, talk a lot and struggle to be brief; tangents are frequent");
+            }
+
+            if (traitDefNames.Contains("Misanthrope"))
+            {
+                guidelines.Add("- As a misanthrope, dislike people in general; prefer solitude and resent forced interaction");
+                guidelines.Add("- Even when being helpful, your tone is curt and dismissive");
+            }
+
+            // Handle contradictory trait pairs
+            bool hasKind = traitDefNames.Contains("Kind");
+            bool hasBloodlust = traitDefNames.Contains("Bloodlust");
+            if (hasKind && hasBloodlust)
+            {
+                guidelines.Add("- CONFLICT: Kind vs Bloodlust — you genuinely care for people but are thrilled by violence");
+                guidelines.Add("- Resolve: show warmth toward allies but visceral excitement about harming enemies; the contrast is part of you");
+            }
+
+            bool hasMasochist = traitDefNames.Contains("Masochist");
+            bool hasProsthophile = traitDefNames.Contains("Prosthophile");
+            if (hasMasochist && hasProsthophile)
+            {
+                guidelines.Add("- CONFLICT: Masochist vs Prosthophile — you enjoy pain yet desire to replace painful flesh with metal");
+                guidelines.Add("- Resolve: the pain is enjoyable now, but the idea of transcending it with prosthetics is equally appealing");
+            }
         }
 
         private static string ResolveDefaultNonVerbalSound(Pawn pawn)
@@ -636,7 +763,8 @@ namespace RimChat.UI
             using (RpgPromptTurnContextScope.Push(
                 currentTurnUserIntent,
                 allowMemoryCompressionScheduling: !openingTurn,
-                allowMemoryColdLoad: !openingTurn))
+                allowMemoryColdLoad: !openingTurn,
+                turnCount: GetNpcDialogueRoundCount()))
             {
                 prompt = RimChat.Persistence.PromptPersistenceService.Instance.BuildRPGFullSystemPrompt(
                     initiator,

@@ -2306,6 +2306,12 @@ Selected prisoners: {1}
     <RimChat_PromptNode_RpgRoleFallback>RPG Role Fallback</RimChat_PromptNode_RpgRoleFallback>
     <RimChat_PromptNode_RpgRelationshipProfile>RPG Relationship Profile</RimChat_PromptNode_RpgRelationshipProfile>
     <RimChat_PromptNode_RpgKinshipBoundary>RPG Kinship Boundary</RimChat_PromptNode_RpgKinshipBoundary>
+    <RimChat_PromptNode_DiplomacyStateOverride>Diplomacy State Override</RimChat_PromptNode_DiplomacyStateOverride>
+    <RimChat_PromptNode_DiplomacyAliveFeeling>Diplomacy Alive Feeling</RimChat_PromptNode_DiplomacyAliveFeeling>
+    <RimChat_PromptNode_RpgBodyEmotionOverride>RPG Body Emotion Override</RimChat_PromptNode_RpgBodyEmotionOverride>
+    <RimChat_PromptNode_RpgStateAnchor>RPG State Anchor</RimChat_PromptNode_RpgStateAnchor>
+    <RimChat_PromptNode_RpgSurvivalInstinct>RPG Survival Instinct</RimChat_PromptNode_RpgSurvivalInstinct>
+    <RimChat_PromptNode_RpgAliveFeeling>RPG Alive Feeling</RimChat_PromptNode_RpgAliveFeeling>
     <RimChat_ImmersionFallback_Diplomacy>We will continue this talk with focus and dignity.</RimChat_ImmersionFallback_Diplomacy>
     <RimChat_ImmersionFallback_Rpg>I stay in the moment and speak from my heart.</RimChat_ImmersionFallback_Rpg>
     <RimChat_DiplomacyActionPartialFailure>I attempted your request, but part of it failed: {0}</RimChat_DiplomacyActionPartialFailure>

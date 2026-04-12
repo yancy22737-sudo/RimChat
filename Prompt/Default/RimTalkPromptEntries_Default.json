@@ -9,7 +9,7 @@
                                           },
                                           {
                                               "SectionId":  "character_persona",
-                                              "Content":  "人格基线：优先参考 {{ world.faction.name }} 与 {{ pawn.target.name }} 的关系语境。保持语气稳定、立场连续，不在单轮内突然人设反转。"
+                                              "Content":  "人格基线：优先参考 {{ world.faction.name }} 与 {{ pawn.target.name }} 的关系语境。保持角色核心性格稳定，但态度必须根据关系变化和客观事实及时调整；当关系/实力/处境已变，继续使用旧语气视为角色扮演失败。"
                                           },
                                           {
                                               "SectionId":  "memory_system",

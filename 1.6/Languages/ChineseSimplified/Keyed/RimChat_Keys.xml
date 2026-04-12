@@ -2398,6 +2398,12 @@ ID：{5}
     <RimChat_PromptNode_RpgRoleFallback>RPG角色兜底</RimChat_PromptNode_RpgRoleFallback>
     <RimChat_PromptNode_RpgRelationshipProfile>RPG关系画像</RimChat_PromptNode_RpgRelationshipProfile>
     <RimChat_PromptNode_RpgKinshipBoundary>RPG亲属边界</RimChat_PromptNode_RpgKinshipBoundary>
+    <RimChat_PromptNode_DiplomacyStateOverride>外交状态覆盖</RimChat_PromptNode_DiplomacyStateOverride>
+    <RimChat_PromptNode_DiplomacyAliveFeeling>外交活人感</RimChat_PromptNode_DiplomacyAliveFeeling>
+    <RimChat_PromptNode_RpgBodyEmotionOverride>RPG身体情绪覆盖</RimChat_PromptNode_RpgBodyEmotionOverride>
+    <RimChat_PromptNode_RpgStateAnchor>RPG状态锚定</RimChat_PromptNode_RpgStateAnchor>
+    <RimChat_PromptNode_RpgSurvivalInstinct>RPG求生本能</RimChat_PromptNode_RpgSurvivalInstinct>
+    <RimChat_PromptNode_RpgAliveFeeling>RPG活人感</RimChat_PromptNode_RpgAliveFeeling>
     <RimChat_ImmersionFallback_Diplomacy>我们会以更专注、更体面的方式继续这次会谈。</RimChat_ImmersionFallback_Diplomacy>
     <RimChat_ImmersionFallback_Rpg>我会留在当下，用自己的心声回应你。</RimChat_ImmersionFallback_Rpg>
     <RimChat_DiplomacyActionPartialFailure>我尝试处理你的请求，但其中一部分未成功：{0}</RimChat_DiplomacyActionPartialFailure>

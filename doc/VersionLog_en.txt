@@ -1,5 +1,91 @@
-﻿﻿﻿﻿0.9.1002
-- Enhancement: Improved right-click dialogue option compatibility — added runtime fallback injection mechanism (Pawn_FloatMenuOptions_FallbackPatch) to ensure dynamically created Pawn types also show dialogue options; removed trade caravan Pawn filter, caravan members can now converse; relaxed RaceProps null check, now shows disabled button instead of hiding.
+﻿0.9.1009
+- Prompt immersion and format optimization: 7-module fix (immersion first, token saving second):
+  1. [P0] Hediff-Need state fusion: Added ResolveHediffLabelWithContext method — when a Hediff label (e.g., "Malnutrition") contradicts a recovered Need (e.g., Food >40%), appends context annotation (e.g., "eating") to prevent LLM hallucination on stale Hediff labels;
+  2. [P0] Protocol violation retry message history leak: Added IsProtocolViolationMessage filter in ConvertFromChatMessages, blocking DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION prefixed retry messages from compressed persistent history, preventing format instruction leakage in subsequent dialogue turns;
+  3. [P1] Action Space conditional pruning: Added ApplyActionExclusions method, auto-excluding inapplicable actions based on DialogueScenarioContext social identity signals — non-prisoner NPCs exclude ReduceResistance/ReduceWill/Recruit, non-player faction leaders exclude RomanceAttempt/MarriageProposal/Date;
+  4. [P1] FOV information filtering: Added IsPawnPrivyToColonyInfo check — when the other party in dialogue is not a player faction member (prisoner/hostile/foreign), suppresses colony inventory and alert data to prevent omniscient information leakage;
+  5. [P2] action_rules format instruction deduplication: Removed redundant format constraints duplicated with api_limits/quest_guidance/response_contract, condensed to one minimization principle + commitment-action binding rule;
+  6. [P2] rpg_state_anchor compression: Compressed from ~800 to ~400 chars, retaining core constraints (power perception/behavior consistency/contradiction self-correction), removing redundant examples;
+  7. [P2] thought_chain streamlining: Compressed from 16 thought items to 8 core items, removing detail constraint items duplicated with repetition_reinforcement; added TurnCount to RpgPromptTurnContextRuntime for future tiered rendering;
+- Version: bumped About/About.xml modVersion to 0.9.1009.
+0.9.1008
+- Root fix: AI ignores its own observable state (e.g., eating but claiming nothing is in front of it), dialogue inertia overrides system-injected facts — systemic fix:
+  1. Added [Self-Action Consistency] section to rpg_state_anchor: declares Recent Job State and Needs data as true observable state with priority above prior dialogue self-descriptions; when dialogue history contradicts data, prior output is wrong and must be acknowledged and corrected;
+  2. Expanded rpg_state_anchor [Contradiction Self-Correction] from faction-only to all system-injected facts (faction relations, settlement power, self observable state);
+  3. Added anchor contradiction example "eating but claiming nothing is in front of you", explicitly listing self-action denial from dialogue inertia as roleplay failure;
+  4. UnifiedCatalogMigrationTargetVersion 6→7, added ApplyRpgStateAnchorSelfActionMigration one-time migration (covers any/rpg/proactive_rpg channels);
+  5. Synchronized PromptUnifiedDefaults.cs C# fallback and PromptUnifiedCatalog_Default.json JSON defaults.
+- Version: bumped About/About.xml modVersion to 0.9.1008.
+
+0.9.1007
+- Root fix: character_persona upgrade not taking effect — old save serialized data overrides file defaults, causing the old "maintain stable tone" text to still appear at runtime:
+  1. C# constant CurrentAnyPersona updated to new text; added LegacyCurrentAnyPersona for exact-match upgrade path;
+  2. UnifiedCatalogMigrationTargetVersion 5→6, added ApplyCharacterPersonaStateAnchorMigration one-time migration (covers any/diplomacy/rpg all channels);
+  3. PromptSectionCatalog_Default.json / RimTalkPromptEntries_Default.json any channel character_persona synchronized;
+  4. TryUpgradeLegacyAnyDefaults added old CurrentAnyPersona → new CurrentAnyPersona exact-match upgrade line.
+- Version: bumped About/About.xml modVersion to 0.9.1009
+- Prompt immersion and format optimization: 7-module fix (immersion first, token saving second):
+  1. [P0] Hediff-Need state fusion: Added ResolveHediffLabelWithContext method — when a Hediff label (e.g., "Malnutrition") contradicts a recovered Need (e.g., Food >40%), appends context annotation (e.g., "eating") to prevent LLM hallucination on stale Hediff labels;
+  2. [P0] Protocol violation retry message history leak: Added IsProtocolViolationMessage filter in ConvertFromChatMessages, blocking DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION prefixed retry messages from compressed persistent history, preventing format instruction leakage in subsequent dialogue turns;
+  3. [P1] Action Space conditional pruning: Added ApplyActionExclusions method, auto-excluding inapplicable actions based on DialogueScenarioContext social identity signals — non-prisoner NPCs exclude ReduceResistance/ReduceWill/Recruit, non-player faction leaders exclude RomanceAttempt/MarriageProposal/Date;
+  4. [P1] FOV information filtering: Added IsPawnPrivyToColonyInfo check — when the other party in dialogue is not a player faction member (prisoner/hostile/foreign), suppresses colony inventory and alert data to prevent omniscient information leakage;
+  5. [P2] action_rules format instruction deduplication: Removed redundant format constraints duplicated with api_limits/quest_guidance/response_contract, condensed to one minimization principle + commitment-action binding rule;
+  6. [P2] rpg_state_anchor compression: Compressed from ~800 to ~400 chars, retaining core constraints (power perception/behavior consistency/contradiction self-correction), removing redundant examples;
+  7. [P2] thought_chain streamlining: Compressed from 16 thought items to 8 core items, removing detail constraint items duplicated with repetition_reinforcement; added TurnCount to RpgPromptTurnContextRuntime for future tiered rendering;
+- Version: bumped About/About.xml modVersion to 0.9.1009.
+
+0.9.1009
+- Prompt immersion and format optimization: 7-module fix (immersion first, token saving second):
+  1. [P0] Hediff-Need state fusion: Added ResolveHediffLabelWithContext method — when a Hediff label (e.g., "Malnutrition") contradicts a recovered Need (e.g., Food >40%), appends context annotation (e.g., "eating") to prevent LLM hallucination on stale Hediff labels;
+  2. [P0] Protocol violation retry message history leak: Added IsProtocolViolationMessage filter in ConvertFromChatMessages, blocking DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION prefixed retry messages from compressed persistent history, preventing format instruction leakage in subsequent dialogue turns;
+  3. [P1] Action Space conditional pruning: Added ApplyActionExclusions method, auto-excluding inapplicable actions based on DialogueScenarioContext social identity signals — non-prisoner NPCs exclude ReduceResistance/ReduceWill/Recruit, non-player faction leaders exclude RomanceAttempt/MarriageProposal/Date;
+  4. [P1] FOV information filtering: Added IsPawnPrivyToColonyInfo check — when the other party in dialogue is not a player faction member (prisoner/hostile/foreign), suppresses colony inventory and alert data to prevent omniscient information leakage;
+  5. [P2] action_rules format instruction deduplication: Removed redundant format constraints duplicated with api_limits/quest_guidance/response_contract, condensed to one minimization principle + commitment-action binding rule;
+  6. [P2] rpg_state_anchor compression: Compressed from ~800 to ~400 chars, retaining core constraints (power perception/behavior consistency/contradiction self-correction), removing redundant examples;
+  7. [P2] thought_chain streamlining: Compressed from 16 thought items to 8 core items, removing detail constraint items duplicated with repetition_reinforcement; added TurnCount to RpgPromptTurnContextRuntime for future tiered rendering;
+- Version: bumped About/About.xml modVersion to 0.9.1009.
+
+0.9.1008
+- Root fix: AI ignores its own observable state (e.g., eating but claiming nothing is in front of it), dialogue inertia overrides system-injected facts — systemic fix:
+  1. Added [Self-Action Consistency] section to rpg_state_anchor: declares Recent Job State and Needs data as true observable state with priority above prior dialogue self-descriptions; when dialogue history contradicts data, prior output is wrong and must be acknowledged and corrected;
+  2. Expanded rpg_state_anchor [Contradiction Self-Correction] from faction-only to all system-injected facts (faction relations, settlement power, self observable state);
+  3. Added anchor contradiction example "eating but claiming nothing is in front of you", explicitly listing self-action denial from dialogue inertia as roleplay failure;
+  4. UnifiedCatalogMigrationTargetVersion 6→7, added ApplyRpgStateAnchorSelfActionMigration one-time migration (covers any/rpg/proactive_rpg channels);
+  5. Synchronized PromptUnifiedDefaults.cs C# fallback and PromptUnifiedCatalog_Default.json JSON defaults.
+- Version: bumped About/About.xml modVersion to 0.9.1008.
+
+0.9.1007.
+
+0.9.1006
+- Root fix: AI ignores updated faction relations/power status, persistently uses outdated tone (threatening allies, bluffing while weak, doubling down when contradicted) — quadruple systemic fix:
+  1. New rpg_state_anchor prompt node (Order 236), dynamically injects {{ world.current_faction_profile }} and {{ world.faction_settlement_summary }}, forcing AI to anchor to current faction relations and settlement power;
+  2. rpg_state_anchor includes contradiction self-correction rules (three options: acknowledge & correct / personality-consistent explanation / in-character deflection), prohibiting holding positions that contradict facts;
+  3. Modified character_persona section (any + rpg_dialogue + proactive_rpg): changed "maintain stable tone and consistent stance, no sudden persona reversal within a single turn" to "maintain stable core personality, but attitude must adjust promptly when relations/power/situation change; continuing to use outdated tone when conditions have changed is a roleplay failure";
+  4. Added [State Anchor] paragraph to RPG channel character_persona: "Persona is not armor — keep core personality stable, but when relations/power/situation change, attitude must adjust accordingly".
+- Version: bumped About/About.xml modVersion to 0.9.1006.
+
+0.9.1005
+- Root fix: AI characters stubbornly maintain hostility/pride even under extreme survival needs (e.g., throwing food away and mocking the provider while severely malnourished) — triple systemic fix:
+  1. BuildStyleGuidelines prisoner branch: added "survival instinct overrides pride" rule — never reject/discard survival provisions under extreme need;
+  2. hostile (socialIdentity + relationshipStatus): changed from absolute hardline to conditional hardline — when the player meets basic needs, the NPC may show reluctant, limited softening; no longer escalate hostility toward someone actively helping them survive;
+  3. New rpg_survival_instinct prompt node (Order 236): defines extreme need thresholds (food<15%, rest<10%, health<30%), behavior rules (no rejecting/discarding survival provisions, no escalating hostility toward helpers, allow verbal stubbornness with honest body behavior), and minimal goodwill floor after needs ease.
+- Added: rpg_survival_instinct node registered in SchemaCatalog, PromptUnifiedDefaults fallback, and PromptPersistenceService rendering branch.
+- Version: bumped About/About.xml modVersion to 0.9.1005.
+
+0.9.1004
+- Root fix: New prompt nodes (rpg_body_emotion_override, rpg_alive_feeling, diplomacy_state_override, diplomacy_alive_feeling) not rendering in old saves — ResolveUnifiedNodeTemplate fallback changed from string.Empty to CreateFallback().ResolveNode(), consistent with existing node patterns, ensuring old saves can fall back to correct content from Default JSON.
+- Root fix: New node Order value was 1000 (default), placed after thought_chain(9999) causing incorrect position — assigned Order 235/236 for 4 new nodes, placed after response_contract(230) and before thought_chain(9999).
+- Root fix: BuildStyleGuidelines ignored personalityTraits variable — added AppendTraitStyleGuidelines method, generating concrete dialogue behavior constraints for 15 key traits (Masochist, Kind, Bloodlust, Psychopath, etc.) and 2 contradictory trait pairs.
+- Version: bumped About/About.xml modVersion to 0.9.1004.
+
+0.9.1003
+- Added: 4 prompt nodes -- Diplomacy State Override (diplomacy_state_override), Diplomacy Alive Feeling (diplomacy_alive_feeling), RPG Body Emotion Override (rpg_body_emotion_override), RPG Alive Feeling (rpg_alive_feeling), injecting state consistency and alive-feeling constraints into dialogue.
+- Enhanced: 6 Section content expanded -- character_persona and repetition_reinforcement for diplomacy/RPG/proactive modes now include stance correction, persona-is-not-armor, body anchor, and emotion continuity directives.
+- Enhanced: DiplomacyDialogue fact-grounding template now includes [State Consistency] directive requiring output alignment with the forced state override block.
+- Version: bumped About/About.xml modVersion to 0.9.1003.
+
+0.9.1002
+- Enhancement: Improved right-click dialogue option compatibility -- added runtime fallback injection mechanism (Pawn_FloatMenuOptions_FallbackPatch) to ensure dynamically created Pawn types also show dialogue options.
 - Added: "End Conversation" option in quick actions menu, allowing players to proactively end diplomatic dialogue.
 - Version: bumped About/About.xml modVersion to 0.9.1002.
 

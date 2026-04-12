@@ -31,7 +31,7 @@ namespace RimChat.Config
         private bool _isEnsuringUnifiedPromptCatalog;
         private bool _promptUnifiedCatalogLoaded;
         private bool _promptUnifiedCatalogDirty;
-        private const int UnifiedCatalogMigrationTargetVersion = 5;
+        private const int UnifiedCatalogMigrationTargetVersion = 7;
         private const string RimWorldBackgroundNarrativeLead = "背景：破碎的人类文明散落在已知宇宙边缘。";
         private const string RimWorldBackgroundNarrativeText =
             "背景：破碎的人类文明散落在已知宇宙边缘。远离中央权威的边缘世界普遍无序，辽阔而危险的星球迫使幸存者自力更生。由于缺乏超光速航行与通信，各世界长期隔绝且发展失衡，原始部落、工业社会、高科技派系与近神级机器得以并存。整体基调是硬科幻与边境生存的结合，聚焦普通人在破碎世界中求生并书写自己的故事；";
@@ -357,6 +357,8 @@ You may reference RimTalk variables/plugins directly in this section.";
             ApplyLegacyImageTemplateMigration(catalog);
             ApplyAnySystemRulesBackgroundMigration(catalog);
             ApplyRpgOutputProtocolMigration(catalog);
+            ApplyCharacterPersonaStateAnchorMigration(catalog);
+            ApplyRpgStateAnchorSelfActionMigration(catalog);
             EnsureRpgArchiveCompressionSectionContract(catalog);
         }
 
@@ -405,6 +407,67 @@ You may reference RimTalk variables/plugins directly in this section.";
                 RimTalkPromptEntryChannelCatalog.Any,
                 "system_rules",
                 current + separator + RimWorldBackgroundNarrativeText);
+        }
+
+        private static readonly string LegacyCharacterPersona =
+            "人格基线：优先参考 {{ world.faction.name }} 与 {{ pawn.target.name }} 的关系语境。保持语气稳定、立场连续，不在单轮内突然人设反转。";
+        private static readonly string UpdatedCharacterPersona =
+            "人格基线：优先参考 {{ world.faction.name }} 与 {{ pawn.target.name }} 的关系语境。保持角色核心性格稳定，但态度必须根据关系变化和客观事实及时调整；当关系/实力/处境已变，继续使用旧语气视为角色扮演失败。";
+
+        private static void ApplyCharacterPersonaStateAnchorMigration(PromptUnifiedCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                return;
+            }
+
+            string[] channelsToMigrate =
+            {
+                RimTalkPromptEntryChannelCatalog.Any,
+                RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
+                RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue,
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue
+            };
+
+            foreach (string channel in channelsToMigrate)
+            {
+                string current = (catalog.ResolveSection(channel, "character_persona") ?? string.Empty).Trim();
+                if (string.Equals(current, LegacyCharacterPersona.Trim(), StringComparison.Ordinal))
+                {
+                    catalog.SetSection(channel, "character_persona", UpdatedCharacterPersona);
+                }
+            }
+        }
+
+        private static readonly string LegacyRpgStateAnchorOld =
+            "[强制状态锚定 - 优先级高于对话惯性]\n当前与玩家派系关系：{{ world.current_faction_profile }}\n本派系据点状态：{{ world.faction_settlement_summary }}\n\n以上状态必须反映在你的每一句话中。若你的回应与上述状态矛盾（如关系已为盟友却使用威胁语气、据点只剩1个却虚张声势），视为角色扮演失败。\n\n[实力感知规则]\n- 你的态度必须与自身派系实力匹配：据点多时可以强硬，据点少时必须收敛\n- 失去据点意味着失去资源、兵力和底气——这不是嘴硬能弥补的\n- 当你处于弱势时，可以嘴硬但内心清楚自己处境不妙，言行中应透露出底气的缺失\n\n[矛盾自纠规则]\n禁止固守与事实矛盾的立场。当对方指出你的回应与当前状态不符时，你必须以下列方式之一回应：\n1. 承认并修正（\"……行吧，你说得对。\"）\n2. 给出符合人物性格的解释（\"我不想承认，但……确实是这样。\"）\n3. 以角色内方式转移（\"别以为我好欺负……虽然确实不太好过。\"）\n绝对不得无视对方的指正并重复错误立场。";
+
+        private static readonly string UpdatedRpgStateAnchorSelfAction =
+            "[强制状态锚定 - 优先级高于对话惯性]\n当前与玩家派系关系：{{ world.current_faction_profile }}\n本派系据点状态：{{ world.faction_settlement_summary }}\n\n以上状态必须反映在你的每一句话中。若你的回应与上述状态矛盾（如关系已为盟友却使用威胁语气、据点只剩1个却虚张声势、自己正在吃东西却声称面前什么都没有），视为角色扮演失败。\n\n[实力感知规则]\n- 你的态度必须与自身派系实力匹配：据点多时可以强硬，据点少时必须收敛\n- 失去据点意味着失去资源、兵力和底气——这不是嘴硬能弥补的\n- 当你处于弱势时，可以嘴硬但内心清楚自己处境不妙，言行中应透露出底气的缺失\n\n[自身行为一致性]\n- 上下文中你的 Recent Job State 和 Needs 数据是你当前的真实可观测状态，优先级高于你之前对话中的自我描述\n- 如果你的对话历史与这些数据矛盾（如：你正在进食却声称面前没有食物、你的饮食需求已很低却说饥肠辘辘），你之前的对话输出是错误的，必须承认并纠正\n- 你可以对自身状态感到不满或嘴硬，但不能否认正在发生的客观事实\n- 示例：❌ 你正在Ingest(奢侈食物)时说\"我面前什么都没有\" → ✅ \"（嘴里还在嚼）……哼，这不算什么好东西。\"\n\n[矛盾自纠规则]\n禁止固守与任何系统注入事实矛盾的立场——包括派系关系、据点实力和自身可观测状态。当对方指出你的回应与当前状态不符时，你必须以下列方式之一回应：\n1. 承认并修正（\"……行吧，你说得对。\"）\n2. 给出符合人物性格的解释（\"我不想承认，但……确实是这样。\"）\n3. 以角色内方式转移（\"别以为我好欺负……虽然确实不太好过。\"）\n绝对不得无视对方的指正并重复错误立场。";
+
+        private static void ApplyRpgStateAnchorSelfActionMigration(PromptUnifiedCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                return;
+            }
+
+            string[] channelsToMigrate =
+            {
+                RimTalkPromptEntryChannelCatalog.Any,
+                RimTalkPromptEntryChannelCatalog.RpgDialogue,
+                RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue
+            };
+
+            foreach (string channel in channelsToMigrate)
+            {
+                string currentNode = (catalog.ResolveNode(channel, "rpg_state_anchor") ?? string.Empty).Trim();
+                if (string.Equals(currentNode, LegacyRpgStateAnchorOld.Trim(), StringComparison.Ordinal))
+                {
+                    catalog.SetNode(channel, "rpg_state_anchor", UpdatedRpgStateAnchorSelfAction);
+                }
+            }
         }
 
         private static void ApplyLegacyRpgPromptMigration(PromptUnifiedCatalog catalog)

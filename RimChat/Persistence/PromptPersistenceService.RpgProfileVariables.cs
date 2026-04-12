@@ -24,10 +24,18 @@ namespace RimChat.Persistence
             List<string> lines = BuildBasePawnProfileLines(pawn);
             if (context?.IsRpg == true)
             {
+                // Determine the other pawn in the dialogue for FOV filtering
+                Pawn otherPawn = null;
+                if (context.Initiator != null && context.Target != null)
+                {
+                    otherPawn = context.Initiator == pawn ? context.Target : context.Initiator;
+                }
+
                 AppendRpgProfileExtensions(
                     lines,
                     pawn,
-                    envConfig?.RpgSceneParamSwitches ?? new RpgSceneParamSwitchesConfig());
+                    envConfig?.RpgSceneParamSwitches ?? new RpgSceneParamSwitchesConfig(),
+                    otherPawn);
             }
 
             return string.Join("\n", lines);
@@ -53,6 +61,15 @@ namespace RimChat.Persistence
             List<string> lines,
             Pawn pawn,
             RpgSceneParamSwitchesConfig switches)
+        {
+            AppendRpgProfileExtensions(lines, pawn, switches, null);
+        }
+
+        private void AppendRpgProfileExtensions(
+            List<string> lines,
+            Pawn pawn,
+            RpgSceneParamSwitchesConfig switches,
+            Pawn otherPawn)
         {
             if (switches.IncludeRecentJobState)
             {
@@ -88,15 +105,24 @@ namespace RimChat.Persistence
                 AddProfileLineFromBuilder(lines, pawn, AppendPlayerAttributeLevels);
             }
 
-            AppendRpgColonyProfileExtensions(lines, pawn, switches);
+            AppendRpgColonyProfileExtensions(lines, pawn, switches, otherPawn);
         }
 
         private void AppendRpgColonyProfileExtensions(
             List<string> lines,
             Pawn pawn,
-            RpgSceneParamSwitchesConfig switches)
+            RpgSceneParamSwitchesConfig switches,
+            Pawn otherPawn)
         {
             if (pawn?.Faction != Faction.OfPlayer || switches == null)
+            {
+                return;
+            }
+
+            // FOV gate: colony inventory/alerts are private to the player faction.
+            // If the other pawn in the dialogue is not privy to colony info,
+            // suppress colony-wide data to prevent omniscient information leakage.
+            if (!IsPawnPrivyToColonyInfo(pawn, otherPawn))
             {
                 return;
             }
@@ -117,6 +143,32 @@ namespace RimChat.Persistence
             {
                 AddProfileLineFromBuilder(lines, AppendPlayerHomeAlerts);
             }
+        }
+
+        /// <summary>
+        /// Determine whether colony-private information should be visible
+        /// in a dialogue involving both pawn and otherPawn.
+        /// Colony inventory and alerts are only shared when both participants
+        /// are members of the player faction (or the other pawn is absent).
+        /// A prisoner, hostile, or foreign faction member should not see
+        /// colony stock levels or active alerts.
+        /// </summary>
+        private static bool IsPawnPrivyToColonyInfo(Pawn pawn, Pawn otherPawn)
+        {
+            // No other participant: no restriction
+            if (otherPawn == null)
+            {
+                return true;
+            }
+
+            // Other pawn is also a player faction member: share colony info
+            if (otherPawn.Faction == Faction.OfPlayer && !otherPawn.IsPrisoner)
+            {
+                return true;
+            }
+
+            // Other pawn is a prisoner, hostile, or foreign faction: restrict
+            return false;
         }
 
         private static string BuildPairSocialSummary(Pawn initiator, Pawn target, string kinshipValue, string romanceState)

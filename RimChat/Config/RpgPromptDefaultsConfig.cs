@@ -231,6 +231,7 @@ namespace RimChat.Config
         public string CompactActionFieldsHint;
         public string CompactClosureGuidance;
         public List<string> CompactActionNames;
+        public HashSet<string> ExcludeActionNames;
 
         public static RpgApiActionPromptConfig CreateFallback()
         {
@@ -249,7 +250,8 @@ namespace RimChat.Config
                 CompactTryGainMemoryTemplate = "- TryGainMemory: Add a visible memory to yourself. Requires defName. Short exchanges use lighter memories, personal exchanges use medium memories, major emotional turns use strong memories, and the core philosophical set is rare and only for life-changing dialogue. Valid examples: {{ dialogue.examples }}.",
                 CompactActionFieldsHint = "Action object fields: action (required), defName/amount/reason (optional by action).",
                 CompactClosureGuidance = "When the reply clearly ends or refuses the conversation, include exactly one of: ExitDialogue or ExitDialogueCooldown. Use TryGainMemory only when context clearly supports a memory effect.",
-                CompactActionNames = new List<string>(DefaultCompactActionNames)
+                CompactActionNames = new List<string>(DefaultCompactActionNames),
+                ExcludeActionNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             };
         }
 
@@ -282,6 +284,8 @@ namespace RimChat.Config
             {
                 CompactActionNames = new List<string>(fallback.CompactActionNames ?? new List<string>());
             }
+
+            ExcludeActionNames ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         public RpgApiActionPromptConfig Clone()
@@ -301,7 +305,8 @@ namespace RimChat.Config
                 CompactTryGainMemoryTemplate = CompactTryGainMemoryTemplate,
                 CompactActionFieldsHint = CompactActionFieldsHint,
                 CompactClosureGuidance = CompactClosureGuidance,
-                CompactActionNames = CompactActionNames != null ? new List<string>(CompactActionNames) : new List<string>()
+                CompactActionNames = CompactActionNames != null ? new List<string>(CompactActionNames) : new List<string>(),
+                ExcludeActionNames = ExcludeActionNames != null ? new HashSet<string>(ExcludeActionNames, StringComparer.OrdinalIgnoreCase) : new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             };
         }
 

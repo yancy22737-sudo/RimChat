@@ -1302,6 +1302,12 @@ namespace RimChat.Config
                 case "api_limits_node_template": return 210;
                 case "quest_guidance_node_template": return 220;
                 case "response_contract_node_template": return 230;
+                case "diplomacy_state_override": return 235;
+                case "rpg_body_emotion_override": return 235;
+                case "rpg_state_anchor": return 236;
+                case "rpg_survival_instinct": return 237;
+                case "diplomacy_alive_feeling": return 236;
+                case "rpg_alive_feeling": return 238;
                 case "thought_chain_node_template": return 9999;
                 case "strategy_output_contract": return 240;
                 case "strategy_player_negotiator_context_template": return 250;

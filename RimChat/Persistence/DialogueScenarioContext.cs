@@ -16,6 +16,37 @@ namespace RimChat.Persistence
         public Pawn Target;
         public readonly HashSet<string> Tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>True when Target is a prisoner of the player faction.</summary>
+        public bool IsTargetPrisoner => Target?.IsPrisoner == true;
+
+        /// <summary>True when Target belongs to a hostile faction toward the player.</summary>
+        public bool IsTargetHostileToFaction
+        {
+            get
+            {
+                if (Target?.Faction == null)
+                {
+                    return false;
+                }
+
+                return Target.Faction.HostileTo(Faction.OfPlayer);
+            }
+        }
+
+        /// <summary>True when Target is a faction leader.</summary>
+        public bool IsTargetFactionLeader
+        {
+            get
+            {
+                if (Target?.Faction == null)
+                {
+                    return false;
+                }
+
+                return Target.Faction.leader == Target;
+            }
+        }
+
         public static DialogueScenarioContext CreateDiplomacy(Faction faction, bool isProactive, IEnumerable<string> additionalTags = null)
         {
             var context = new DialogueScenarioContext

@@ -11,6 +11,8 @@ namespace RimChat.Persistence
         public string CurrentTurnUserIntent = string.Empty;
         public bool AllowMemoryCompressionScheduling = true;
         public bool AllowMemoryColdLoad = true;
+        /// <summary>Current dialogue turn count (0-based). Used for thought chain tiered rendering.</summary>
+        public int TurnCount;
     }
 
     /// <summary>
@@ -35,14 +37,16 @@ namespace RimChat.Persistence
         public static IDisposable Push(
             string currentTurnUserIntent,
             bool allowMemoryCompressionScheduling = true,
-            bool allowMemoryColdLoad = true)
+            bool allowMemoryColdLoad = true,
+            int turnCount = 0)
         {
             RpgPromptTurnContextRuntime previousContext = current;
             current = new RpgPromptTurnContextRuntime
             {
                 CurrentTurnUserIntent = currentTurnUserIntent?.Trim() ?? string.Empty,
                 AllowMemoryCompressionScheduling = allowMemoryCompressionScheduling,
-                AllowMemoryColdLoad = allowMemoryColdLoad
+                AllowMemoryColdLoad = allowMemoryColdLoad,
+                TurnCount = turnCount
             };
 
             return new RpgPromptTurnContextScope(previousContext);

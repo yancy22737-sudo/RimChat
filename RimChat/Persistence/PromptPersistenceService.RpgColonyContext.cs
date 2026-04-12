@@ -30,6 +30,13 @@ namespace RimChat.Persistence
                 return;
             }
 
+            // FOV gate: prisoners cannot see colony-wide info even if they
+            // technically belong to the player faction
+            if (pawn.IsPrisoner)
+            {
+                return;
+            }
+
             if (switches.IncludeRecentJobState)
             {
                 AppendPlayerRecentJobState(sb, pawn);
