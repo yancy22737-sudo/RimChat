@@ -654,6 +654,9 @@
     <RimChat_SendInfoMenuRequestQuest>请求任务</RimChat_SendInfoMenuRequestQuest>
     <RimChat_SendInfoMenuPrisoner>发送囚犯信息</RimChat_SendInfoMenuPrisoner>
     <RimChat_SendInfoMenuAirdropTrade>发送空投交易请求</RimChat_SendInfoMenuAirdropTrade>
+    <RimChat_SendInfoMenuEndConversation>结束会话</RimChat_SendInfoMenuEndConversation>
+    <RimChat_SendInfoMenuEndConversationAlreadyEnded>会话已经结束。</RimChat_SendInfoMenuEndConversationAlreadyEnded>
+    <RimChat_SendInfoMenuEndConversationSuccess>已结束与 {0} 的会话。</RimChat_SendInfoMenuEndConversationSuccess>
     <RimChat_SendInfoTauntTitle>选择挑衅方式</RimChat_SendInfoTauntTitle>
     <RimChat_SendInfoTauntOptionStandard>放马过来</RimChat_SendInfoTauntOptionStandard>
     <RimChat_SendInfoTauntOptionStandardDesc>对应普通袭击：直接施压，让对方尽快派出一波常规袭击。</RimChat_SendInfoTauntOptionStandardDesc>
@@ -900,7 +903,7 @@
     <RimChat_RansomNeedPrisonerSelectionSystem>已触发赎回流程：请先在弹窗中选择具体囚犯，再继续提交支付。</RimChat_RansomNeedPrisonerSelectionSystem>
     <RimChat_RansomNoEligiblePrisonerSystem>当前没有可执行赎回的囚犯目标。</RimChat_RansomNoEligiblePrisonerSystem>
     <RimChat_RansomNeedOfferSystem>已锁定囚犯：{0}。请提交有效赎金报价（银币）。</RimChat_RansomNeedOfferSystem>
-    <RimChat_RansomOfferWindowSystem>{0} 当前可报价区间：{1}-{2} 银（当前叫价：{3}）。超出区间会被拒绝。</RimChat_RansomOfferWindowSystem>
+    <RimChat_RansomOfferWindowSystem>{0} 参考价格范围：{1}-{2} 银（当前叫价：{3}）。低价节省资源；高价体现囚犯价值或善意。</RimChat_RansomOfferWindowSystem>
     <RimChat_RansomOfferOutOfWindowSystem>报价 {0} 超出允许区间。当前可报价范围：{1}-{2} 银（当前叫价：{3}）。</RimChat_RansomOfferOutOfWindowSystem>
     <RimChat_RansomOfferOutOfWindowSimpleSystem>报价 {0} 超出当前可报价区间，请在系统提示区间内重新报价。</RimChat_RansomOfferOutOfWindowSimpleSystem>
     <RimChat_RansomOfferMustMatchCurrentAskSystem>报价 {0} 未命中当前叫价 {1} 银。请按当前叫价重新报价（当前窗口：{2}-{3} 银）。</RimChat_RansomOfferMustMatchCurrentAskSystem>
@@ -993,6 +996,7 @@ ID：{5}
     <RimChat_PresenceBlockedDnd>当前请勿打扰，无法发送消息。</RimChat_PresenceBlockedDnd>
     <RimChat_ConversationEnded>对方已结束本轮对话。</RimChat_ConversationEnded>
     <RimChat_ConversationEndedReason>对方已结束本轮对话：{0}</RimChat_ConversationEndedReason>
+    <RimChat_ConversationEndedByPlayerWithCooldown>我方结束了当前对话，{0}小时后可继续。</RimChat_ConversationEndedByPlayerWithCooldown>
     <RimChat_ReinitiateDialogueButton>重新发起对话</RimChat_ReinitiateDialogueButton>
     <RimChat_ReinitiateCooldownHint>可在 {0} 小时后重新发起。</RimChat_ReinitiateCooldownHint>
     <RimChat_StrategyFallbackLabel>策略建议</RimChat_StrategyFallbackLabel>
@@ -1030,6 +1034,7 @@ ID：{5}
     <RimChat_ConversationReinitiated>你重新发起了对话。</RimChat_ConversationReinitiated>
     <RimChat_ConversationReinitiatedByNpc>对方主动重新发起了对话。</RimChat_ConversationReinitiatedByNpc>
     <RimChat_SystemExitDialogue>对方结束了当前对话。</RimChat_SystemExitDialogue>
+    <RimChat_SystemExitDialogueByPlayer>我方结束了当前对话。</RimChat_SystemExitDialogueByPlayer>
     <RimChat_SystemExitDialogueWithReason>对方结束了当前对话：{0}</RimChat_SystemExitDialogueWithReason>
     <RimChat_SystemGoOffline>对方已下线。</RimChat_SystemGoOffline>
     <RimChat_SystemGoOfflineWithReason>对方已下线：{0}</RimChat_SystemGoOfflineWithReason>

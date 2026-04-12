@@ -1,4 +1,18 @@
-﻿0.9.999
+﻿﻿﻿﻿0.9.1002
+- Enhancement: Improved right-click dialogue option compatibility — added runtime fallback injection mechanism (Pawn_FloatMenuOptions_FallbackPatch) to ensure dynamically created Pawn types also show dialogue options; removed trade caravan Pawn filter, caravan members can now converse; relaxed RaceProps null check, now shows disabled button instead of hiding.
+- Added: "End Conversation" option in quick actions menu, allowing players to proactively end diplomatic dialogue.
+- Version: bumped About/About.xml modVersion to 0.9.1002.
+
+0.9.1001
+- Fix: "Foreign Pawn" converse entry re-enabled to avoid feature unavailability.
+- Improvement: Ransom amount limit removed, ransom prompt optimization — AI as payer benefits from lower ransom; higher price only for high-value prisoners or demanding players; low price + appreciation for unconditional release goodwill.
+- Version: bumped About/About.xml modVersion to 0.9.1001.
+
+0.9.1000
+- Root fix: Severe frame drops when opening comms console dialogue — Log.Warning in DoWindowContents for windowPos==0,0 fires every frame (inRect is window-local coords, x=y=0 is expected for centered windows), causing 60 stack traces + disk I/O per second blocking the main thread. Fix: removed the faulty check. Also fixed layout cache invalidation loop in DrawMessages — when typewriter animation is active, cache miss → InvalidateLayoutCache → rebuild → miss again in an infinite loop every frame. Fix: compute layout inline on cache miss instead of invalidating the entire cache.
+- Version: bumped About/About.xml modVersion to 0.9.1000.
+
+0.9.999
 - Optimize: Float menu dialogue button vanilla-style improvements — hide button when in combat (following vanilla interaction logic), show disabled button when drafted.
 - Optimize: Fine‑grained vanilla‑style reason messages for unavailable dialogue — "Cannot converse: (Target is downed)", "Cannot converse: (Target is asleep)", "Cannot converse: (Target is downed/asleep)".
 - Optimize: Separate combat vs. drafted state detection logic (PawnCombatStateUtility.IsEitherPawnInCombat and IsEitherPawnDrafted).

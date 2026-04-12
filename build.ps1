@@ -185,7 +185,12 @@ if (Test-Path "$destRoot\\Prompt\\Custom") {
 }
 if (Test-Path $destRoot) {
     # Clear destination to avoid stale files (important for XML/Patch moves)
-    Remove-Item -Path $destRoot -Recurse -Force | Out-Null
+    # Use robocopy to handle Windows reserved device names (like 'nul')
+    $emptyDir = Join-Path $env:TEMP "RimChat_EmptyDir"
+    New-Item -ItemType Directory -Path $emptyDir -Force | Out-Null
+    robocopy $emptyDir $destRoot /MIR /NJH /NJS /NDL /NC /NS /NP | Out-Null
+    Remove-Item -Path $emptyDir -Force -ErrorAction SilentlyContinue | Out-Null
+    Remove-Item -Path $destRoot -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
 }
 New-Item -ItemType Directory -Path $destRoot -Force | Out-Null
 

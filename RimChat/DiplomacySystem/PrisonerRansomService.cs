@@ -152,18 +152,6 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            if (!TryGetOfferWindow(state, out int minOffer, out int maxOffer, out string windowError))
-            {
-                error = windowError;
-                return false;
-            }
-
-            if (offerSilver < minOffer || offerSilver > maxOffer)
-            {
-                error = $"offer_window_violation({offerSilver},{minOffer},{maxOffer})";
-                return false;
-            }
-
             return true;
         }
 

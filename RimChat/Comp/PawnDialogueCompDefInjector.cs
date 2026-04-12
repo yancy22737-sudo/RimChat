@@ -13,6 +13,7 @@ namespace RimChat.Comp
     internal static class PawnDialogueCompDefInjector
     {
         private static bool _injected;
+        private static HashSet<ThingDef> _injectedDefs = new HashSet<ThingDef>();
 
         public static void EnsureInjected()
         {
@@ -38,6 +39,7 @@ namespace RimChat.Comp
                         continue;
 
                     AddDialogueComp(def);
+                    _injectedDefs.Add(def);
                     added++;
                 }
 
@@ -50,6 +52,37 @@ namespace RimChat.Comp
             }
         }
 
+        /// <summary>
+        /// Runtime fallback: inject CompPawnDialogue to a specific pawn's def if missing.
+        /// Called when generating float menu options to handle dynamically created pawn types.
+        /// </summary>
+        public static bool TryInjectForPawn(Pawn pawn)
+        {
+            if (pawn == null || pawn.def == null)
+                return false;
+
+            ThingDef def = pawn.def;
+
+            if (_injectedDefs.Contains(def) || HasDialogueComp(def))
+                return false;
+
+            if (!IsEligiblePawnDef(def))
+                return false;
+
+            try
+            {
+                AddDialogueComp(def);
+                _injectedDefs.Add(def);
+                Log.Message($"[RimChat] Runtime injected CompPawnDialogue to {def.defName}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Failed to inject CompPawnDialogue to {def.defName}: {ex.Message}");
+                return false;
+            }
+        }
+
         private static bool IsEligiblePawnDef(ThingDef def)
         {
             if (def == null || def.race == null)
@@ -59,11 +92,6 @@ namespace RimChat.Comp
             if (thingClass == null || !typeof(Pawn).IsAssignableFrom(thingClass))
                 return false;
 
-            // Inject CompPawnDialogue for all Pawn subclasses with a known race type.
-            // Runtime eligibility (whether dialogue actually works) is handled by
-            // PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace.
-            // VehiclePawn and other non-standard Pawn subclasses lack RaceProps
-            // classification and are excluded here.
             if (def.race.Humanlike || def.race.IsMechanoid || def.race.ToolUser || def.race.Animal)
                 return true;
 

@@ -303,7 +303,7 @@ namespace RimChat.UI
             closeOnAccept = false;
             closeOnCancel = true;
             onlyOneOfTypeAllowed = false;
-            forcePause = false;
+            forcePause = true;
             draggable = true;
 
             // Settings打开和关闭音效
@@ -510,13 +510,10 @@ namespace RimChat.UI
         {
             PollDiplomacyMemoryRevision();
             ApplyPendingDiplomacyMemoryRefresh();
+            // inRect is window-local coords, so x=y=0 is expected for centered windows
             lastWindowScreenPos = new Vector2(inRect.x, inRect.y);
             lastWindowContentRect = inRect;
             speakerHoverRequestThisFrame = false;
-            if (lastWindowScreenPos.x == 0 && lastWindowScreenPos.y == 0)
-            {
-                Log.Warning("[RimChat] windowPos is 0,0 - inRect may not be screen coords");
-            }
             // 更新逐字output效果
             UpdateTypewriterEffect();
 
@@ -1340,7 +1337,9 @@ namespace RimChat.UI
                     float maxBubbleWidth = GetMaxBubbleWidth(viewRect.width);
                     bubbleWidth = msg.IsSystemMessage() ? CalculateBubbleWidth(msg, maxSystemWidth) : CalculateBubbleWidth(msg, maxBubbleWidth);
                     msgHeight = CalculateMessageHeight(msg, bubbleWidth);
-                    InvalidateLayoutCache();
+                    // Do NOT invalidate here: EnsureLayoutCache already rebuilt the cache at
+                    // the top of DrawMessages. A miss means this message is still mutating
+                    // (e.g. typewriter), so just compute its layout inline this frame.
                 }
 
                 if (msg.IsSystemMessage())
@@ -1823,10 +1822,33 @@ namespace RimChat.UI
                     airdropValidation != null && !airdropValidation.Allowed ? null : (Action)TryStartManualAirdropTradeSend),
                 new FloatMenuOption(
                     BuildManualAirdropTradeMenuLabel(prisonerLabel, prisonerValidation),
-                    prisonerValidation != null && !prisonerValidation.Allowed ? null : (Action)TryStartManualPrisonerInfoSend)
+                    prisonerValidation != null && !prisonerValidation.Allowed ? null : (Action)TryStartManualPrisonerInfoSend),
+                new FloatMenuOption(
+                    "RimChat_SendInfoMenuEndConversation".Translate(),
+                    TryEndConversation)
             };
 
             Find.WindowStack.Add(new FloatMenu(options));
+        }
+
+        private void TryEndConversation()
+        {
+            if (session == null || faction == null)
+            {
+                return;
+            }
+
+            if (session.isConversationEndedByNpc)
+            {
+                Messages.Message("RimChat_SendInfoMenuEndConversationAlreadyEnded".Translate(), MessageTypeDefOf.RejectInput, false);
+                return;
+            }
+
+            int cooldownTicks = 2500;
+            session.MarkConversationEnded("player_initiated", true, cooldownTicks);
+            GameComponent_DiplomacyManager.Instance?.ApplyPresenceAction(faction, AIActionNames.ExitDialogue, string.Empty, session);
+            session.AddMessage("System", "RimChat_SystemExitDialogueByPlayer".Translate(), false, DialogueMessageType.System);
+            Messages.Message("RimChat_SendInfoMenuEndConversationSuccess".Translate(faction.Name), MessageTypeDefOf.TaskCompletion, false);
         }
 
         private void TryStartManualAirdropTradeSend()

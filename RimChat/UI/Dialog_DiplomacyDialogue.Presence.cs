@@ -165,6 +165,20 @@ namespace RimChat.UI
                 return false;
             }
 
+            if (session.conversationEndReason == "player_initiated")
+            {
+                int currentTick = Find.TickManager?.TicksGame ?? 0;
+                int remainingTicks = session.GetReinitiateRemainingTicks(currentTick);
+                if (remainingTicks > 0)
+                {
+                    float remainingHours = remainingTicks / 2500f;
+                    reason = "RimChat_ConversationEndedByPlayerWithCooldown".Translate(remainingHours.ToString("F1"));
+                    return true;
+                }
+                session.ReinitiateConversation();
+                return false;
+            }
+
             if (!string.IsNullOrEmpty(session.conversationEndReason))
             {
                 reason = "RimChat_ConversationEndedReason".Translate(session.conversationEndReason);

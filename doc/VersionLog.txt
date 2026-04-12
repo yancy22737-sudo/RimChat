@@ -1,4 +1,18 @@
-﻿0.9.999
+0.9.1002
+- 增强：右键对话选项兼容性提升——新增运行时兜底注入机制（Pawn_FloatMenuOptions_FallbackPatch），确保动态创建的Pawn类型也能显示对话选项；移除商队Pawn过滤，商队成员现在可以对话；放宽RaceProps空值检查，改为显示禁用按钮而非隐藏。
+- 新增：快速行动菜单添加"结束会话"选项，玩家可主动结束外交对话。
+- 版本：About/About.xml modVersion 提升到 0.9.1002。
+
+0.9.1001
+- 修复："外来Pawn"重新出现 converse 入口，避免功能不可用。
+- 改进：赎金金额限制移除，赎金提示词优化——AI作为付款方，赎金越低对派系越有利；高价仅用于高价值囚犯或玩家胃口大的情况；玩家愿意无条件释放时可出低价并赞赏其善意。
+- 版本：About/About.xml modVersion 提升到 0.9.1001。
+
+0.9.1000
+- 根修：通讯台对话窗口打开时急剧掉帧——DoWindowContents 内 windowPos==0,0 的 Log.Warning 每帧触发（inRect 是窗口局部坐标，x=y=0 是居中窗口的正常值），导致每秒60次堆栈追踪+磁盘I/O阻塞主线程。修复：移除该错误检测。同时修复 DrawMessages 中 cache miss 时调用 InvalidateLayoutCache 导致的缓存循环失效问题——typewriter 动画期间每帧 cache miss → invalidate → 重建 → 再 miss 无限循环。修复：cache miss 时就地计算布局，不再 invalidate 整个缓存。
+- 版本：About/About.xml modVersion 提升到 0.9.1000。
+
+0.9.999
 - 优化：浮菜单对话按钮原版风格优化——战斗中直接隐藏（参考原版交互逻辑），征召中仍显示禁用按钮。
 - 优化：不可对话原因细粒度原版风格提示——"无法对话：（目标处于倒地状态）"、"无法对话：（目标处于睡眠状态）"、"无法对话：（目标处于倒地/睡眠状态）"。
 - 优化：拆分战斗和征召状态判断逻辑（PawnCombatStateUtility.IsEitherPawnInCombat 和 IsEitherPawnDrafted）。

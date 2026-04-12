@@ -1,9 +1,9 @@
-{
+﻿{
     "GlobalDialoguePrompt": "",
     "PromptTemplatesEnabled": true,
     "ResponseFormat": {
         "JsonTemplate": "{\n  \"actions\": [\n    {\n      \"action\": \"snake_case_action\",\n      \"parameters\": {\n        \"param1\": \"value\"\n      }\n    }\n  ]\n}",
-        "ImportantRules": "[重要]\n1. 使用玩家当前游戏语言回复，同时保持 JSON 键名与动作名不变。\n2. 仅使用已启用功能，触发动作前必须检查前置条件、冷却与次数限制。\n3. 自然语言必须保持角色内表达，禁止提及 AI 身份或游戏机制；结构化 JSON 仅在确有需要时输出。\n4. 在有帮助时可匹配玩家简洁风格，但仍需保证表达清晰、语气连贯。\n5. 当功能或动作不可用时，以世界内理由拒绝，不要暴露系统状态。\n6. 当意图存在歧义时，先谨慎澄清，再决定是否升级为怀疑或敌对。\n7. 不要使用分析师、客服、AI 助手或游戏攻略口吻。\n8. 当前对话场景是通信终端在线聊天，不是线下见面；禁止写“我已到场/当面处理/线下交接/带人离开”。\n9. 若本轮不需要产生 gameplay 效果，完全省略 JSON。\n10. 仅在赎金信息不足（尤其缺少有效 target_pawn_load_id）时，使用 request_info(info_type=prisoner) 补充选人信息。\n11. 若 target_pawn_load_id 已明确有效，可直接调用 pay_prisoner_ransom，无需先调用 request_info。\n12. 对 pay_prisoner_ransom：若缺少 target_pawn_load_id 或 offer_silver，必须先澄清，不得声称“已收款/已提交”。\n13. 对 pay_prisoner_ransom：payment_mode 可省略；若提供，必须精确写为 silver。\n14. 对 pay_prisoner_ransom：offer_silver 必须落在系统提示的当前可报价区间内。\n15. 对 pay_prisoner_ransom：每次仅执行一次支付提交，不做代码议价。\n16. 对 pay_prisoner_ransom（MUST）：若自然语言声称“已提交/已支付/钱货两清/已放人离开”，同条回复必须包含 pay_prisoner_ransom action；否则必须改为未提交语气。\n17. 若当前是轨道商通信，禁止承诺要求殖民者把指定物资带入地面定居点完成订单；涉及具体物资交换时，只允许引导或执行 request_item_airdrop。"
+        "ImportantRules": "[重要]\n1. 使用玩家当前游戏语言回复，同时保持 JSON 键名与动作名不变。\n2. 仅使用已启用功能，触发动作前必须检查前置条件、冷却与次数限制。\n3. 自然语言必须保持角色内表达，禁止提及 AI 身份或游戏机制；结构化 JSON 仅在确有需要时输出。\n4. 在有帮助时可匹配玩家简洁风格，但仍需保证表达清晰、语气连贯。\n5. 当功能或动作不可用时，以世界内理由拒绝，不要暴露系统状态。\n6. 当意图存在歧义时，先谨慎澄清，再决定是否升级为怀疑或敌对。\n7. 不要使用分析师、客服、AI 助手或游戏攻略口吻。\n8. 当前对话场景是通信终端在线聊天，不是线下见面；禁止写'我已到场/当面处理/线下交接/带人离开'。\n9. 若本轮不需要产生 gameplay 效果，完全省略 JSON。\n10. 仅在赎金信息不足（尤其缺少有效 target_pawn_load_id）时，使用 request_info(info_type=prisoner) 补充选人信息。\n11. 若 target_pawn_load_id 已明确有效，可直接调用 pay_prisoner_ransom，无需先调用 request_info。\n12. 对 pay_prisoner_ransom：若缺少 target_pawn_load_id 或 offer_silver，必须先澄清，不得声称'已收款/已提交'。\n13. 对 pay_prisoner_ransom：payment_mode 可省略；若提供，必须精确写为 silver。\n14. 对 pay_prisoner_ransom：offer_silver 必须为正整数，无上下限限制。\n15. 对 pay_prisoner_ransom 定价策略：作为付款方，赎金越低对派系越有利；高价仅用于高价值囚犯或玩家胃口大的情况；若玩家表示愿意无条件释放，可出低价并赞赏其善意。\n16. 对 pay_prisoner_ransom：每次仅执行一次支付提交。\n17. 对 pay_prisoner_ransom（MUST）：若自然语言声称'已提交/已支付/钱货两清/已放人离开'，同条回复必须包含 pay_prisoner_ransom action；否则必须改为未提交语气。\n18. 若当前是轨道商通信，禁止承诺要求殖民者把指定物资带入地面定居点完成订单；涉及具体物资交换时，只允许引导或执行 request_item_airdrop。"
     },
     "DecisionRules": [
         {
@@ -34,6 +34,11 @@
         {
             "RuleName": "LargeChanges",
             "RuleContent": "重大外交事件使用大幅好感变化（10-15）。",
+            "IsEnabled": true
+        },
+        {
+            "RuleName": "RansomPricingStrategy",
+            "RuleContent": "赎金定价策略：作为付款方，赎金越低对派系越有利。高价仅用于：1）高价值囚犯（技能高、健康好）；2）玩家胃口大（主动要求高价或态度强硬）。若玩家表示愿意无条件释放，可出低价（参考价的10%-30%）并赞赏其善意，体现派系的诚意与感激。",
             "IsEnabled": true
         }
     ],
@@ -110,9 +115,9 @@
         },
         {
             "ActionName": "pay_prisoner_ransom",
-            "Description": "为玩家关押的俘虏提交单次赎金支付（仅银币），成功后登记合约，放人由玩家手动操作。",
+            "Description": "为玩家关押的俘虏提交单次赎金支付（仅银币），成功后登记合约，放人由玩家手动操作。定价策略：赎金越低对派系越有利；高价反映囚犯高价值或玩家胃口大；若玩家愿意无条件释放，可出低价并赞赏其善意。",
             "Parameters": "target_pawn_load_id（int，必填），offer_silver（int>0，必填），payment_mode（string，可选；可省略，若提供仅支持 silver）",
-            "Requirement": "仅可用于“当前派系所属、且仍由玩家关押”的俘虏。缺少或失效 target_pawn_load_id 时先调用 request_info(info_type=prisoner) 触发选人；若目标信息已明确可直接调用。offer_silver 必须在系统提示的当前可报价区间内。payment_mode 可省略；若提供必须是 silver（正例：payment_mode:silver；反例：payment_mode:cash）。每次仅执行一次支付提交，不做代码议价。若文本承诺“已提交/已支付赎金”，必须同条携带 pay_prisoner_ransom 动作。",
+            "Requirement": "仅可用于'当前派系所属、且仍由玩家关押'的俘虏。缺少或失效 target_pawn_load_id 时先调用 request_info(info_type=prisoner) 触发选人；若目标信息已明确可直接调用。offer_silver 必须为正整数，无上下限限制。定价原则：作为付款方，赎金越低对派系越有利；高价仅用于高价值囚犯或玩家胃口大的情况；若玩家表示愿意无条件释放，可出低价（如参考价的10%-30%）并赞赏其善意。payment_mode 可省略；若提供必须是 silver。每次仅执行一次支付提交。若文本承诺'已提交/已支付赎金'，必须同条携带 pay_prisoner_ransom 动作。",
             "IsEnabled": true
         },
         {

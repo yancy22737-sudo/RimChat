@@ -81,12 +81,6 @@ namespace RimChat.Dialogue
                 return false;
             }
 
-            if (IsTradeCaravanPawn(target))
-            {
-                reason = "target_trade_caravan";
-                return false;
-            }
-
             return true;
         }
 

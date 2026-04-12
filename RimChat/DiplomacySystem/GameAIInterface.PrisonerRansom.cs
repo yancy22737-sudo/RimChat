@@ -122,22 +122,10 @@ namespace RimChat.DiplomacySystem
 
             if (!prisonerRansomService.TryValidateOfferWindow(state, offeredSilver, out string offerWindowError))
             {
-                if (prisonerRansomService.TryGetOfferWindow(state, out int minOffer, out int maxOffer, out _))
-                {
-                    return FailFastRansom(
-                        "offer_out_of_window",
-                        "RimChat_RansomOfferOutOfWindowSystem".Translate(
-                            offeredSilver,
-                            minOffer,
-                            maxOffer,
-                            state.CurrentAskSilver).ToString(),
-                        $"offer out of window: offered={offeredSilver}, min={minOffer}, max={maxOffer}, current_ask={state.CurrentAskSilver}, detail={offerWindowError}");
-                }
-
                 return FailFastRansom(
-                    "offer_out_of_window",
-                    "RimChat_RansomOfferOutOfWindowSimpleSystem".Translate(offeredSilver).ToString(),
-                    $"offer window unavailable: offered={offeredSilver}, detail={offerWindowError}");
+                    "offer_invalid",
+                    "RimChat_RansomInvalidOfferSystem".Translate().ToString(),
+                    $"offer validation failed: offered={offeredSilver}, detail={offerWindowError}");
             }
 
             bool hasBatchTargetCount = TryReadIntParameter(parameters, "batch_target_count", out int batchTargetCount);

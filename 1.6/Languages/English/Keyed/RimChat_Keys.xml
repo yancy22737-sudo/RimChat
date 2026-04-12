@@ -995,6 +995,9 @@
     <RimChat_SendInfoMenuRequestQuest>Request Quest</RimChat_SendInfoMenuRequestQuest>
     <RimChat_SendInfoMenuPrisoner>Send Prisoner Info</RimChat_SendInfoMenuPrisoner>
     <RimChat_SendInfoMenuAirdropTrade>Send Airdrop Trade Request</RimChat_SendInfoMenuAirdropTrade>
+    <RimChat_SendInfoMenuEndConversation>End Conversation</RimChat_SendInfoMenuEndConversation>
+    <RimChat_SendInfoMenuEndConversationAlreadyEnded>Conversation has already ended.</RimChat_SendInfoMenuEndConversationAlreadyEnded>
+    <RimChat_SendInfoMenuEndConversationSuccess>Ended conversation with {0}.</RimChat_SendInfoMenuEndConversationSuccess>
     <RimChat_SendInfoTauntTitle>Choose a Taunt</RimChat_SendInfoTauntTitle>
     <RimChat_SendInfoTauntOptionStandard>Bring it on</RimChat_SendInfoTauntOptionStandard>
     <RimChat_SendInfoTauntOptionStandardDesc>Maps to a standard raid: direct provocation that pressures the faction into a normal attack.</RimChat_SendInfoTauntOptionStandardDesc>
@@ -1241,7 +1244,7 @@
     <RimChat_RansomNeedPrisonerSelectionSystem>Ransom flow triggered: select the exact prisoner in the popup before payment submission continues.</RimChat_RansomNeedPrisonerSelectionSystem>
     <RimChat_RansomNoEligiblePrisonerSystem>No eligible prisoner target is currently available for ransom.</RimChat_RansomNoEligiblePrisonerSystem>
     <RimChat_RansomNeedOfferSystem>Prisoner locked: {0}. Submit a valid silver ransom offer.</RimChat_RansomNeedOfferSystem>
-    <RimChat_RansomOfferWindowSystem>{0} current offer window: {1}-{2} silver (current ask: {3}). Offers outside this range are rejected.</RimChat_RansomOfferWindowSystem>
+    <RimChat_RansomOfferWindowSystem>{0} reference price range: {1}-{2} silver (current ask: {3}). Lower offers save resources; higher offers reflect prisoner value or goodwill.</RimChat_RansomOfferWindowSystem>
     <RimChat_RansomOfferOutOfWindowSystem>Offer {0} is out of range. Valid window is {1}-{2} silver (current ask: {3}).</RimChat_RansomOfferOutOfWindowSystem>
     <RimChat_RansomOfferOutOfWindowSimpleSystem>Offer {0} is outside the current offer window. Re-submit within the range shown by system messages.</RimChat_RansomOfferOutOfWindowSimpleSystem>
     <RimChat_RansomOfferMustMatchCurrentAskSystem>Offer {0} does not match the current ask {1}. Please re-offer exactly the current ask (current window: {2}-{3} silver).</RimChat_RansomOfferMustMatchCurrentAskSystem>
@@ -1327,6 +1330,7 @@ Selected prisoners: {1}
     <RimChat_PresenceBlockedDnd>Currently set to do not disturb. You cannot send messages.</RimChat_PresenceBlockedDnd>
     <RimChat_ConversationEnded>The other side ended this dialogue session.</RimChat_ConversationEnded>
     <RimChat_ConversationEndedReason>The other side ended this dialogue session: {0}</RimChat_ConversationEndedReason>
+    <RimChat_ConversationEndedByPlayerWithCooldown>We ended the current dialogue. Available in {0} hours.</RimChat_ConversationEndedByPlayerWithCooldown>
     <RimChat_ReinitiateDialogueButton>Reinitiate Dialogue</RimChat_ReinitiateDialogueButton>
     <RimChat_ReinitiateCooldownHint>Reinitiate available in {0} hours.</RimChat_ReinitiateCooldownHint>
     <RimChat_StrategyFallbackLabel>Strategy</RimChat_StrategyFallbackLabel>
@@ -1364,6 +1368,7 @@ Selected prisoners: {1}
     <RimChat_ConversationReinitiated>You reinitiated the dialogue.</RimChat_ConversationReinitiated>
     <RimChat_ConversationReinitiatedByNpc>The other side proactively reinitiated the dialogue.</RimChat_ConversationReinitiatedByNpc>
     <RimChat_SystemExitDialogue>The other side ended the current dialogue.</RimChat_SystemExitDialogue>
+    <RimChat_SystemExitDialogueByPlayer>We ended the current dialogue.</RimChat_SystemExitDialogueByPlayer>
     <RimChat_SystemExitDialogueWithReason>The other side ended the current dialogue: {0}</RimChat_SystemExitDialogueWithReason>
     <RimChat_SystemGoOffline>The other side went offline.</RimChat_SystemGoOffline>
     <RimChat_SystemGoOfflineWithReason>The other side went offline: {0}</RimChat_SystemGoOfflineWithReason>
