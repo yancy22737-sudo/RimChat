@@ -49,8 +49,7 @@ namespace RimChat.DiplomacySystem
             "OpportunitySite_PeaceTalks",
             "PawnLend",
             "ThreatReward_Raid_MiscReward",
-            "Hospitality_Refugee",
-            "BestowingCeremony"
+            "Hospitality_Refugee"
         };
 
         private static readonly HashSet<string> BanditCampAllowedFactionDefs = new HashSet<string>
@@ -81,6 +80,7 @@ namespace RimChat.DiplomacySystem
         private const string DialogueSourceParameterKey = "dialogue_source";
         private const string OrbitalTraderDialogueSource = "orbital_trader";
         private const string ExplicitChallengeRequestParameterKey = "explicit_challenge_request";
+        private const string BestowingCeremonyQuestDefName = "BestowingCeremony";
 
         private ApiActionEligibilityService()
         {
@@ -454,6 +454,16 @@ namespace RimChat.DiplomacySystem
             if (string.IsNullOrWhiteSpace(questDefName))
             {
                 return QuestValidationResult.Denied("quest_def_required", "create_quest requires a valid questDefName from the injected allowed list.");
+            }
+
+            if (string.Equals(questDefName, BestowingCeremonyQuestDefName, StringComparison.Ordinal))
+            {
+                Log.Warning(
+                    $"[RimChat][QuestGuard] blocked create_quest for disabled template. " +
+                    $"faction='{faction?.Name ?? "Unknown"}', questDefName='{questDefName}', code='bestowing_disabled'.");
+                return QuestValidationResult.Denied(
+                    "bestowing_disabled",
+                    $"Quest template '{BestowingCeremonyQuestDefName}' is disabled by policy to prevent empty bestowing ceremony corruption.");
             }
 
             QuestTemplateEligibility eligibility = report.Find(questDefName);

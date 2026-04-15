@@ -1,3 +1,12 @@
+0.9.1024
+- 请求任务授勋禁用 + 冷却文案游戏时间统一（Fail-Fast 根修）：
+  1. [根修] `ApiActionEligibilityService.SupportedQuestDefs` 移除 `BestowingCeremony`，请求任务可选模板与可用任务注入链路不再暴露授勋模板。
+  2. [阻断] `ValidateCreateQuest(...)` 新增 `bestowing_disabled` fail-fast；外部强行传入授勋模板时直接拒绝，避免空授勋请求进入任务发布链。
+  3. [可观测性] 新增稳定日志锚点：`[RimChat][QuestGuard] blocked create_quest for disabled template`，包含 faction/questDefName/code，便于 Player.log 快速定位旧链路触发。
+  4. [口径统一] `Dialog_DiplomacyDialogue.ActionHint.FormatCooldownReason(...)` 改为统一输出游戏内剩余时间（天/时），覆盖 `quest_cooldown`/`aid_cooldown`/`caravan_cooldown` 等外交冷却提示。
+  5. [兼容] 仅调整任务模板可见性与提示文案解释层；冷却存储与判定真相源保持 `TicksGame` 不变，不新增存档字段。
+  6. [文档] 同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+  7. [版本] About/About.xml modVersion 提升到 0.9.1024。
 0.9.1023
 - `/models` 缺失回退 + 结构化解析原文直出 + 响应契约前置格式要求（双链路根修）：
   1. [诊断] `ApiUsabilityDiagnosticService.RunCloudDiagnosticCoroutine` 新增 `/models` 缺失状态码判定（仅 `404/405/501`）；命中后跳过模型可用性硬校验，改为 `chat probe + contract` 作为最终可用性判据。

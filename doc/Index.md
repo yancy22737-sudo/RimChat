@@ -1,4 +1,15 @@
-# RimChat 模块索引（v0.9.1023）
+# RimChat 模块索引（v0.9.1024）
+
+## 请求任务授勋禁用 + 冷却文案游戏时间统一（v0.9.1024）
+- 目标：根修“请求任务出现空授勋仪式导致后续授勋链路异常”与“外交冷却提示像系统时间”的双问题。
+- 关键模块：
+  - `RimChat/DiplomacySystem/ApiActionEligibilityService.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.ActionHint.cs`
+- 链路变化：
+  - 任务白名单移除 `BestowingCeremony`，请求任务菜单与可用任务注入链路不再暴露授勋模板。
+  - `ValidateCreateQuest(...)` 新增 `bestowing_disabled` fail-fast 拦截；外部强行传入授勋模板时直接拒绝并打稳定日志锚点（含 faction/questDefName/code）。
+  - 外交 `[?]` 冷却文案统一改为游戏内时间口径（天/时），不再按现实时间解释 `RemainingSeconds`。
+  - 保持冷却存储与判定真相源不变（仍使用 `TicksGame`），仅调整文案解释层。
 
 ## `/models` 缺失回退 + 结构化原文直出 + 契约前置格式要求（v0.9.1023）
 - 目标：修复“模型接口实际可用但 `/v1/models` 缺失导致误判失败”，并根治结构化响应不合规时固定回退句吞回复问题。

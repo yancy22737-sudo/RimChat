@@ -1,3 +1,12 @@
+0.9.1024
+- Quest-request bestowing disable + in-game cooldown wording unification (fail-fast root fix):
+  1. [Root fix] Removed `BestowingCeremony` from `ApiActionEligibilityService.SupportedQuestDefs`, so it is no longer exposed in manual quest-request options or allowed-quest injection flows.
+  2. [Guardrail] Added `bestowing_disabled` fail-fast in `ValidateCreateQuest(...)`; forced external requests for the bestowing template are rejected before quest publication.
+  3. [Observability] Added stable log anchor: `[RimChat][QuestGuard] blocked create_quest for disabled template`, including faction/questDefName/code for fast `Player.log` triage.
+  4. [Wording unification] `Dialog_DiplomacyDialogue.ActionHint.FormatCooldownReason(...)` now consistently renders diplomacy cooldowns as in-game remaining time (days/hours), covering `quest_cooldown`, `aid_cooldown`, `caravan_cooldown`, and related codes.
+  5. [Compatibility] Changed only quest-template visibility and cooldown wording layer; cooldown storage/truth source remains `TicksGame`, with no new save fields.
+  6. [Docs] Synced `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+  7. [Version] Bumped About/About.xml modVersion to 0.9.1024.
 0.9.1023
 - `/models` fallback + raw passthrough on structured-parse failure + strict JSON preamble (root fix across validation and dialogue paths):
   1. [Diagnostics] `ApiUsabilityDiagnosticService.RunCloudDiagnosticCoroutine` now treats only `404/405/501` as “models endpoint missing”; in this case it skips strict model-availability gating and promotes `chat probe + contract` to final availability truth.

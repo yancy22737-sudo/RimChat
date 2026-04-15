@@ -1,4 +1,18 @@
-# RimChat AI API 文档（v0.9.1023）
+# RimChat AI API 文档（v0.9.1024）
+
+## 请求任务授勋禁用与冷却文案口径统一（v0.9.1024）
+
+- `RimChat.DiplomacySystem.ApiActionEligibilityService`
+  - `SupportedQuestDefs` 移除 `BestowingCeremony`，该模板不再进入 `GetFactionQuestAvailabilityReport(...)` 的可用任务集合。
+  - `ValidateCreateQuest(...)` 新增授勋模板强制阻断：
+    - 命中 `questDefName == "BestowingCeremony"` 时直接返回 `bestowing_disabled`。
+    - 同步写入稳定日志锚点：`[RimChat][QuestGuard] blocked create_quest for disabled template ...`（包含 faction/questDefName/code）。
+  - 语义：该阻断仅作用于 RimChat 的 `create_quest` 动作链，不改游戏本体任务系统。
+
+- `RimChat.UI.Dialog_DiplomacyDialogue.ActionHint`
+  - `FormatCooldownReason(...)` 统一改为游戏内剩余时间格式化（复用 `FormatGameTimeCooldownReason`）。
+  - 覆盖所有外交 `*_cooldown` 提示，包括 `quest_cooldown`、`aid_cooldown`、`caravan_cooldown` 等。
+  - 语义：只改提示文案层，不改冷却存储与判定逻辑（底层仍由 `TicksGame` 驱动）。
 
 ## `/models` 缺失回退与结构化原文直出接口（v0.9.1023）
 

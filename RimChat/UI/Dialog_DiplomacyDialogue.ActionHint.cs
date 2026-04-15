@@ -211,11 +211,6 @@ namespace RimChat.UI
                    code.EndsWith("_cooldown", StringComparison.Ordinal);
         }
 
-        private static bool IsGameTimeCooldownCode(string code)
-        {
-            return string.Equals(code, "airdrop_cooldown", StringComparison.Ordinal);
-        }
-
         private static string FormatCooldownReason(string code, int remainingSeconds)
         {
             if (remainingSeconds <= 0)
@@ -223,25 +218,7 @@ namespace RimChat.UI
                 return "";
             }
 
-            if (IsGameTimeCooldownCode(code))
-            {
-                return FormatGameTimeCooldownReason(remainingSeconds);
-            }
-
-            if (remainingSeconds >= 86400)
-            {
-                int days = remainingSeconds / 86400;
-                return "RimChat_ActionsHint_CooldownDays".Translate(days);
-            }
-
-            if (remainingSeconds >= 3600)
-            {
-                int hours = remainingSeconds / 3600;
-                return "RimChat_ActionsHint_CooldownHours".Translate(hours);
-            }
-
-            int minutes = remainingSeconds / 60;
-            return "RimChat_ActionsHint_CooldownMinutes".Translate(minutes);
+            return FormatGameTimeCooldownReason(remainingSeconds);
         }
 
         private static string FormatGameTimeCooldownReason(int remainingSeconds)
