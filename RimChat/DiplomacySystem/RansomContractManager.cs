@@ -26,6 +26,11 @@ namespace RimChat.DiplomacySystem
         }
 
         private const int TimeoutScanIntervalTicks = 250;
+        private const int TimeoutScanOffsetTicks = 160;
+        private const int TimeoutScanBudgetPerPass = 12;
+        private const int OrganPenaltyBudgetPerPass = 12;
+        private const int HealthyReplyBudgetPerPass = 12;
+        private const int CleanupBudgetPerPass = 24;
         private const int HealthyExitReplyMinDelayTicks = 12500;
         private const int HealthyExitReplyMaxDelayTicks = 25000;
         private const int OrganFailureMinDelayTicks = 12500;
@@ -36,6 +41,10 @@ namespace RimChat.DiplomacySystem
         private const float BatchRansomPenaltyScale = 0.70f;
         private List<RansomContractRecord> contracts = new List<RansomContractRecord>();
         private int lastTimeoutScanTick;
+        private int timeoutScanCursor;
+        private int organPenaltyScanCursor;
+        private int healthyReplyScanCursor;
+        private int cleanupScanCursor;
 
         public RansomContractManager(Game game) : base()
         {
@@ -53,7 +62,7 @@ namespace RimChat.DiplomacySystem
         public override void GameComponentTick()
         {
             int currentTick = Find.TickManager?.TicksGame ?? 0;
-            if (currentTick <= 0 || currentTick - lastTimeoutScanTick < TimeoutScanIntervalTicks)
+            if (!ShouldRunScheduledTask(currentTick, lastTimeoutScanTick, TimeoutScanIntervalTicks, TimeoutScanOffsetTicks))
             {
                 return;
             }
@@ -208,15 +217,36 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            List<RansomContractRecord> timeoutContracts = contracts
-                .Where(contract => contract != null)
-                .Where(contract => contract.Status == RansomContractStatus.PendingRelease)
-                .Where(contract => currentTick > contract.DeadlineTick)
-                .ToList();
-            foreach (RansomContractRecord contract in timeoutContracts)
+            if (contracts == null || contracts.Count == 0)
             {
+                timeoutScanCursor = 0;
+                return;
+            }
+
+            int count = contracts.Count;
+            int cursor = NormalizeCursor(timeoutScanCursor, count);
+            int inspected = 0;
+            while (inspected < TimeoutScanBudgetPerPass)
+            {
+                if (cursor >= count)
+                {
+                    cursor = 0;
+                }
+
+                RansomContractRecord contract = contracts[cursor];
+                cursor++;
+                inspected++;
+                if (contract == null ||
+                    contract.Status != RansomContractStatus.PendingRelease ||
+                    currentTick <= contract.DeadlineTick)
+                {
+                    continue;
+                }
+
                 ApplyTimeoutPenalty(contract, settings);
             }
+
+            timeoutScanCursor = NormalizeCursor(cursor, count);
         }
 
         private void ApplyTimeoutPenalty(RansomContractRecord contract, RimChatSettings settings)
@@ -247,19 +277,42 @@ namespace RimChat.DiplomacySystem
 
         private void ProcessHealthyExitReplies(int currentTick)
         {
-            List<RansomContractRecord> dueContracts = contracts
-                .Where(contract => contract != null)
-                .Where(contract => contract.Status == RansomContractStatus.Completed)
-                .Where(contract => contract.HealthyExitReplyScheduled && !contract.HealthyExitReplySent)
-                .Where(contract => contract.HealthyExitReplyDueTick > 0 && currentTick >= contract.HealthyExitReplyDueTick)
-                .ToList();
-            foreach (RansomContractRecord contract in dueContracts)
+            if (contracts == null || contracts.Count == 0)
             {
+                healthyReplyScanCursor = 0;
+                return;
+            }
+
+            int count = contracts.Count;
+            int cursor = NormalizeCursor(healthyReplyScanCursor, count);
+            int inspected = 0;
+            while (inspected < HealthyReplyBudgetPerPass)
+            {
+                if (cursor >= count)
+                {
+                    cursor = 0;
+                }
+
+                RansomContractRecord contract = contracts[cursor];
+                cursor++;
+                inspected++;
+                if (contract == null ||
+                    contract.Status != RansomContractStatus.Completed ||
+                    !contract.HealthyExitReplyScheduled ||
+                    contract.HealthyExitReplySent ||
+                    contract.HealthyExitReplyDueTick <= 0 ||
+                    currentTick < contract.HealthyExitReplyDueTick)
+                {
+                    continue;
+                }
+
                 bool delivered = TryDeliverHealthyExitReply(contract);
                 contract.HealthyExitReplySent = delivered;
                 contract.HealthyExitReplyScheduled = false;
                 contract.HealthyExitReplyDueTick = 0;
             }
+
+            healthyReplyScanCursor = NormalizeCursor(cursor, count);
         }
 
         private void ProcessOrganFailurePenalties(int currentTick)
@@ -270,16 +323,39 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            List<RansomContractRecord> dueContracts = contracts
-                .Where(contract => contract != null)
-                .Where(contract => contract.Status == RansomContractStatus.Completed)
-                .Where(contract => contract.OrganFailureScheduled && !contract.OrganFailurePenaltyApplied)
-                .Where(contract => contract.OrganFailureDueTick > 0 && currentTick >= contract.OrganFailureDueTick)
-                .ToList();
-            foreach (RansomContractRecord contract in dueContracts)
+            if (contracts == null || contracts.Count == 0)
             {
+                organPenaltyScanCursor = 0;
+                return;
+            }
+
+            int count = contracts.Count;
+            int cursor = NormalizeCursor(organPenaltyScanCursor, count);
+            int inspected = 0;
+            while (inspected < OrganPenaltyBudgetPerPass)
+            {
+                if (cursor >= count)
+                {
+                    cursor = 0;
+                }
+
+                RansomContractRecord contract = contracts[cursor];
+                cursor++;
+                inspected++;
+                if (contract == null ||
+                    contract.Status != RansomContractStatus.Completed ||
+                    !contract.OrganFailureScheduled ||
+                    contract.OrganFailurePenaltyApplied ||
+                    contract.OrganFailureDueTick <= 0 ||
+                    currentTick < contract.OrganFailureDueTick)
+                {
+                    continue;
+                }
+
                 ApplyOrganFailurePenalty(contract, settings);
             }
+
+            organPenaltyScanCursor = NormalizeCursor(cursor, count);
         }
 
         private static bool TryScheduleOrganFailurePenalty(RansomContractRecord contract, Pawn pawn, int exitTick)
@@ -634,29 +710,96 @@ namespace RimChat.DiplomacySystem
 
         private void CleanupFinishedContracts(int currentTick)
         {
-            contracts.RemoveAll(contract =>
+            if (contracts == null || contracts.Count == 0)
             {
-                if (contract == null)
+                cleanupScanCursor = 0;
+                return;
+            }
+
+            int inspected = 0;
+            while (contracts.Count > 0 && inspected < CleanupBudgetPerPass)
+            {
+                if (cleanupScanCursor < 0 || cleanupScanCursor >= contracts.Count)
                 {
-                    return true;
+                    cleanupScanCursor = 0;
                 }
 
-                if (contract.Status == RansomContractStatus.PendingRelease)
+                RansomContractRecord contract = contracts[cleanupScanCursor];
+                bool shouldRemove = ShouldRemoveFinishedContract(contract, currentTick);
+                inspected++;
+                if (shouldRemove)
                 {
-                    return false;
+                    contracts.RemoveAt(cleanupScanCursor);
+                    continue;
                 }
 
-                bool hasPendingFollowups =
-                    (contract.HealthyExitReplyScheduled && !contract.HealthyExitReplySent) ||
-                    (contract.OrganFailureScheduled && !contract.OrganFailurePenaltyApplied);
-                if (hasPendingFollowups)
-                {
-                    return false;
-                }
+                cleanupScanCursor++;
+            }
 
-                int anchorTick = Math.Max(contract.PaidTick, contract.ReleasedTick);
-                return currentTick - anchorTick > 60000;
-            });
+            if (cleanupScanCursor >= contracts.Count)
+            {
+                cleanupScanCursor = 0;
+            }
+        }
+
+        private static bool ShouldRemoveFinishedContract(RansomContractRecord contract, int currentTick)
+        {
+            if (contract == null)
+            {
+                return true;
+            }
+
+            if (contract.Status == RansomContractStatus.PendingRelease)
+            {
+                return false;
+            }
+
+            bool hasPendingFollowups =
+                (contract.HealthyExitReplyScheduled && !contract.HealthyExitReplySent) ||
+                (contract.OrganFailureScheduled && !contract.OrganFailurePenaltyApplied);
+            if (hasPendingFollowups)
+            {
+                return false;
+            }
+
+            int anchorTick = Math.Max(contract.PaidTick, contract.ReleasedTick);
+            return currentTick - anchorTick > 60000;
+        }
+
+        private static int NormalizeCursor(int cursor, int count)
+        {
+            if (count <= 0 || cursor < 0 || cursor >= count)
+            {
+                return 0;
+            }
+
+            return cursor;
+        }
+
+        private static bool ShouldRunScheduledTask(int tick, int lastRunTick, int interval, int offset)
+        {
+            if (tick <= 0 || interval <= 0)
+            {
+                return false;
+            }
+
+            if (!IsOnScheduleSlot(tick, interval, offset))
+            {
+                return false;
+            }
+
+            return lastRunTick <= 0 || tick - lastRunTick >= interval;
+        }
+
+        private static bool IsOnScheduleSlot(int tick, int interval, int offset)
+        {
+            int normalized = (tick - offset) % interval;
+            if (normalized < 0)
+            {
+                normalized += interval;
+            }
+
+            return normalized == 0;
         }
     }
 }

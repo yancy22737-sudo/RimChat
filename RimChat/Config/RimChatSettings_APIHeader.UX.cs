@@ -266,16 +266,16 @@ namespace RimChat.Config
 
         private static string NormalizeLanguageToken(string value)
         {
-            if (string.IsNullOrWhiteSpace(value))
+            string sanitized = TrimLanguageDisplaySuffix(value);
+            if (string.IsNullOrWhiteSpace(sanitized))
             {
                 return string.Empty;
             }
 
-            StringBuilder sb = new StringBuilder(value.Length);
-            string trimmed = value.Trim();
-            for (int i = 0; i < trimmed.Length; i++)
+            StringBuilder sb = new StringBuilder(sanitized.Length);
+            for (int i = 0; i < sanitized.Length; i++)
             {
-                char c = trimmed[i];
+                char c = sanitized[i];
                 if (char.IsLetterOrDigit(c))
                 {
                     sb.Append(char.ToLowerInvariant(c));
@@ -283,6 +283,23 @@ namespace RimChat.Config
             }
 
             return sb.ToString();
+        }
+
+        private static string TrimLanguageDisplaySuffix(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            string trimmed = value.Trim();
+            int suffixStart = trimmed.IndexOfAny(new[] { '(', '（' });
+            if (suffixStart > 0)
+            {
+                return trimmed.Substring(0, suffixStart).Trim();
+            }
+
+            return trimmed;
         }
 
         private static bool IsFolderMatched(string matchedFolder, string activeFolder)

@@ -18,6 +18,9 @@ namespace RimChat.Prompting
         private static readonly object SyncRoot = new object();
         private static readonly Dictionary<string, PromptRequestSnapshotRecord> SnapshotsByChannel =
             new Dictionary<string, PromptRequestSnapshotRecord>(StringComparer.OrdinalIgnoreCase);
+        // Last-known values survive snapshot expiry so preview rendering can still resolve variables
+        private static readonly Dictionary<string, PromptRequestSnapshotRecord> LastKnownByChannel =
+            new Dictionary<string, PromptRequestSnapshotRecord>(StringComparer.OrdinalIgnoreCase);
         private const int MaxSnapshotsPerChannel = 1;
         private const int MaxSnapshotAgeHours = 2;
 
@@ -48,6 +51,7 @@ namespace RimChat.Prompting
             lock (SyncRoot)
             {
                 SnapshotsByChannel[normalizedChannel] = snapshot;
+                LastKnownByChannel[normalizedChannel] = snapshot;
             }
         }
 
@@ -80,6 +84,8 @@ namespace RimChat.Prompting
 
                 if (DateTime.UtcNow - snapshot.RecordedAtUtc > TimeSpan.FromHours(MaxSnapshotAgeHours))
                 {
+                    // Demote to last-known instead of discarding — preview can still use it
+                    LastKnownByChannel[normalizedChannel] = snapshot;
                     SnapshotsByChannel.Remove(normalizedChannel);
                     return false;
                 }
@@ -109,6 +115,7 @@ namespace RimChat.Prompting
             lock (SyncRoot)
             {
                 SnapshotsByChannel.Remove(normalizedChannel);
+                LastKnownByChannel.Remove(normalizedChannel);
             }
         }
 
@@ -117,6 +124,7 @@ namespace RimChat.Prompting
             lock (SyncRoot)
             {
                 SnapshotsByChannel.Clear();
+                LastKnownByChannel.Clear();
             }
         }
 
@@ -131,6 +139,43 @@ namespace RimChat.Prompting
         public static bool HasSnapshotForChannel(string promptChannel)
         {
             return TryGetSnapshot(promptChannel, out _);
+        }
+
+        /// <summary>
+        /// Retrieve the last-known variable values for a channel, even if the snapshot has expired.
+        /// Returns null only if no snapshot was ever recorded for this channel.
+        /// </summary>
+        public static Dictionary<string, object> CloneLastKnownValues(string promptChannel)
+        {
+            if (string.IsNullOrWhiteSpace(promptChannel))
+            {
+                return null;
+            }
+
+            string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            if (string.IsNullOrWhiteSpace(normalizedChannel))
+            {
+                return null;
+            }
+
+            lock (SyncRoot)
+            {
+                // Prefer fresh snapshot
+                if (SnapshotsByChannel.TryGetValue(normalizedChannel, out PromptRequestSnapshotRecord fresh) &&
+                    fresh?.Values != null)
+                {
+                    return CloneValues(fresh.Values);
+                }
+
+                // Fall back to last-known (expired but preserved)
+                if (LastKnownByChannel.TryGetValue(normalizedChannel, out PromptRequestSnapshotRecord lastKnown) &&
+                    lastKnown?.Values != null)
+                {
+                    return CloneValues(lastKnown.Values);
+                }
+            }
+
+            return null;
         }
 
         private static Dictionary<string, object> CloneValues(IReadOnlyDictionary<string, object> source)

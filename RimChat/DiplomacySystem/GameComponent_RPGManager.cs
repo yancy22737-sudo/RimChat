@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using RimChat.Dialogue;
+using RimChat.Util;
 using RimChat.Memory;
 using RimChat.WorldState;
 
@@ -333,6 +334,21 @@ namespace RimChat.DiplomacySystem
 
         private void TrySyncPawnPersonaFromRimTalkSafely(Pawn pawn)
         {
+            if (pawn == null ||
+                pawn.Faction != Faction.OfPlayer ||
+                pawn.Dead ||
+                pawn.Destroyed)
+            {
+                return;
+            }
+
+            if (!PawnDialogueRoutingPolicy.IsRimTalkPersonaSyncEligible(pawn))
+            {
+                DebugLogger.Debug(
+                    $"Skip RimTalk persona sync: pawn '{pawn.LabelShortCap}' lacks persona sync capability.");
+                return;
+            }
+
             if (!TryBeginPawnPersonaSync(pawn))
             {
                 return;
@@ -499,7 +515,20 @@ namespace RimChat.DiplomacySystem
             else
             {
                 List<string> invalidPersonaIds = pawnPersonaPromptsById
-                    .Where(entry => string.IsNullOrWhiteSpace(entry.Value) || !TryResolvePawnByStableId(entry.Key, out _))
+                    .Where(entry =>
+                    {
+                        if (string.IsNullOrWhiteSpace(entry.Value))
+                        {
+                            return true;
+                        }
+
+                        if (!TryResolvePawnByStableId(entry.Key, out Pawn pawn))
+                        {
+                            return true;
+                        }
+
+                        return !PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace(pawn);
+                    })
                     .Select(entry => entry.Key)
                     .ToList();
                 foreach (string id in invalidPersonaIds)
@@ -531,4 +560,3 @@ namespace RimChat.DiplomacySystem
         }
     }
 }
-

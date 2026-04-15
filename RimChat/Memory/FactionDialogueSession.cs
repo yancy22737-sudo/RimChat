@@ -32,8 +32,6 @@ namespace RimChat.Memory
         public string conversationEndReason = "";
         public int conversationEndedTick = 0;
         public int reinitiateAvailableTick = 0;
-        [NonSerialized]
-        public int messageVersion = 0;
 
         // AI requeststate (不save到存档, 重启后需要重新request)
         public string pendingRequestId = null;
@@ -63,6 +61,11 @@ namespace RimChat.Memory
         public int pendingRansomBatchTotalCurrentAskSilver = 0;
         public int pendingRansomBatchTotalMinOfferSilver = 0;
         public int pendingRansomBatchTotalMaxOfferSilver = 0;
+        public bool hasPendingRansomOfferReference = false;
+        public int pendingRansomOfferTargetPawnLoadId = 0;
+        public int pendingRansomOfferCurrentAskSilver = 0;
+        public int pendingRansomOfferMinSilver = 0;
+        public int pendingRansomOfferMaxSilver = 0;
 
         // Airdrop trade-card runtime reference (not persisted)
         public bool hasPendingAirdropTradeCardReference = false;
@@ -105,6 +108,9 @@ namespace RimChat.Memory
         // Periodic snapshot tracking: last message index already summarized to RPG archive
         // Increments on each periodic snapshot, never decreases. Guards against double-summarize.
         public int lastSummarizedMessageIndex = 0;
+
+        // Version counter incremented on each message mutation for layout cache invalidation
+        public int messageVersion = 0;
 
         public FactionDialogueSession() { }
 
@@ -503,6 +509,7 @@ namespace RimChat.Memory
             int safeMin = Math.Max(1, totalMinOfferSilver);
             int safeMax = Math.Max(safeMin, totalMaxOfferSilver);
             int safeAsk = Math.Max(1, totalCurrentAskSilver);
+            ClearPendingRansomOfferReference();
 
             hasPendingRansomBatchSelection = true;
             pendingRansomBatchGroupId = string.IsNullOrWhiteSpace(batchGroupId)
@@ -578,6 +585,76 @@ namespace RimChat.Memory
                 "requirement: if any pay_prisoner_ransom action is used in this turn, output one action for EVERY listed target_pawn_load_id exactly once in the same response.\n" +
                 "requirement: the sum of offer_silver across those actions must be inside [total_offer_window_min_silver, total_offer_window_max_silver].\n" +
                 "[/RansomBatchSelection]";
+            return true;
+        }
+
+        public void SetPendingRansomOfferReference(
+            int targetPawnLoadId,
+            int currentAskSilver,
+            int minOfferSilver,
+            int maxOfferSilver)
+        {
+            if (targetPawnLoadId <= 0)
+            {
+                ClearPendingRansomOfferReference();
+                return;
+            }
+
+            int safeMin = Math.Max(1, minOfferSilver);
+            int safeMax = Math.Max(safeMin, maxOfferSilver);
+            int safeAsk = Math.Max(1, currentAskSilver);
+            hasPendingRansomOfferReference = true;
+            pendingRansomOfferTargetPawnLoadId = targetPawnLoadId;
+            pendingRansomOfferCurrentAskSilver = safeAsk;
+            pendingRansomOfferMinSilver = safeMin;
+            pendingRansomOfferMaxSilver = safeMax;
+        }
+
+        public void ClearPendingRansomOfferReference()
+        {
+            hasPendingRansomOfferReference = false;
+            pendingRansomOfferTargetPawnLoadId = 0;
+            pendingRansomOfferCurrentAskSilver = 0;
+            pendingRansomOfferMinSilver = 0;
+            pendingRansomOfferMaxSilver = 0;
+        }
+
+        public bool TryGetPendingRansomOfferReference(
+            out int targetPawnLoadId,
+            out int currentAskSilver,
+            out int minOfferSilver,
+            out int maxOfferSilver)
+        {
+            targetPawnLoadId = Math.Max(0, pendingRansomOfferTargetPawnLoadId);
+            currentAskSilver = Math.Max(0, pendingRansomOfferCurrentAskSilver);
+            minOfferSilver = Math.Max(0, pendingRansomOfferMinSilver);
+            maxOfferSilver = Math.Max(0, pendingRansomOfferMaxSilver);
+            return hasPendingRansomOfferReference &&
+                targetPawnLoadId > 0 &&
+                minOfferSilver > 0 &&
+                maxOfferSilver >= minOfferSilver;
+        }
+
+        public bool TryBuildPendingRansomOfferReference(out string referenceBlock)
+        {
+            referenceBlock = string.Empty;
+            if (!TryGetPendingRansomOfferReference(
+                    out int targetPawnLoadId,
+                    out int currentAskSilver,
+                    out int minOfferSilver,
+                    out int maxOfferSilver))
+            {
+                return false;
+            }
+
+            referenceBlock =
+                "[RansomOfferReference]\n" +
+                $"target_pawn_load_id: {targetPawnLoadId}\n" +
+                $"current_ask_silver: {currentAskSilver}\n" +
+                $"offer_window_min_silver: {minOfferSilver}\n" +
+                $"offer_window_max_silver: {maxOfferSilver}\n" +
+                "requirement: for pay_prisoner_ransom in single-target flow, keep offer_silver inside [offer_window_min_silver, offer_window_max_silver]; if out of range, execution will clamp to the nearest boundary.\n" +
+                "[/RansomOfferReference]";
             return true;
         }
 
@@ -715,6 +792,7 @@ namespace RimChat.Memory
             Scribe_Values.Look(ref conversationEndedTick, "conversationEndedTick", 0);
             Scribe_Values.Look(ref reinitiateAvailableTick, "reinitiateAvailableTick", 0);
             Scribe_Values.Look(ref lastSummarizedMessageIndex, "lastSummarizedMessageIndex", 0);
+            Scribe_Values.Look(ref messageVersion, "messageVersion", 0);
             Scribe_Values.Look(ref lastAirdropCounterofferDefName, "lastAirdropCounterofferDefName", string.Empty);
             Scribe_Values.Look(ref lastAirdropCounterofferCount, "lastAirdropCounterofferCount", 0);
             Scribe_Values.Look(ref lastAirdropCounterofferSilver, "lastAirdropCounterofferSilver", 0);

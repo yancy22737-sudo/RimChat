@@ -141,6 +141,11 @@ namespace RimChat.UI
             currentSession?.ClearPendingRansomBatchSelection();
         }
 
+        private static void ClearPendingRansomOfferReference(FactionDialogueSession currentSession)
+        {
+            currentSession?.ClearPendingRansomOfferReference();
+        }
+
         private static bool TryGetPendingRansomBatchSelection(
             FactionDialogueSession currentSession,
             out PendingRansomBatchSelection pendingBatch)
@@ -193,6 +198,7 @@ namespace RimChat.UI
 
             var expectedTargetIds = new HashSet<int>(pendingBatch.TargetPawnLoadIds);
             var actionTargetIds = new Dictionary<AIAction, int>();
+            var actionOfferSilver = new Dictionary<AIAction, int>();
             var actualTargetIds = new HashSet<int>();
             int totalOfferSilver = 0;
             foreach (AIAction action in ransomActions)
@@ -231,6 +237,7 @@ namespace RimChat.UI
                 }
 
                 actionTargetIds[action] = targetPawnLoadId;
+                actionOfferSilver[action] = offerSilver;
                 totalOfferSilver += offerSilver;
             }
 
@@ -253,18 +260,21 @@ namespace RimChat.UI
                         FormatRansomBatchTargetIds(extraTargetIds)).ToString());
             }
 
-            if (totalOfferSilver < pendingBatch.TotalMinOfferSilver || totalOfferSilver > pendingBatch.TotalMaxOfferSilver)
+            if (!TryNormalizeBatchOfferTotals(
+                    ransomActions,
+                    actionOfferSilver,
+                    pendingBatch,
+                    totalOfferSilver,
+                    out int normalizedTotalOfferSilver,
+                    out string normalizeFailureMessage))
             {
                 Log.Warning(
-                    $"[RimChat] pay_prisoner_ransom batch validation failed: total offer out of window. " +
-                    $"total_offer={totalOfferSilver}, window={pendingBatch.TotalMinOfferSilver}-{pendingBatch.TotalMaxOfferSilver}, expected_targets={FormatRansomBatchTargetIds(expectedTargetIds)}, actual_targets={FormatRansomBatchTargetIds(actualTargetIds)}");
+                    "[RimChat] pay_prisoner_ransom batch normalization failed. " +
+                    $"total_offer={totalOfferSilver}, window={pendingBatch.TotalMinOfferSilver}-{pendingBatch.TotalMaxOfferSilver}, " +
+                    $"expected_targets={FormatRansomBatchTargetIds(expectedTargetIds)}, actual_targets={FormatRansomBatchTargetIds(actualTargetIds)}");
                 return BatchRansomExecutionPlan.Invalid(
                     ransomActions,
-                    "RimChat_RansomBatchTotalOutOfWindowSystem".Translate(
-                        totalOfferSilver,
-                        pendingBatch.TotalMinOfferSilver,
-                        pendingBatch.TotalMaxOfferSilver,
-                        pendingBatch.TotalCurrentAskSilver).ToString());
+                    normalizeFailureMessage);
             }
 
             foreach (AIAction action in ransomActions)
@@ -272,10 +282,125 @@ namespace RimChat.UI
                 action.Parameters ??= new Dictionary<string, object>(StringComparer.Ordinal);
                 action.Parameters[BatchGroupIdParameterKey] = pendingBatch.BatchGroupId;
                 action.Parameters[BatchTargetCountParameterKey] = expectedTargetIds.Count;
-                action.Parameters[BatchTotalOfferSilverParameterKey] = totalOfferSilver;
+                action.Parameters[BatchTotalOfferSilverParameterKey] = normalizedTotalOfferSilver;
             }
 
             return BatchRansomExecutionPlan.Valid(ransomActions, actionTargetIds, pendingBatch);
+        }
+
+        private static bool TryNormalizeBatchOfferTotals(
+            List<AIAction> ransomActions,
+            Dictionary<AIAction, int> actionOfferSilver,
+            PendingRansomBatchSelection pendingBatch,
+            int totalOfferSilver,
+            out int normalizedTotalOfferSilver,
+            out string failureMessage)
+        {
+            normalizedTotalOfferSilver = Math.Max(0, totalOfferSilver);
+            failureMessage = string.Empty;
+            if (ransomActions == null || actionOfferSilver == null || pendingBatch == null)
+            {
+                failureMessage = "RimChat_RansomSystemUnavailableSystem".Translate().ToString();
+                return false;
+            }
+
+            int targetTotalOfferSilver = Mathf.Clamp(
+                totalOfferSilver,
+                pendingBatch.TotalMinOfferSilver,
+                pendingBatch.TotalMaxOfferSilver);
+            normalizedTotalOfferSilver = targetTotalOfferSilver;
+            if (targetTotalOfferSilver == totalOfferSilver)
+            {
+                return true;
+            }
+
+            if (!TryBuildNormalizedBatchOfferMap(ransomActions, actionOfferSilver, targetTotalOfferSilver, out Dictionary<AIAction, int> normalizedOffers))
+            {
+                failureMessage = "RimChat_RansomBatchTotalOutOfWindowSystem".Translate(
+                    totalOfferSilver,
+                    pendingBatch.TotalMinOfferSilver,
+                    pendingBatch.TotalMaxOfferSilver,
+                    pendingBatch.TotalCurrentAskSilver).ToString();
+                return false;
+            }
+
+            foreach (AIAction action in ransomActions)
+            {
+                action.Parameters ??= new Dictionary<string, object>(StringComparer.Ordinal);
+                action.Parameters["offer_silver"] = normalizedOffers[action];
+                actionOfferSilver[action] = normalizedOffers[action];
+            }
+
+            Log.Message(
+                "[RimChat] pay_prisoner_ransom batch total normalized. " +
+                $"original_total={totalOfferSilver}, normalized_total={targetTotalOfferSilver}, " +
+                $"window={pendingBatch.TotalMinOfferSilver}-{pendingBatch.TotalMaxOfferSilver}, " +
+                $"targets={ransomActions.Count}");
+            return true;
+        }
+
+        private static bool TryBuildNormalizedBatchOfferMap(
+            List<AIAction> ransomActions,
+            Dictionary<AIAction, int> actionOfferSilver,
+            int targetTotalOfferSilver,
+            out Dictionary<AIAction, int> normalizedOffers)
+        {
+            normalizedOffers = new Dictionary<AIAction, int>();
+            if (ransomActions == null || actionOfferSilver == null || ransomActions.Count <= 0 || targetTotalOfferSilver <= 0)
+            {
+                return false;
+            }
+
+            int targetCount = ransomActions.Count;
+            if (targetTotalOfferSilver < targetCount)
+            {
+                return false;
+            }
+
+            int weightSum = ransomActions.Sum(action => actionOfferSilver.TryGetValue(action, out int offer) ? Math.Max(1, offer) : 1);
+            if (weightSum <= 0)
+            {
+                return false;
+            }
+
+            int remainingPool = targetTotalOfferSilver - targetCount;
+            int allocated = targetCount;
+            var candidates = new List<BatchOfferScaleCandidate>(targetCount);
+            for (int i = 0; i < targetCount; i++)
+            {
+                AIAction action = ransomActions[i];
+                int weight = actionOfferSilver.TryGetValue(action, out int offer) ? Math.Max(1, offer) : 1;
+                double rawExtra = remainingPool * (double)weight / weightSum;
+                int floorExtra = Math.Max(0, (int)Math.Floor(rawExtra));
+                int normalized = 1 + floorExtra;
+                allocated += floorExtra;
+                candidates.Add(new BatchOfferScaleCandidate(action, i, weight, normalized, rawExtra - floorExtra));
+            }
+
+            int residual = targetTotalOfferSilver - allocated;
+            if (residual < 0)
+            {
+                return false;
+            }
+
+            foreach (BatchOfferScaleCandidate candidate in candidates
+                .OrderByDescending(item => item.FractionRemainder)
+                .ThenByDescending(item => item.Weight)
+                .ThenBy(item => item.Index)
+                .Take(residual))
+            {
+                candidate.NormalizedOffer += 1;
+            }
+
+            int finalTotal = 0;
+            foreach (BatchOfferScaleCandidate candidate in candidates)
+            {
+                int safeOffer = Math.Max(1, candidate.NormalizedOffer);
+                normalizedOffers[candidate.Action] = safeOffer;
+                finalTotal += safeOffer;
+            }
+
+            return finalTotal == targetTotalOfferSilver;
         }
 
         private void HandleBatchRansomPaymentSuccess(
@@ -546,6 +671,7 @@ namespace RimChat.UI
             currentSession.boundRansomTargetPawnLoadId = 0;
             currentSession.boundRansomTargetFactionId = string.Empty;
             currentSession.ClearPendingRansomBatchSelection();
+            currentSession.ClearPendingRansomOfferReference();
             Log.Message("[RimChat] pay_prisoner_ransom succeeded. Cleared request_info(prisoner) state.");
         }
 
@@ -787,6 +913,29 @@ namespace RimChat.UI
                     actionTargetIds.TryGetValue(action, out targetPawnLoadId) &&
                     targetPawnLoadId > 0;
             }
+        }
+
+        private sealed class BatchOfferScaleCandidate
+        {
+            public BatchOfferScaleCandidate(
+                AIAction action,
+                int index,
+                int weight,
+                int normalizedOffer,
+                double fractionRemainder)
+            {
+                Action = action;
+                Index = Math.Max(0, index);
+                Weight = Math.Max(1, weight);
+                NormalizedOffer = Math.Max(1, normalizedOffer);
+                FractionRemainder = Math.Max(0d, fractionRemainder);
+            }
+
+            public AIAction Action { get; }
+            public int Index { get; }
+            public int Weight { get; }
+            public int NormalizedOffer { get; set; }
+            public double FractionRemainder { get; }
         }
 
     }

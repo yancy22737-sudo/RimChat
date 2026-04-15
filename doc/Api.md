@@ -1,4 +1,129 @@
-# RimChat AI API 文档（v0.9.87）
+# RimChat AI API 文档（v0.9.1023）
+
+## `/models` 缺失回退与结构化原文直出接口（v0.9.1023）
+
+- `RimChat.Config.ApiUsabilityDiagnosticService.RunCloudDiagnosticCoroutine(...)`
+  - 新增 `/models` 缺失状态码判定：仅 `404/405/501` 视为“端点不存在但可回退 chat 验证”。
+  - 命中缺失码后：
+    - 跳过 `ModelAvailability` 的模型列表硬校验。
+    - 继续执行 `ChatProbe -> ResponseContractValidation`。
+    - chat 成功时整体可用性判定成功，并在技术细节写入 warning（`models_endpoint_missing_http=...; fallback_to_chat_probe=true`）。
+  - 非缺失码（如 `429/5xx/网络异常`）保持 fail-fast，不放行。
+
+- `RimChat.Config.ApiUsabilityDiagnosticService.ProbeLocalServiceCoroutine(...)`
+  - OpenAI 兼容本地探测中，`/v1/models` 返回 `404/405/501` 不再直接判定本地服务不可用。
+  - 新行为改为继续进入 chat 探测，由 chat 回包作为最终可用性判据。
+
+- `RimChat.AI.AIChatServiceAsync.ProcessRequestCoroutine(...)`
+  - 结构化包络重试耗尽后，移除固定沉浸兜底句注入（`RimChat_ImmersionFallback_*` 路径退出）。
+  - 新行为：直接透传模型原始可见文本（raw passthrough）作为 `parsedResponse` 输出。
+  - 该分支新增日志标签：`Dialogue envelope raw passthrough used after retry`，用于和旧兜底行为区分。
+
+- `RimChat.Persistence.PromptPersistenceService` / `PromptPersistenceService.Hierarchical`
+  - 响应契约段落最前新增统一强约束前置文本：
+    - `### 格式要求`
+    - “最终响应必须是 JSON，且符合这个格式”
+    - `visible_dialogue` JSON 示例块。
+  - RPG 与外交链路统一生效，且在 Prompt Workbench 预览链路可见（WYSIWYG）。
+
+## AI 赎金越界报价全链路钳制热修接口（v0.9.1022）
+
+- RimChat.DiplomacySystem.GameAIInterface.PreparePrisonerRansom(...)
+  - 单目标赎金执行前新增统一归一化入口：基于实时谈判状态计算报价窗口并对越界 offer_silver 执行最近边界夹逼。
+  - 语义收敛：
+    - OfferedSilver：AI 原始报价
+    - AcceptedSilver：实际执行报价（可能被归一化）
+  - 新增 prepare 阶段归一化日志：target/original/window/normalized/current_ask，便于 Player.log 回放核对。
+
+- RimChat.DiplomacySystem.PrisonerRansomResultData
+  - 新增返回字段：
+    - OfferWindowMinSilver
+    - OfferWindowMaxSilver
+  - 结果负载可同时承载原始报价、执行报价、窗口边界，便于 UI 与调试链路一致展示。
+
+- RimChat.UI.Dialog_DiplomacyDialogue.AppendRansomSuccessSystemMessage(...)
+  - 当 paid_submitted 且 OfferedSilver != AcceptedSilver 时，新增系统提示“报价已按区间归一化”。
+  - 保持原有成功提示不变，新增提示仅在发生归一化时显示。
+
+- 多语言键
+  - 新增：
+    - RimChat_RansomOfferNormalizedSystem（1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml）
+    - RimChat_RansomOfferNormalizedSystem（1.6/Languages/English/Keyed/RimChat_Keys.xml）
+  - 禁止硬编码 UI 文本，保持语言系统一致性。
+
+## 赎金区间落点与社交新闻兼容修复接口（v0.9.1019）
+
+- `RimChat.Persistence.PromptPersistenceService.BuildUnifiedChannelSystemPrompt(...)`
+  - `social_circle_post` 通道在原生渲染兼容失败时不再抛 `RimTalkPromptRenderCompatibilityException` 终止流程。
+  - 新行为：记录兼容失败诊断日志后，继续使用结构化渲染文本发起请求。
+
+- `RimChat.Memory.FactionDialogueSession`
+  - 新增单目标赎金快照接口：
+    - `SetPendingRansomOfferReference(int targetPawnLoadId, int currentAskSilver, int minOfferSilver, int maxOfferSilver)`
+    - `ClearPendingRansomOfferReference()`
+    - `TryGetPendingRansomOfferReference(out int targetPawnLoadId, out int currentAskSilver, out int minOfferSilver, out int maxOfferSilver)`
+    - `TryBuildPendingRansomOfferReference(out string referenceBlock)`
+  - 对话引用块新增：`[RansomOfferReference]`，字段为 `target_pawn_load_id/current_ask_silver/offer_window_min_silver/offer_window_max_silver/requirement`。
+
+- `RimChat.UI.Dialog_DiplomacyDialogue`
+  - `BuildAiUserMessage(...)` 现在会稳定注入 `[RansomOfferReference]`（若存在快照）。
+
+- `RimChat.UI.Dialog_DiplomacyDialogue.PrisonerRansomSelection`
+  - `TryHandlePrisonerRansomActionWithSelection(...)` 新增单目标执行前归一化：若 `offer_silver` 越界，夹逼到最近窗口边界再执行。
+  - 选人/取消/批量切换链路会维护单目标快照生命周期，避免跨流程污染。
+
+- `RimChat.UI.Dialog_DiplomacyDialogue.PrisonerRansomBatchRuntime`
+  - `BuildBatchRansomExecutionPlan(...)` 行为更新：批量总价越界时不再直接拒绝，而是自动归一化。
+  - 归一化规则：
+    - 总价先夹逼到 `[total_offer_window_min_silver, total_offer_window_max_silver]`。
+    - 然后按原始报价比例缩放到每个 target。
+    - 使用“小数余量优先分配”做整数修正，保证总和精确。
+    - 若边界小于目标数导致无法满足“每目标>=1”，保持 fail-fast。
+
+- 契约同步
+  - `pay_prisoner_ransom` 合同语义从“无上下限”收敛为“参考系统窗口；越界执行前归一化”。
+  - 批量合同语义从“越界拒绝”升级为“越界自动总价归一化并回写动作参数”。
+## 主动外交/社交新闻快照缓存接口（v0.9.1018）
+
+- `RimChat.Persistence.DiplomacyPromptRuntimeSnapshot`
+  - 只读运行时快照模型，封装主动外交与社交新闻共用的高成本动态文本块：
+    - `EnvironmentPromptBlock`
+    - `MemoryDataBlock`
+    - `FactionInfoBlock`
+    - `PlayerPawnProfileBlock`
+    - `PlayerRoyaltySummaryBlock`
+    - `FactionSettlementSummaryBlock`
+  - 元数据字段：`MemoryRevision / WorldEventRevision / PlayerGoodwill / PlayerRelationKind / PromptFilesStampUtcTicks / SettingsSignature`。
+
+- `RimChat.Persistence.IDiplomacyPromptSnapshotCache`
+  - `WarmupOnLoad()`：读档/开局后初始化队列并启动预热目标集合。
+  - `TryGetSnapshot(Faction faction, out DiplomacyPromptRuntimeSnapshot snapshot)`：请求路径只读获取；未命中不做同步重算。
+  - `Invalidate(Faction faction = null, string reason = "manual")`：按派系或全局失效。
+  - `RequestWarmup(Faction faction, string reason = "request")`：请求分支主动提交预热任务。
+  - `Tick(int currentTick, int maxBuildsPerTick = 1)`：分帧预算构建入口（当前实现每 tick 默认 1 个）。
+
+- `RimChat.Persistence.PromptPersistenceService`
+  - `BuildFullSystemPrompt(...)` 新增 `DiplomacyPromptRuntimeSnapshot runtimeSnapshot` 重载。
+  - `BuildUnifiedChannelSystemPrompt(...)` 新增可选参数 `runtimeSnapshot`，通过线程作用域复用快照动态块。
+  - `BuildRuntimeSnapshotForFaction(...)`：将记忆/据点/谈判者/环境情报重计算集中到预热路径。
+
+- 调用约束
+  - 主动派系消息（`GameComponent_NpcDialoguePushManager`）与社交新闻（`SocialNewsPromptBuilder + NewsRequests`）必须先尝试快照。
+  - 快照未就绪时统一 fail-fast 延迟重试，禁止在请求帧执行兜底同步全量扫描。
+
+## RPGManager Tick 性能根修（v0.9.1016）
+
+- `RimChat.Core.ModDependencyProbe`
+  - 新增 `IsLoaded(string token)`：提供模组依赖可用性缓存探测（首次扫描后缓存命中），用于高频运行时路径降耗。
+- `RimChat.DiplomacySystem.GameComponent_RPGManager.PersonaBootstrap`
+  - `ProcessNpcPersonaRuntimeTick()`：先执行 Tick 节流判断，再执行 RimTalk 依赖判定，减少每 Tick 固定开销。
+  - `ProcessNpcPersonaBootstrapTick()`：在 bootstrap 队列初始化前加入 RimTalk 可用性 fail-fast。
+  - `IsRimTalkLoadedForPersonaBlock()`：改为统一走 `ModDependencyProbe.IsLoaded("rimtalk")`。
+  - `TrySyncPawnPersonaFromRimTalk(...)` / `TryCopyPawnPersonaFromRimTalk(...)`：
+    - 保留原签名（兼容调用方）。
+    - 新增内部重载（传入已解析模板），供运行时扫描、bootstrap 队列扫描、手动全量同步单轮复用模板，避免重复触发配置归一化链。
+- 兼容性
+  - 无对外接口破坏；现有设置页与运行时调用点无需改造。
 
 ## 空投统一市场价倍率系统（v0.9.88）
 

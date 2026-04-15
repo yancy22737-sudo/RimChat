@@ -30,6 +30,7 @@ namespace RimChat.Config
                 {
                     PromptPresetConfig created = _promptPresetService.CreateFromLegacy(this, NextPresetName("Preset"));
                     _promptPresetStore.Presets.Add(created);
+                    InvalidatePresetSummariesCache();
                     _selectedPromptPresetId = created.Id;
                     _presetRenameBuffer = created.Name;
                     CancelPromptWorkspaceInlineRename();
@@ -55,6 +56,7 @@ namespace RimChat.Config
                 {
                     PromptPresetConfig duplicated = _promptPresetService.Duplicate(this, selected, NextPresetName(selected.Name));
                     _promptPresetStore.Presets.Add(duplicated);
+                    InvalidatePresetSummariesCache();
                     _selectedPromptPresetId = duplicated.Id;
                     _presetRenameBuffer = duplicated.Name;
                     CancelPromptWorkspaceInlineRename();
@@ -75,7 +77,7 @@ namespace RimChat.Config
 
         private void DrawPromptWorkspacePresetList(Rect rect)
         {
-            List<PromptPresetSummary> rows = _promptPresetService.BuildSummaries(_promptPresetStore);
+            List<PromptPresetSummary> rows = GetCachedPresetSummaries();
             const float rowStep = 26f;
             Rect view = new Rect(0f, 0f, rect.width - 16f, Mathf.Max(rect.height, rows.Count * rowStep));
             Widgets.BeginScrollView(rect, ref _promptPresetScroll, view);
@@ -209,6 +211,7 @@ namespace RimChat.Config
 
             PromptPresetConfig duplicated = _promptPresetService.Duplicate(this, source, NextPresetName(source.Name));
             _promptPresetStore.Presets.Add(duplicated);
+            InvalidatePresetSummariesCache();
             _selectedPromptPresetId = duplicated.Id;
             _presetRenameBuffer = duplicated.Name;
             CancelPromptWorkspaceInlineRename();
@@ -230,6 +233,7 @@ namespace RimChat.Config
             string deletedName = selected.Name ?? string.Empty;
             bool deletedActive = selected.IsActive;
             _promptPresetStore.Presets.RemoveAll(p => string.Equals(p.Id, selected.Id, StringComparison.Ordinal));
+            InvalidatePresetSummariesCache();
             _selectedPromptPresetId = _promptPresetStore.Presets.FirstOrDefault()?.Id ?? string.Empty;
             if (deletedActive && !string.IsNullOrWhiteSpace(_selectedPromptPresetId))
             {
@@ -337,6 +341,7 @@ namespace RimChat.Config
                 target.Name = next;
                 target.UpdatedAtUtc = DateTime.UtcNow.ToString("o");
                 _presetRenameBuffer = target.Name;
+                InvalidatePresetSummariesCache();
                 _promptPresetService.SaveAll(_promptPresetStore);
                 if (!string.Equals(beforeName, target.Name, StringComparison.Ordinal))
                 {

@@ -877,9 +877,12 @@ namespace RimChat.AI
 
                                 if (!parsedEnvelope.IsValid)
                                 {
-                                    parsedResponse = ImmersionOutputGuard.BuildLocalFallbackDialogue(usageChannel);
-                                    parsedEnvelope = DialogueResponseEnvelopeParser.Parse(parsedResponse, usageChannel);
-                                    Log.Warning($"[RimChat] Dialogue envelope fallback used after retry: reason={parsedEnvelope?.FailureReason ?? "invalid_dialogue_contract"}");
+                                    string envelopeFailureReason = parsedEnvelope.FailureReason;
+                                    string rawPassthrough = parsedResponse ?? string.Empty;
+                                    parsedEnvelope = null;
+                                    parsedResponse = rawPassthrough;
+                                    string responsePreview = BuildResponsePreviewForLog(rawPassthrough, 280);
+                                    Log.Warning($"[RimChat] Dialogue envelope raw passthrough used after retry: reason={envelopeFailureReason}, response_preview={responsePreview}");
                                 }
                                 else
                                 {
@@ -1593,7 +1596,7 @@ namespace RimChat.AI
                     $"DIPLOMACY_CONTRACT_VIOLATION={reasonTag}. Return exactly one JSON object only with visible_dialogue and optional actions. Put all visible dialogue inside visible_dialogue. If you make explicit execution commitments (arranged/submitted/dispatched), include the matching action inside the same top-level actions array. Do not place dialogue outside JSON. Do not append a trailing JSON object. " +
                     "Use request_info(info_type=prisoner) only when ransom target information is missing; if target_pawn_load_id is already valid, pay_prisoner_ransom may be called directly. " +
                     "For pay_prisoner_ransom, never claim payment/submission unless target_pawn_load_id and offer_silver are both valid positive integers. " +
-                    "For pay_prisoner_ransom, keep offer_silver inside the current offer window from system messages; current ask is a preferred reference, not a strict exact-match requirement. " +
+                    "For pay_prisoner_ransom, keep offer_silver inside the current offer window from system messages; current ask is a preferred reference, not a strict exact-match requirement. If offer_silver is out of range, execution will clamp it to the nearest window boundary before submit. " +
                     "If a [RansomBatchSelection] block is present and you choose to output pay_prisoner_ransom this turn, output one action for every listed target_pawn_load_id exactly once in the same response, and keep total offer_silver inside the provided batch window. " +
                     "If target is unknown or offer is missing, rewrite as one in-character clarification question and do NOT claim the request was submitted."
             });
@@ -1736,7 +1739,7 @@ namespace RimChat.AI
             return style + " Output in-character diplomacy dialogue. " +
                 "Prefer 1-2 concise sentences. " +
                 "Only append one trailing {\"actions\":[{\"action\":\"snake_case_action\",\"parameters\":{...}}]} JSON object when needed. " +
-                "For pay_prisoner_ransom, keep offer_silver inside the current offer window from system messages; current ask is recommended but not mandatory exact match. " +
+                "For pay_prisoner_ransom, keep offer_silver inside the current offer window from system messages; current ask is recommended but not mandatory exact match. If offer_silver is out of range, execution will clamp it to the nearest window boundary before submit. " +
                 "When [RansomBatchSelection] exists and you emit pay_prisoner_ransom, emit exactly one action per listed target in that same response and keep the total offer inside the batch window. " +
                 "Do not wrap dialogue in JSON fields.";
         }
@@ -2315,3 +2318,4 @@ namespace RimChat.AI
         }
     }
 }
+

@@ -26,7 +26,8 @@ namespace RimChat.Persistence
             string payloadText = "",
             bool deterministicPreview = false,
             bool allowMemoryCompressionScheduling = true,
-            bool allowMemoryColdLoad = true)
+            bool allowMemoryColdLoad = true,
+            DiplomacyPromptRuntimeSnapshot runtimeSnapshot = null)
         {
             string currentTurnUserIntent = RpgPromptTurnContextScope.Current?.CurrentTurnUserIntent ?? string.Empty;
             bool resolvedAllowMemoryCompressionScheduling =
@@ -34,12 +35,17 @@ namespace RimChat.Persistence
             bool resolvedAllowMemoryColdLoad =
                 RpgPromptTurnContextScope.Current?.AllowMemoryColdLoad ?? allowMemoryColdLoad;
             IDisposable turnScope = null;
+            IDisposable runtimeScope = null;
             if (rootChannel == RimTalkPromptChannel.Rpg && !deterministicPreview)
             {
                 turnScope = RpgPromptTurnContextScope.Push(
                     currentTurnUserIntent,
                     resolvedAllowMemoryCompressionScheduling,
                     resolvedAllowMemoryColdLoad);
+            }
+            if (runtimeSnapshot != null)
+            {
+                runtimeScope = PushRuntimeSnapshotScope(runtimeSnapshot);
             }
 
             try
@@ -94,7 +100,14 @@ namespace RimChat.Persistence
                         string message = string.IsNullOrWhiteSpace(diagnostic.ErrorMessage)
                             ? "social_circle_post native RimTalk render compatibility failed."
                             : diagnostic.ErrorMessage;
-                        throw new RimTalkPromptRenderCompatibilityException(message, diagnostic);
+                        Log.Warning(
+                            "[RimChat] social_circle_post native render compatibility failure. " +
+                            "Falling back to structured prompt text for this request. " +
+                            $"channel={diagnostic?.PromptChannel ?? string.Empty}, " +
+                            $"bound_method={diagnostic?.BoundMethod ?? string.Empty}, " +
+                            $"bound_variant={diagnostic?.BoundMethodVariant ?? string.Empty}, " +
+                            $"failure_stage={diagnostic?.FailureStage ?? string.Empty}, " +
+                            $"error={message}");
                     }
                 }
 
@@ -106,6 +119,7 @@ namespace RimChat.Persistence
             }
             finally
             {
+                runtimeScope?.Dispose();
                 turnScope?.Dispose();
             }
         }
@@ -569,7 +583,7 @@ namespace RimChat.Persistence
                 PromptChannel = normalizedChannel
             };
 
-            foreach (PromptSectionSchemaItem section in PromptSectionSchemaCatalog.GetMainChainSections())
+            foreach (PromptSectionSchemaItem section in GetOrderedSectionsForCompose(normalizedChannel))
             {
                 string template = RimChatMod.Settings?.ResolvePromptSectionText(normalizedChannel, section.Id) ?? string.Empty;
                 bool rawModVariablesSection = IsRpgModVariablesRawOutputSection(
@@ -610,6 +624,13 @@ namespace RimChat.Persistence
             aggregate.RenderedText = PromptHierarchyRenderer.Render(
                 BuildMainPromptSectionNodeForAggregate(aggregate.Sections));
             return aggregate;
+        }
+
+        private static IReadOnlyList<PromptSectionSchemaItem> GetOrderedSectionsForCompose(string promptChannel)
+        {
+            List<PromptSectionLayoutConfig> sectionLayouts =
+                RimChatMod.Settings?.GetPromptSectionLayouts(promptChannel) ?? new List<PromptSectionLayoutConfig>();
+            return PromptSectionSchemaCatalog.GetOrderedMainChainSections(sectionLayouts, enabledOnly: true);
         }
 
         private static bool IsRpgModVariablesRawOutputSection(
@@ -697,7 +718,8 @@ namespace RimChat.Persistence
             bool deterministicPreview,
             DialogueScenarioContext scenarioContext,
             EnvironmentPromptConfig environmentConfig,
-            IReadOnlyDictionary<string, object> additionalValues)
+            IReadOnlyDictionary<string, object> additionalValues,
+            Dictionary<string, object> cachedComposeValues = null)
         {
             string source = template ?? string.Empty;
             if (source.IndexOf("{{", StringComparison.Ordinal) < 0)
@@ -705,15 +727,23 @@ namespace RimChat.Persistence
                 return source.Trim();
             }
 
-            Dictionary<string, object> values = deterministicPreview
-                ? BuildDeterministicComposeValues(promptChannel, scenarioContext, additionalValues)
-                : BuildRuntimeComposeValues(
-                    "prompt_sections." + (promptChannel ?? string.Empty) + ".mod_variables_raw",
-                    ResolveTemplateRenderChannel(promptChannel, rootChannel, scenarioContext),
-                    promptChannel,
-                    scenarioContext,
-                    environmentConfig,
-                    additionalValues);
+            Dictionary<string, object> values;
+            if (deterministicPreview && cachedComposeValues != null)
+            {
+                values = cachedComposeValues;
+            }
+            else
+            {
+                values = deterministicPreview
+                    ? BuildDeterministicComposeValues(promptChannel, scenarioContext, additionalValues)
+                    : BuildRuntimeComposeValues(
+                        "prompt_sections." + (promptChannel ?? string.Empty) + ".mod_variables_raw",
+                        ResolveTemplateRenderChannel(promptChannel, rootChannel, scenarioContext),
+                        promptChannel,
+                        scenarioContext,
+                        environmentConfig,
+                        additionalValues);
+            }
             string rendered = TemplateVariableRegex.Replace(source, match =>
             {
                 string normalized = NormalizeTemplateVariableName(match.Groups[1].Value);
@@ -1124,7 +1154,8 @@ namespace RimChat.Persistence
             bool deterministicPreview,
             DialogueScenarioContext scenarioContext,
             EnvironmentPromptConfig environmentConfig,
-            IReadOnlyDictionary<string, object> additionalValues)
+            IReadOnlyDictionary<string, object> additionalValues,
+            Dictionary<string, object> cachedComposeValues = null)
         {
             string template = templateText?.Trim() ?? string.Empty;
             if (template.Length == 0)
@@ -1138,9 +1169,19 @@ namespace RimChat.Persistence
             }
 
             string renderChannel = ResolveTemplateRenderChannel(promptChannel, rootChannel, scenarioContext);
-            Dictionary<string, object> values = deterministicPreview
-                ? BuildDeterministicComposeValues(promptChannel, scenarioContext, additionalValues)
-                : BuildRuntimeComposeValues(templateId, renderChannel, promptChannel, scenarioContext, environmentConfig, additionalValues);
+            Dictionary<string, object> values;
+            if (deterministicPreview && cachedComposeValues != null)
+            {
+                // Reuse pre-built compose values from the build state — avoids repeated CloneSnapshotValues
+                values = cachedComposeValues;
+            }
+            else
+            {
+                values = deterministicPreview
+                    ? BuildDeterministicComposeValues(promptChannel, scenarioContext, additionalValues)
+                    : BuildRuntimeComposeValues(templateId, renderChannel, promptChannel, scenarioContext, environmentConfig, additionalValues);
+            }
+
             PromptRenderContext renderContext = PromptRenderContext.Create(templateId, renderChannel);
             renderContext.SetValues(values);
             return PromptTemplateRenderer.RenderOrThrow(templateId, renderChannel, template, renderContext).Trim();
@@ -1489,6 +1530,18 @@ namespace RimChat.Persistence
                 return values;
             }
 
+            // Fall back to last-known snapshot values (expired but preserved) before using
+            // hard-coded placeholders — this resolves many variables that would otherwise
+            // render as raw {{ ... }} tokens in the preview.
+            values = TryBuildFromLastKnown(promptChannel);
+            if (values != null)
+            {
+                values["ctx.channel"] = promptChannel ?? string.Empty;
+                values["ctx.mode"] = ResolvePromptModeForCompose(scenarioContext, promptChannel);
+                MergeAdditionalValues(values, additionalValues);
+                return values;
+            }
+
             values = CreatePromptVariableSeed();
             values["ctx.channel"] = promptChannel ?? string.Empty;
             values["ctx.mode"] = ResolvePromptModeForCompose(scenarioContext, promptChannel);
@@ -1523,6 +1576,17 @@ namespace RimChat.Persistence
             }
 
             return snapshot;
+        }
+
+        private static Dictionary<string, object> TryBuildFromLastKnown(string promptChannel)
+        {
+            Dictionary<string, object> lastKnown = PromptRequestSnapshotCache.CloneLastKnownValues(promptChannel);
+            if (lastKnown == null || lastKnown.Count == 0)
+            {
+                return null;
+            }
+
+            return lastKnown;
         }
 
         private static void MergeAdditionalValues(

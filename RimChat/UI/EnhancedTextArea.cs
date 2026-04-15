@@ -43,6 +43,12 @@ namespace RimChat.UI
         public event Action OnFocusLost;
         public event Action OnTextSubmitted;
 
+        // Content height cache to avoid per-frame style calculations (A optimization)
+        private string _cachedHeightText;
+        private float _cachedHeightWidth;
+        private float _cachedContentHeight = 20f;
+        private GUIStyle _cachedTextAreaStyle;
+
         #endregion
 
         #region 属性
@@ -314,10 +320,19 @@ namespace RimChat.UI
         {
             if (string.IsNullOrEmpty(text)) return 20f;
 
-            // 估算text高度
+            // Cache content height to avoid per-frame style calculations (A optimization)
             GUIStyle style = GetTextAreaStyle();
+            if (_cachedHeightText == text && Mathf.Abs(_cachedHeightWidth - width) < 0.5f && _cachedTextAreaStyle == style)
+            {
+                return _cachedContentHeight;
+            }
+
+            _cachedHeightText = text;
+            _cachedHeightWidth = width;
+            _cachedTextAreaStyle = style;
             float height = style.CalcHeight(new GUIContent(text), width);
-            return Mathf.Max(height + 20f, 50f);
+            _cachedContentHeight = Mathf.Max(height + 20f, 50f);
+            return _cachedContentHeight;
         }
 
         private void ClampScrollPosition(Rect viewRect, Rect visibleRect)

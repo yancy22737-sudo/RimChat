@@ -10,9 +10,9 @@ namespace RimChat.Dialogue
     internal static class PawnDialogueRoutingPolicy
     {
         /// <summary>
-        /// Check if a pawn's race is eligible for RPG dialogue.
-        /// Uses capability-based whitelist: Humanlike, Mechanoid and Animal always eligible;
-        /// ToolUser requires story/skills subsystems (excludes VehiclePawn etc.).
+        /// Check if a pawn can participate in RPG dialogue.
+        /// Humanlike/Mechanoid/Animal are allowed.
+        /// ToolUser requires persona-related subsystems to exclude shell pawns (for example VehiclePawn).
         /// </summary>
         internal static bool IsRpgDialogueEligibleRace(Pawn pawn)
         {
@@ -21,49 +21,41 @@ namespace RimChat.Dialogue
                 return false;
             }
 
-            // Humanlike, Mechanoid and Animal always have the required subsystems
             if (pawn.RaceProps.Humanlike || pawn.RaceProps.IsMechanoid || pawn.RaceProps.Animal)
             {
                 return true;
             }
 
-            // ToolUser may include non-standard Pawn subclasses (e.g. VehiclePawn)
-            // that lack story/skills — verify capability before allowing
-            if (pawn.RaceProps.ToolUser && pawn.story != null && pawn.skills != null)
+            if (!pawn.RaceProps.ToolUser)
             {
-                return true;
+                return false;
             }
 
-            return false;
+            return HasPersonaSubsystems(pawn);
         }
 
         /// <summary>
-        /// Return a reason key explaining why a pawn's race is not eligible for RPG dialogue.
-        /// Returns null if the race IS eligible.
+        /// Check if a pawn can use RimTalk persona sync.
+        /// Animals remain dialogue-eligible but are excluded from RimTalk persona sync by design.
         /// </summary>
-        internal static string GetIneligibleRaceReason(Pawn pawn)
+        internal static bool IsRimTalkPersonaSyncEligible(Pawn pawn)
         {
-            if (pawn?.RaceProps == null)
+            if (!IsRpgDialogueEligibleRace(pawn) || pawn?.RaceProps == null)
             {
-                return "RimChat_Converse_Disabled_NoRace";
+                return false;
             }
 
-            if (pawn.RaceProps.Humanlike || pawn.RaceProps.IsMechanoid || pawn.RaceProps.Animal)
+            if (pawn.RaceProps.Animal)
             {
-                return null;
+                return false;
             }
 
-            if (pawn.RaceProps.ToolUser)
-            {
-                if (pawn.story == null || pawn.skills == null)
-                {
-                    return "RimChat_Converse_Disabled_IncompatibleRace";
-                }
-                return null;
-            }
+            return HasPersonaSubsystems(pawn);
+        }
 
-            // Pawn has RaceProps but none of the known categories
-            return "RimChat_Converse_Disabled_IncompatibleRace";
+        private static bool HasPersonaSubsystems(Pawn pawn)
+        {
+            return pawn?.story != null && pawn.skills != null;
         }
 
         internal static bool ShouldUseRpgDialogue(Pawn initiator, Pawn target, out string reason)
@@ -78,6 +70,18 @@ namespace RimChat.Dialogue
             if (target == null)
             {
                 reason = "target_null";
+                return false;
+            }
+
+            if (!IsRpgDialogueEligibleRace(target))
+            {
+                reason = "target_race_ineligible";
+                return false;
+            }
+
+            if (IsTradeCaravanPawn(target))
+            {
+                reason = "target_trade_caravan";
                 return false;
             }
 
@@ -101,6 +105,24 @@ namespace RimChat.Dialogue
             string dutyName = pawn.mindState?.duty?.def?.defName ?? string.Empty;
             return dutyName.IndexOf("TradeWithColony", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
                    dutyName.IndexOf("Trader", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
+        /// Returns a localized reason string if the pawn's race is ineligible for RPG dialogue, or null if eligible.
+        /// </summary>
+        internal static string GetIneligibleRaceReason(Pawn pawn)
+        {
+            if (pawn?.RaceProps == null)
+            {
+                return "RimChat_RaceNotEligible_NullRace".Translate();
+            }
+
+            if (IsRpgDialogueEligibleRace(pawn))
+            {
+                return null;
+            }
+
+            return "RimChat_RaceNotEligible_Incompatible".Translate(pawn.LabelShort ?? pawn.KindLabel);
         }
     }
 }

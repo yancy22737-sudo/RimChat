@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimChat.AI;
 using RimChat.Memory;
+using RimChat.Persistence;
 using RimChat.Prompting;
 using RimWorld;
 using Verse;
@@ -16,12 +17,49 @@ namespace RimChat.DiplomacySystem
     {
         private const int MaxPendingSocialNewsRequests = 4;
         private const int FailedOriginAutoRetryDays = 2;
+        private const int SnapshotRetryDelayTicks = 250;
         private readonly Dictionary<string, PendingSocialNewsRequest> pendingSocialNewsRequests =
             new Dictionary<string, PendingSocialNewsRequest>();
+        private readonly List<DeferredSocialNewsSeed> deferredSocialNewsSeeds =
+            new List<DeferredSocialNewsSeed>();
 
         private void ClearSocialTransientState()
         {
             pendingSocialNewsRequests.Clear();
+            deferredSocialNewsSeeds.Clear();
+        }
+
+        private void ProcessDeferredSocialNewsSeeds(int currentTick)
+        {
+            if (!IsSocialCircleEnabled() || currentTick <= 0 || deferredSocialNewsSeeds.Count == 0)
+            {
+                return;
+            }
+
+            if (!CanGenerateSocialNews())
+            {
+                return;
+            }
+
+            List<DeferredSocialNewsSeed> dueItems = deferredSocialNewsSeeds
+                .Where(item => item != null && item.DueTick <= currentTick)
+                .OrderBy(item => item.DueTick)
+                .Take(3)
+                .ToList();
+            foreach (DeferredSocialNewsSeed item in dueItems)
+            {
+                deferredSocialNewsSeeds.Remove(item);
+                if (item?.Seed == null || !item.Seed.IsValid())
+                {
+                    continue;
+                }
+
+                TryQueueNewsSeed(item.Seed, currentTick, item.AllowFailedRetry);
+                if (pendingSocialNewsRequests.Count >= MaxPendingSocialNewsRequests)
+                {
+                    break;
+                }
+            }
         }
 
         private bool TryQueueNextScheduledNews(DebugGenerateReason reason, int currentTick, bool bypassSimulationToggle)
@@ -122,10 +160,16 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
+            if (!TryResolvePromptSnapshotOrDefer(seed, currentTick, allowFailedRetry, out DiplomacyPromptRuntimeSnapshot snapshot))
+            {
+                failureReason = SocialPostEnqueueFailureReason.None;
+                return true;
+            }
+
             List<ChatMessageData> messages;
             try
             {
-                messages = SocialNewsPromptBuilder.BuildMessages(seed);
+                messages = SocialNewsPromptBuilder.BuildMessages(seed, snapshot);
                 Log.Message(
                     "[RimChat][SocialNewsPrompt] "
                     + $"origin_type={seed.OriginType}, origin_key={seed.OriginKey ?? string.Empty}, "
@@ -174,6 +218,69 @@ namespace RimChat.DiplomacySystem
             };
             failureReason = SocialPostEnqueueFailureReason.None;
             return true;
+        }
+
+        private bool TryResolvePromptSnapshotOrDefer(
+            SocialNewsSeed seed,
+            int currentTick,
+            bool allowFailedRetry,
+            out DiplomacyPromptRuntimeSnapshot snapshot)
+        {
+            snapshot = null;
+            Faction snapshotFaction = seed?.SourceFaction ?? seed?.TargetFaction;
+            if (snapshotFaction == null)
+            {
+                return true;
+            }
+
+            IDiplomacyPromptSnapshotCache cache = DiplomacyPromptSnapshotCache.Instance;
+            cache.RequestWarmup(snapshotFaction, "social_news_seed");
+            if (cache.TryGetSnapshot(snapshotFaction, out snapshot))
+            {
+                return true;
+            }
+
+            EnqueueDeferredSocialNewsSeed(seed, currentTick + SnapshotRetryDelayTicks, allowFailedRetry);
+            return false;
+        }
+
+        private void EnqueueDeferredSocialNewsSeed(SocialNewsSeed seed, int dueTick, bool allowFailedRetry)
+        {
+            if (seed == null || !seed.IsValid())
+            {
+                return;
+            }
+
+            string key = BuildDeferredSocialSeedKey(seed);
+            DeferredSocialNewsSeed existing = deferredSocialNewsSeeds.FirstOrDefault(item =>
+                item != null && string.Equals(item.Key, key, StringComparison.Ordinal));
+            if (existing != null)
+            {
+                existing.DueTick = Math.Min(existing.DueTick, dueTick);
+                existing.AllowFailedRetry |= allowFailedRetry;
+                return;
+            }
+
+            deferredSocialNewsSeeds.Add(new DeferredSocialNewsSeed
+            {
+                Key = key,
+                Seed = seed,
+                DueTick = dueTick,
+                AllowFailedRetry = allowFailedRetry
+            });
+        }
+
+        private static string BuildDeferredSocialSeedKey(SocialNewsSeed seed)
+        {
+            if (!string.IsNullOrWhiteSpace(seed?.OriginKey))
+            {
+                return $"{seed.OriginType}:{seed.OriginKey}";
+            }
+
+            int summaryHash = GenText.StableStringHash(seed?.Summary ?? string.Empty);
+            string sourceId = seed?.SourceFaction?.GetUniqueLoadID() ?? "none";
+            string targetId = seed?.TargetFaction?.GetUniqueLoadID() ?? "none";
+            return $"{seed?.OriginType}:{sourceId}:{targetId}:{summaryHash}";
         }
 
         private bool CanGenerateSocialNews()
@@ -519,6 +626,14 @@ namespace RimChat.DiplomacySystem
         {
             public SocialNewsSeed Seed;
             public int QueuedTick;
+        }
+
+        private sealed class DeferredSocialNewsSeed
+        {
+            public string Key = string.Empty;
+            public SocialNewsSeed Seed;
+            public int DueTick;
+            public bool AllowFailedRetry;
         }
 
         private static SocialPostEnqueueFailureReason MapForceFailureToEnqueueFailure(SocialForceGenerateFailureReason failureReason)

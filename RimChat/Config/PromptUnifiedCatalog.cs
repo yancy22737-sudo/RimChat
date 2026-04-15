@@ -283,6 +283,24 @@ namespace RimChat.Config
             return GetOrCreateChannel(channel).GetOrderedNodeLayouts(channel);
         }
 
+        public List<PromptSectionLayoutConfig> GetOrderedSectionLayouts(string promptChannel)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            return GetOrCreateChannel(channel).GetOrderedSectionLayouts();
+        }
+
+        public void SetSectionLayout(string promptChannel, string sectionId, int order)
+        {
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            string normalizedSection = PromptSectionSchemaCatalog.NormalizeSectionId(sectionId);
+            if (string.IsNullOrWhiteSpace(normalizedSection))
+            {
+                return;
+            }
+
+            GetOrCreateChannel(channel).SetSectionLayout(normalizedSection, order);
+        }
+
         public List<PromptUnifiedTemplateAliasConfig> GetTemplateAliases(string promptChannel)
         {
             string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
@@ -559,6 +577,7 @@ namespace RimChat.Config
         public List<PromptUnifiedSectionContent> Sections = new List<PromptUnifiedSectionContent>();
         public List<PromptUnifiedNodeContent> Nodes = new List<PromptUnifiedNodeContent>();
         public List<PromptUnifiedNodeLayoutConfig> NodeLayout = new List<PromptUnifiedNodeLayoutConfig>();
+        public List<PromptSectionLayoutConfig> SectionLayout = new List<PromptSectionLayoutConfig>();
         public List<PromptUnifiedTemplateAliasConfig> TemplateAliases = new List<PromptUnifiedTemplateAliasConfig>();
 
         public void ExposeData()
@@ -567,11 +586,13 @@ namespace RimChat.Config
             Scribe_Collections.Look(ref Sections, "sections", LookMode.Deep);
             Scribe_Collections.Look(ref Nodes, "nodes", LookMode.Deep);
             Scribe_Collections.Look(ref NodeLayout, "nodeLayout", LookMode.Deep);
+            Scribe_Collections.Look(ref SectionLayout, "sectionLayout", LookMode.Deep);
             Scribe_Collections.Look(ref TemplateAliases, "templateAliases", LookMode.Deep);
             PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel);
             Sections ??= new List<PromptUnifiedSectionContent>();
             Nodes ??= new List<PromptUnifiedNodeContent>();
             NodeLayout ??= new List<PromptUnifiedNodeLayoutConfig>();
+            SectionLayout ??= new List<PromptSectionLayoutConfig>();
             TemplateAliases ??= new List<PromptUnifiedTemplateAliasConfig>();
         }
 
@@ -731,6 +752,37 @@ namespace RimChat.Config
             existing.Content = content?.Trim() ?? string.Empty;
         }
 
+        public void SetSectionLayout(string sectionId, int order)
+        {
+            string normalized = PromptSectionSchemaCatalog.NormalizeSectionId(sectionId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return;
+            }
+
+            SectionLayout ??= new List<PromptSectionLayoutConfig>();
+            PromptSectionLayoutConfig existing = SectionLayout.FirstOrDefault(s =>
+                s != null && string.Equals(s.SectionId, normalized, StringComparison.OrdinalIgnoreCase));
+            if (existing == null)
+            {
+                SectionLayout.Add(PromptSectionLayoutConfig.Create(normalized, order));
+                return;
+            }
+
+            existing.Order = order;
+        }
+
+        public List<PromptSectionLayoutConfig> GetOrderedSectionLayouts()
+        {
+            Normalize();
+            return SectionLayout
+                .Where(item => item != null)
+                .Select(item => item.Clone())
+                .OrderBy(item => item.Order)
+                .ThenBy(item => item.SectionId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
         public void SetNode(string nodeId, string content)
         {
             string normalized = PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId);
@@ -849,6 +901,16 @@ namespace RimChat.Config
                 }
 
                 SetNodeLayout(layout.NodeId, layout.GetSlot(), layout.Order, layout.Enabled);
+            }
+
+            foreach (PromptSectionLayoutConfig sectionLayout in source.SectionLayout ?? new List<PromptSectionLayoutConfig>())
+            {
+                if (sectionLayout == null)
+                {
+                    continue;
+                }
+
+                SetSectionLayout(sectionLayout.SectionId, sectionLayout.Order);
             }
 
             foreach (PromptUnifiedTemplateAliasConfig alias in source.TemplateAliases ?? new List<PromptUnifiedTemplateAliasConfig>())
@@ -1315,6 +1377,56 @@ namespace RimChat.Config
                 case "strategy_scenario_dossier_template": return 270;
                 default: return 1000;
             }
+        }
+    }
+
+    [Serializable]
+    public sealed class PromptSectionLayoutConfig : IExposable
+    {
+        public string SectionId = string.Empty;
+        public int Order = int.MaxValue;
+        public bool Enabled = true;
+
+        public PromptSectionLayoutConfig() { }
+
+        internal PromptSectionLayoutConfig(string sectionId, int order, bool enabled = true)
+        {
+            SectionId = sectionId ?? string.Empty;
+            Order = Math.Max(0, order);
+            Enabled = enabled;
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref SectionId, "sectionId", string.Empty);
+            Scribe_Values.Look(ref Order, "order", int.MaxValue);
+            Scribe_Values.Look(ref Enabled, "enabled", true);
+            SectionId = PromptSectionSchemaCatalog.NormalizeSectionId(SectionId);
+            if (Order < 0)
+            {
+                Order = 0;
+            }
+        }
+
+        public PromptSectionLayoutConfig Clone()
+        {
+            return new PromptSectionLayoutConfig(SectionId, Order, Enabled);
+        }
+
+        public static PromptSectionLayoutConfig Create(string sectionId, int order, bool enabled = true)
+        {
+            return new PromptSectionLayoutConfig(
+                PromptSectionSchemaCatalog.NormalizeSectionId(sectionId),
+                order,
+                enabled);
+        }
+    }
+
+    internal static class PromptSectionLayoutDefaults
+    {
+        internal static PromptSectionLayoutConfig BuildDefaultLayout(string sectionId, int defaultOrder)
+        {
+            return PromptSectionLayoutConfig.Create(sectionId, defaultOrder);
         }
     }
 

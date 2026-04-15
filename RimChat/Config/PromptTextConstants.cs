@@ -1,4 +1,4 @@
-﻿namespace RimChat.Config
+namespace RimChat.Config
 {
     /// <summary>/// Dependencies: none.
  /// Responsibility: provide a single source of truth for repeated prompt default text literals.
@@ -116,6 +116,9 @@
         public const string CriticalActionRulesReference =
             "所有协议与边界规则以上方“输出规范权威区”为准。";
         public const string NoActionResponseHint = "如果不需要动作，请仍输出一个 JSON 对象，只保留 visible_dialogue，不要附加 actions。";
+        public const string StrictJsonFormatHeader = "### 格式要求";
+        public const string StrictJsonFormatRequirement = "最终响应必须是 JSON，且符合这个格式：";
+        public const string StrictJsonFormatTemplate = "{\n  \"visible_dialogue\":\"响应文本\"\n}";
 
         public const string GoodwillPeacePolicyHeader = "动态和平策略（基于好感）：";
         public const string GoodwillPeacePolicyVeryLowLine1 =

@@ -20,7 +20,8 @@ namespace RimChat.Config
         private enum PromptWorkbenchInfoPanel
         {
             Preview = 0,
-            Variables = 1
+            Variables = 1,
+            FullPreview = 2
         }
 
         private IPromptPresetService _promptPresetService;
@@ -28,6 +29,11 @@ namespace RimChat.Config
         private string _selectedPromptPresetId = string.Empty;
         private string _presetRenameBuffer = string.Empty;
         private Vector2 _promptPresetScroll = Vector2.zero;
+
+        // Preset summaries cache to eliminate per-frame JSON serialization
+        private List<PromptPresetSummary> _cachedPresetSummaries;
+        private int _cachedPresetSummariesCount = -1;
+        private string _cachedPresetSummariesActiveId;
         private PromptWorkbenchChannel _workbenchChannel = PromptWorkbenchChannel.Diplomacy;
         private PromptWorkbenchInfoPanel _workbenchSidePanelTab = PromptWorkbenchInfoPanel.Preview;
         private string _workbenchVariableInsertToken = string.Empty;
@@ -38,6 +44,38 @@ namespace RimChat.Config
         private RimTalkPromptChannel _workbenchEditingConfigChannel = RimTalkPromptChannel.Diplomacy;
         private bool _workbenchEditingConfigReady;
         private string _workbenchPromptChannel = string.Empty;
+
+        /// <summary>
+        /// Gets cached preset summaries. Rebuilds only when preset count or active preset changes.
+        /// Eliminates per-frame JSON serialization in BuildSummaries.
+        /// </summary>
+        private List<PromptPresetSummary> GetCachedPresetSummaries()
+        {
+            int currentCount = _promptPresetStore?.Presets?.Count ?? 0;
+            string currentActiveId = _promptPresetStore?.ActivePresetId;
+
+            if (_cachedPresetSummaries == null ||
+                _cachedPresetSummariesCount != currentCount ||
+                _cachedPresetSummariesActiveId != currentActiveId)
+            {
+                _cachedPresetSummaries = _promptPresetService?.BuildSummaries(_promptPresetStore)
+                    ?? new List<PromptPresetSummary>();
+                _cachedPresetSummariesCount = currentCount;
+                _cachedPresetSummariesActiveId = currentActiveId;
+            }
+
+            return _cachedPresetSummaries;
+        }
+
+        /// <summary>
+        /// Invalidates the preset summaries cache. Call after any preset mutation.
+        /// </summary>
+        private void InvalidatePresetSummariesCache()
+        {
+            _cachedPresetSummaries = null;
+            _cachedPresetSummariesCount = -1;
+            _cachedPresetSummariesActiveId = null;
+        }
 
         internal void FlushPromptEditorsToStorageForPreset(bool persistToFiles = false)
         {
@@ -312,6 +350,7 @@ namespace RimChat.Config
         {
             _workbenchEditingConfig = null;
             _workbenchEditingConfigReady = false;
+            MarkWorkspaceAllDirty();
         }
 
         private void DrawWorkbenchPresetPanel(Rect rect)
@@ -440,6 +479,7 @@ namespace RimChat.Config
             if (Widgets.ButtonInvisible(rect))
             {
                 _workbenchSidePanelTab = panel;
+                MarkWorkspaceDirty(WorkspaceDirtySidePanel);
             }
         }
 
@@ -808,19 +848,20 @@ namespace RimChat.Config
             _advancedPromptMode = false;
             SetPromptWorkbenchExperimentalEnabled(false);
 
-            if (Find.WindowStack.WindowOfType<Dialog_PromptWorkbenchLarge>() != null)
+            // Close existing popup if open, then open a fresh large-size workbench window.
+            Dialog_PromptWorkbenchLarge existing = Find.WindowStack.WindowOfType<Dialog_PromptWorkbenchLarge>();
+            if (existing != null)
             {
-                return;
+                Find.WindowStack.TryRemove(existing);
             }
 
+            EnsurePromptWorkspaceSelection();
             Find.WindowStack.Add(new Dialog_PromptWorkbenchLarge(this));
         }
 
         internal void SetWorkbenchChannelRimTalkRpg()
         {
-            _workbenchChannel = PromptWorkbenchChannel.Rpg;
-            SetPromptWorkbenchExperimentalEnabled(false);
-            selectedTab = 2;
+            OpenPromptWorkbenchWindowForRpg();
         }
 
         private void ShowImportPresetDialog()

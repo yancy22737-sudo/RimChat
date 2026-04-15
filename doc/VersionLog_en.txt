@@ -1,4 +1,120 @@
-﻿0.9.1009
+0.9.1023
+- `/models` fallback + raw passthrough on structured-parse failure + strict JSON preamble (root fix across validation and dialogue paths):
+  1. [Diagnostics] `ApiUsabilityDiagnosticService.RunCloudDiagnosticCoroutine` now treats only `404/405/501` as “models endpoint missing”; in this case it skips strict model-availability gating and promotes `chat probe + contract` to final availability truth.
+  2. [Diagnostics] Cloud usability test now succeeds (with warning detail) when `/models` is missing but chat is reachable; non-missing failures (`429/5xx/network`) remain fail-fast.
+  3. [Local diagnostics] `ProbeLocalServiceCoroutine` no longer marks OpenAI-compatible local service as down when `/v1/models` returns `404/405/501`; it proceeds to chat probe for final validation.
+  4. [Dialogue path] `AIChatServiceAsync.ProcessRequestCoroutine` removes fixed immersion fallback sentence after structured-envelope retries are exhausted, and switches to raw model text passthrough with explicit logging tag.
+  5. [Prompting] Added a strict JSON format preamble (`### Format Requirement` equivalent + `visible_dialogue` JSON example) at the beginning of response-contract sections for both RPG and diplomacy, visible in workbench preview.
+  6. [Docs] Synced `doc/Api.md`, `doc/Index.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+  7. [Version] Bumped About/About.xml modVersion to 0.9.1023.
+0.9.1022
+- Build and version sync:
+  1. [Version] Bumped About/About.xml modVersion to 0.9.1022.
+  2. [Build] Ran build.ps1 and completed deployment.
+  3. [Docs] Synced version markers in doc/Api.md, doc/Index.md, doc/VersionLog.txt, and doc/VersionLog_en.txt.
+0.9.1021
+- AI ransom out-of-window clamp hotfix (end-to-end at API layer):
+  1. [Root fix] PreparePrisonerRansom now normalizes single-target out-of-range offer_silver to the nearest real-time window boundary, covering AI direct paths without UI snapshot dependency.
+  2. [Semantics] OfferedSilver is always the original offer; AcceptedSilver is always the actually executed amount.
+  3. [Observability] Added prepare-stage normalization logs (target/original/window/normalized/current_ask).
+  4. [Feedback] Added a post-success normalization system message (only when normalization occurred) and localized key RimChat_RansomOfferNormalizedSystem in ZH/EN.
+  5. [Model] PrisonerRansomResultData now includes OfferWindowMinSilver/OfferWindowMaxSilver for window replay and debugging.
+- Docs: synchronized doc/Index.md, doc/Api.md, doc/VersionLog.txt, and doc/VersionLog_en.txt.
+- Version: bumped About/About.xml modVersion to 0.9.1021.
+0.9.1020
+- Prompt-page false render-failure alert and half-blank UX fix (CJK compatibility-mode semantics correction):
+  1. [Fix] EvaluatePromptWorkspaceUguiCapability still switches to IMGUI compatibility rendering when CJK glyph coverage is missing, but no longer triggers the false RimChat_PromptRenderFailed alert.
+  2. [New] Added localized key RimChat_PromptRenderCompatibilityMode (ZH/EN); compatibility-mode notification is now a neutral event instead of a failure prompt.
+  3. [Diagnostics] Compatibility-switch logs now include language folder, font name, SupportsCjk, and UGUI panel flag states for one-shot root-cause tracing.
+  4. [Semantic alignment] RimChat_PromptRenderFailed remains reserved for real exception-caught render failures.
+- Docs: synchronized doc/config.md, doc/VersionLog.txt, and doc/VersionLog_en.txt.
+0.9.1019
+- Ransom window anchoring and social-news compatibility fix (systemic execution-chain update):
+  1. [Social news compatibility] `BuildUnifiedChannelSystemPrompt` no longer fail-fast aborts on `social_circle_post` native render compatibility mismatch; it now logs a warning and continues with structured fallback prompt text.
+  2. [Stable single-target reference] `FactionDialogueSession` now stores single-target ransom snapshot (`target/current_ask/min/max`) and builds `[RansomOfferReference]`; `BuildAiUserMessage` injects it every turn, independent of history compression retention.
+  3. [Single-target pre-execution clamp] `TryHandlePrisonerRansomActionWithSelection` now clamps out-of-range `offer_silver` to the nearest snapshot boundary before execution and logs normalization details.
+  4. [Batch total auto-rewrite] `BuildBatchRansomExecutionPlan` now normalizes out-of-window batch totals by clamping total to nearest boundary, proportional per-target rescale, fractional-residual integer distribution, and exact-sum rewrite; mathematically infeasible boundaries still fail-fast.
+  5. [Prompt contract conflict cleanup] Removed legacy "offer_silver has no upper/lower limit" wording and unified contract semantics to "reference system window + pre-execution normalization" across `SystemPromptConfig`, default prompt template, and `action_rules.txt`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` modVersion to `0.9.1019`.
+0.9.1017
+- Vehicle Pawn crash root fix (RimTalk Persona vs RPG eligibility decoupling):
+  1. [Root Fix] `PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace` now uses a capability-aware whitelist: Humanlike/Mechanoid/Animal remain RPG-dialogue eligible; ToolUser must have both `story+skills`, which blocks VehiclePawn/shell Pawn types from entering RPG eligibility.
+  2. [New] Added `IsRimTalkPersonaSyncEligible`: applies an extra persona-subsystem gate on top of RPG eligibility, and explicitly excludes Animal from RimTalk Persona sync (Animal keeps RPG dialogue only).
+  3. [Block] Added fail-fast guards in `TrySyncPawnPersonaFromRimTalkSafely` and `IsEligibleRimTalkPersonaCopyTarget`; ineligible pawns are skipped before any RimTalk `GetPersonality(Pawn)` reflection call.
+  4. [Cleanup] `CleanupInvalidRpgDictionaries` now removes persisted persona entries for pawns that can be resolved but no longer satisfy RPG eligibility (including vehicle-like pawns), while preserving old-save compatibility.
+  5. [Consistency] `ShouldUseRpgDialogue` now validates target pawn eligibility; `GetIneligibleRaceReason` now aligns with the same eligibility rules so menu visibility and executable routing stay consistent.
+- Docs: synchronized `doc/Index.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` modVersion to `0.9.1017`.
+0.9.1016
+- RPGManager tick performance root fix (GameComponent detection unification):
+  1. [New] Added `RimChat/Core/ModDependencyProbe.cs` with cached dependency probe `IsLoaded(token)`; first lookup scans mods, subsequent lookups are O(1) cache hits.
+  2. [Opt] Reordered `GameComponent_RPGManager.PersonaBootstrap.ProcessNpcPersonaRuntimeTick()` to apply tick throttling before RimTalk dependency detection, reducing per-tick fixed overhead.
+  3. [Opt] Updated `ProcessNpcPersonaBootstrapTick()` to fail fast on RimTalk availability before queue scanning, avoiding unnecessary queue initialization when dependency is absent.
+  4. [Refactor] Added internal overloads for `TrySyncPawnPersonaFromRimTalk` / `TryCopyPawnPersonaFromRimTalk` that accept a pre-resolved template; runtime scan, bootstrap queue scan, and manual full-sync now reuse one template resolution per pass.
+  5. [Refactor] `IsRimTalkLoadedForPersonaBlock()` now delegates to `ModDependencyProbe` and no longer performs direct per-tick iteration over `LoadedModManager.RunningModsListForReading`.
+- Docs: synchronized `doc/Index.md`, `doc/Api.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- Version: bumped `About/About.xml` modVersion to `0.9.1016`.
+
+0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010
+- Prompt workbench low-level refactoring (business functionality and entry points preserved):
+  1. [Refactor] Deprecated Dialog_PromptWorkbenchLarge popup entry, replaced with embedded Tab2 navigation, eliminating popup-panel state sync issues;
+  2. [Refactor] Added PromptWorkbenchModuleProjection model, merging Section/Node dual lists into a unified module list, removing edit-mode-switch UI complexity;
+  3. [Refactor] RimChatSettings_PromptSectionWorkspace left panel changed from Section/Node dual-mode switch to single module list rendering (DrawPromptWorkspaceModuleList), Section items with left accent bar (clickable), Node items with checkbox toggle and sort/drag buttons;
+  4. [Refactor] Editor panel removed mode-switch toggle and Node selector, replaced with DrawPromptWorkspaceCurrentModuleLabel showing current module type tag + name;
+  5. [New] Preview panel added snapshot data status indicator: green "Live Data" or gray "Placeholder", letting users know if preview content is based on runtime snapshots;
+  6. [New] PawnDialogueRoutingPolicy.GetIneligibleRaceReason method returning localized ineligibility reason for race-based dialogue filtering;
+  7. [New] FactionDialogueSession.messageVersion field, auto-incremented in all Add*Message methods and persisted in ExposeData, providing foundation for message version tracking;
+- Version: bumped About/About.xml modVersion to 0.9.1010.
+0.9.1009
 - Prompt immersion and format optimization: 7-module fix (immersion first, token saving second):
   1. [P0] Hediff-Need state fusion: Added ResolveHediffLabelWithContext method — when a Hediff label (e.g., "Malnutrition") contradicts a recovered Need (e.g., Food >40%), appends context annotation (e.g., "eating") to prevent LLM hallucination on stale Hediff labels;
   2. [P0] Protocol violation retry message history leak: Added IsProtocolViolationMessage filter in ConvertFromChatMessages, blocking DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION prefixed retry messages from compressed persistent history, preventing format instruction leakage in subsequent dialogue turns;
@@ -7,7 +123,162 @@
   5. [P2] action_rules format instruction deduplication: Removed redundant format constraints duplicated with api_limits/quest_guidance/response_contract, condensed to one minimization principle + commitment-action binding rule;
   6. [P2] rpg_state_anchor compression: Compressed from ~800 to ~400 chars, retaining core constraints (power perception/behavior consistency/contradiction self-correction), removing redundant examples;
   7. [P2] thought_chain streamlining: Compressed from 16 thought items to 8 core items, removing detail constraint items duplicated with repetition_reinforcement; added TurnCount to RpgPromptTurnContextRuntime for future tiered rendering;
-- Version: bumped About/About.xml modVersion to 0.9.1009.
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010
+- Prompt workbench low-level refactoring (business functionality and entry points preserved):
+  1. [Refactor] Deprecated Dialog_PromptWorkbenchLarge popup entry, replaced with embedded Tab2 navigation, eliminating popup-panel state sync issues;
+  2. [Refactor] Added PromptWorkbenchModuleProjection model, merging Section/Node dual lists into a unified module list, removing edit-mode-switch UI complexity;
+  3. [Refactor] RimChatSettings_PromptSectionWorkspace left panel changed from Section/Node dual-mode switch to single module list rendering (DrawPromptWorkspaceModuleList), Section items with left accent bar (clickable), Node items with checkbox toggle and sort/drag buttons;
+  4. [Refactor] Editor panel removed mode-switch toggle and Node selector, replaced with DrawPromptWorkspaceCurrentModuleLabel showing current module type tag + name;
+  5. [New] Preview panel added snapshot data status indicator: green "Live Data" or gray "Placeholder", letting users know if preview content is based on runtime snapshots;
+  6. [New] PawnDialogueRoutingPolicy.GetIneligibleRaceReason method returning localized ineligibility reason for race-based dialogue filtering;
+  7. [New] FactionDialogueSession.messageVersion field, auto-incremented in all Add*Message methods and persisted in ExposeData, providing foundation for message version tracking;
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010.
+
+0.9.1009.
 0.9.1008
 - Root fix: AI ignores its own observable state (e.g., eating but claiming nothing is in front of it), dialogue inertia overrides system-injected facts — systemic fix:
   1. Added [Self-Action Consistency] section to rpg_state_anchor: declares Recent Job State and Needs data as true observable state with priority above prior dialogue self-descriptions; when dialogue history contradicts data, prior output is wrong and must be acknowledged and corrected;
@@ -23,16 +294,160 @@
   2. UnifiedCatalogMigrationTargetVersion 5→6, added ApplyCharacterPersonaStateAnchorMigration one-time migration (covers any/diplomacy/rpg all channels);
   3. PromptSectionCatalog_Default.json / RimTalkPromptEntries_Default.json any channel character_persona synchronized;
   4. TryUpgradeLegacyAnyDefaults added old CurrentAnyPersona → new CurrentAnyPersona exact-match upgrade line.
-- Version: bumped About/About.xml modVersion to 0.9.1009
-- Prompt immersion and format optimization: 7-module fix (immersion first, token saving second):
-  1. [P0] Hediff-Need state fusion: Added ResolveHediffLabelWithContext method — when a Hediff label (e.g., "Malnutrition") contradicts a recovered Need (e.g., Food >40%), appends context annotation (e.g., "eating") to prevent LLM hallucination on stale Hediff labels;
-  2. [P0] Protocol violation retry message history leak: Added IsProtocolViolationMessage filter in ConvertFromChatMessages, blocking DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION prefixed retry messages from compressed persistent history, preventing format instruction leakage in subsequent dialogue turns;
-  3. [P1] Action Space conditional pruning: Added ApplyActionExclusions method, auto-excluding inapplicable actions based on DialogueScenarioContext social identity signals — non-prisoner NPCs exclude ReduceResistance/ReduceWill/Recruit, non-player faction leaders exclude RomanceAttempt/MarriageProposal/Date;
-  4. [P1] FOV information filtering: Added IsPawnPrivyToColonyInfo check — when the other party in dialogue is not a player faction member (prisoner/hostile/foreign), suppresses colony inventory and alert data to prevent omniscient information leakage;
-  5. [P2] action_rules format instruction deduplication: Removed redundant format constraints duplicated with api_limits/quest_guidance/response_contract, condensed to one minimization principle + commitment-action binding rule;
-  6. [P2] rpg_state_anchor compression: Compressed from ~800 to ~400 chars, retaining core constraints (power perception/behavior consistency/contradiction self-correction), removing redundant examples;
-  7. [P2] thought_chain streamlining: Compressed from 16 thought items to 8 core items, removing detail constraint items duplicated with repetition_reinforcement; added TurnCount to RpgPromptTurnContextRuntime for future tiered rendering;
-- Version: bumped About/About.xml modVersion to 0.9.1009.
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010
+- Prompt workbench low-level refactoring (business functionality and entry points preserved):
+  1. [Refactor] Deprecated Dialog_PromptWorkbenchLarge popup entry, replaced with embedded Tab2 navigation, eliminating popup-panel state sync issues;
+  2. [Refactor] Added PromptWorkbenchModuleProjection model, merging Section/Node dual lists into a unified module list, removing edit-mode-switch UI complexity;
+  3. [Refactor] RimChatSettings_PromptSectionWorkspace left panel changed from Section/Node dual-mode switch to single module list rendering (DrawPromptWorkspaceModuleList), Section items with left accent bar (clickable), Node items with checkbox toggle and sort/drag buttons;
+  4. [Refactor] Editor panel removed mode-switch toggle and Node selector, replaced with DrawPromptWorkspaceCurrentModuleLabel showing current module type tag + name;
+  5. [New] Preview panel added snapshot data status indicator: green "Live Data" or gray "Placeholder", letting users know if preview content is based on runtime snapshots;
+  6. [New] PawnDialogueRoutingPolicy.GetIneligibleRaceReason method returning localized ineligibility reason for race-based dialogue filtering;
+  7. [New] FactionDialogueSession.messageVersion field, auto-incremented in all Add*Message methods and persisted in ExposeData, providing foundation for message version tracking;
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010.
 
 0.9.1009
 - Prompt immersion and format optimization: 7-module fix (immersion first, token saving second):
@@ -43,7 +458,483 @@
   5. [P2] action_rules format instruction deduplication: Removed redundant format constraints duplicated with api_limits/quest_guidance/response_contract, condensed to one minimization principle + commitment-action binding rule;
   6. [P2] rpg_state_anchor compression: Compressed from ~800 to ~400 chars, retaining core constraints (power perception/behavior consistency/contradiction self-correction), removing redundant examples;
   7. [P2] thought_chain streamlining: Compressed from 16 thought items to 8 core items, removing detail constraint items duplicated with repetition_reinforcement; added TurnCount to RpgPromptTurnContextRuntime for future tiered rendering;
-- Version: bumped About/About.xml modVersion to 0.9.1009.
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010
+- Prompt workbench low-level refactoring (business functionality and entry points preserved):
+  1. [Refactor] Deprecated Dialog_PromptWorkbenchLarge popup entry, replaced with embedded Tab2 navigation, eliminating popup-panel state sync issues;
+  2. [Refactor] Added PromptWorkbenchModuleProjection model, merging Section/Node dual lists into a unified module list, removing edit-mode-switch UI complexity;
+  3. [Refactor] RimChatSettings_PromptSectionWorkspace left panel changed from Section/Node dual-mode switch to single module list rendering (DrawPromptWorkspaceModuleList), Section items with left accent bar (clickable), Node items with checkbox toggle and sort/drag buttons;
+  4. [Refactor] Editor panel removed mode-switch toggle and Node selector, replaced with DrawPromptWorkspaceCurrentModuleLabel showing current module type tag + name;
+  5. [New] Preview panel added snapshot data status indicator: green "Live Data" or gray "Placeholder", letting users know if preview content is based on runtime snapshots;
+  6. [New] PawnDialogueRoutingPolicy.GetIneligibleRaceReason method returning localized ineligibility reason for race-based dialogue filtering;
+  7. [New] FactionDialogueSession.messageVersion field, auto-incremented in all Add*Message methods and persisted in ExposeData, providing foundation for message version tracking;
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010.
+
+0.9.1009.
+
+0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010
+- Prompt workbench low-level refactoring (business functionality and entry points preserved):
+  1. [Refactor] Deprecated Dialog_PromptWorkbenchLarge popup entry, replaced with embedded Tab2 navigation, eliminating popup-panel state sync issues;
+  2. [Refactor] Added PromptWorkbenchModuleProjection model, merging Section/Node dual lists into a unified module list, removing edit-mode-switch UI complexity;
+  3. [Refactor] RimChatSettings_PromptSectionWorkspace left panel changed from Section/Node dual-mode switch to single module list rendering (DrawPromptWorkspaceModuleList), Section items with left accent bar (clickable), Node items with checkbox toggle and sort/drag buttons;
+  4. [Refactor] Editor panel removed mode-switch toggle and Node selector, replaced with DrawPromptWorkspaceCurrentModuleLabel showing current module type tag + name;
+  5. [New] Preview panel added snapshot data status indicator: green "Live Data" or gray "Placeholder", letting users know if preview content is based on runtime snapshots;
+  6. [New] PawnDialogueRoutingPolicy.GetIneligibleRaceReason method returning localized ineligibility reason for race-based dialogue filtering;
+  7. [New] FactionDialogueSession.messageVersion field, auto-incremented in all Add*Message methods and persisted in ExposeData, providing foundation for message version tracking;
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010.
+
+0.9.1009
+- Prompt immersion and format optimization: 7-module fix (immersion first, token saving second):
+  1. [P0] Hediff-Need state fusion: Added ResolveHediffLabelWithContext method — when a Hediff label (e.g., "Malnutrition") contradicts a recovered Need (e.g., Food >40%), appends context annotation (e.g., "eating") to prevent LLM hallucination on stale Hediff labels;
+  2. [P0] Protocol violation retry message history leak: Added IsProtocolViolationMessage filter in ConvertFromChatMessages, blocking DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION prefixed retry messages from compressed persistent history, preventing format instruction leakage in subsequent dialogue turns;
+  3. [P1] Action Space conditional pruning: Added ApplyActionExclusions method, auto-excluding inapplicable actions based on DialogueScenarioContext social identity signals — non-prisoner NPCs exclude ReduceResistance/ReduceWill/Recruit, non-player faction leaders exclude RomanceAttempt/MarriageProposal/Date;
+  4. [P1] FOV information filtering: Added IsPawnPrivyToColonyInfo check — when the other party in dialogue is not a player faction member (prisoner/hostile/foreign), suppresses colony inventory and alert data to prevent omniscient information leakage;
+  5. [P2] action_rules format instruction deduplication: Removed redundant format constraints duplicated with api_limits/quest_guidance/response_contract, condensed to one minimization principle + commitment-action binding rule;
+  6. [P2] rpg_state_anchor compression: Compressed from ~800 to ~400 chars, retaining core constraints (power perception/behavior consistency/contradiction self-correction), removing redundant examples;
+  7. [P2] thought_chain streamlining: Compressed from 16 thought items to 8 core items, removing detail constraint items duplicated with repetition_reinforcement; added TurnCount to RpgPromptTurnContextRuntime for future tiered rendering;
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010
+- Prompt workbench low-level refactoring (business functionality and entry points preserved):
+  1. [Refactor] Deprecated Dialog_PromptWorkbenchLarge popup entry, replaced with embedded Tab2 navigation, eliminating popup-panel state sync issues;
+  2. [Refactor] Added PromptWorkbenchModuleProjection model, merging Section/Node dual lists into a unified module list, removing edit-mode-switch UI complexity;
+  3. [Refactor] RimChatSettings_PromptSectionWorkspace left panel changed from Section/Node dual-mode switch to single module list rendering (DrawPromptWorkspaceModuleList), Section items with left accent bar (clickable), Node items with checkbox toggle and sort/drag buttons;
+  4. [Refactor] Editor panel removed mode-switch toggle and Node selector, replaced with DrawPromptWorkspaceCurrentModuleLabel showing current module type tag + name;
+  5. [New] Preview panel added snapshot data status indicator: green "Live Data" or gray "Placeholder", letting users know if preview content is based on runtime snapshots;
+  6. [New] PawnDialogueRoutingPolicy.GetIneligibleRaceReason method returning localized ineligibility reason for race-based dialogue filtering;
+  7. [New] FactionDialogueSession.messageVersion field, auto-incremented in all Add*Message methods and persisted in ExposeData, providing foundation for message version tracking;
+- Version: bumped About/About.xml modVersion to 0.9.1015
+- Prompt workbench performance optimization Plan A (lightweight caching optimization):
+  1. [Opt] Token fragment caching: PromptWorkbenchChipEditor added _cachedTokenFragments cache, only recalculates token positions when text/rect/style changes, eliminating per-frame TryBuildTokenFragments calls (expensive text layout calculations);
+  2. [Opt] Preview build frame skipping: RimChatSettings_PromptSectionWorkspace added PromptWorkspacePreviewFrameSkip=2, checks preview build every 3 frames (from 60fps to 20fps), reducing 66% preview build CPU usage;
+  3. [Opt] Content height caching: EnhancedTextArea added _cachedContentHeight cache, only recalculates height when text/width/style changes, reducing GC allocations.
+- Version: bumped About/About.xml modVersion to 0.9.1015.
+
+0.9.1014
+- Prompt workbench UI rendering pipeline deep performance optimization (eliminated ~200 per-frame heap allocations):
+  1. [Opt] BuildModules result caching: added GetCachedPromptWorkspaceModules method, returns cached module list when channel and layouts unchanged, eliminating per-frame BuildModules + LINQ sorting + GetOrderedMainChainSections;
+  2. [Opt] Eliminated redundant Clone in Layout caches: GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes return cached list directly on cache hit (write paths ensured safe via cache invalidation), eliminating ~50+ Clone + 6 new List per frame;
+  3. [Opt] GetOrderedMainChainSections caching: added layout-content-signature-based cache, avoiding per-frame creation of 2 Dictionary + 1 List + sorting;
+  4. [Opt] Color static-ization: extracted ~30 new Color() calls into static readonly fields, eliminating per-frame construction overhead;
+  5. [Fix] Removed duplicate HandlePromptWorkspaceKeyboardShortcuts call in DrawPromptWorkspaceEditorPanel.
+- Version: bumped About/About.xml modVersion to 0.9.1014.
+
+0.9.1013
+- Prompt workbench preview rendering performance optimization (frame rate recovered from ~80fps to ~800fps):
+  1. [Opt] Subsection layout caching: added SubsectionLayoutEntry list cache, moving per-frame CalcHeight calls into EnsureLayoutCache, eliminating per-frame height calculations;
+  2. [Opt] SectionLayout list caching: added _promptWorkspaceSectionLayoutCacheChannel cache in RimChatSettings_PromptSectionWorkspace.NodeLayout.cs, avoiding per-frame list cloning;
+  3. [Opt] ComposeValues caching: added CachedComposeValues dictionary to incremental preview build state in PromptWorkspacePreviewModels.cs, ensuring BuildDeterministicComposeValues called only once per build session;
+  4. [Opt] GUIStyle caching: replaced new GUIStyle() calls with instance field caches, eliminating per-frame GC allocations;
+  5. [Fix] CS0162 warning: fixed loop logic error in DrawSubsectionBody.
+- Version: bumped About/About.xml modVersion to 0.9.1013.
+
+0.9.1012
+- Prompt workbench UI high-fidelity alignment with RimTalk and preview optimization:
+  1. [Fix] Clicking "Prompt Workbench" Tab now directly opens the large popup (Dialog_PromptWorkbenchLarge), removing the Launcher intermediate page;
+  2. [Refactor] Module list aligned with RimTalk entry UI: Section now has enable/disable checkbox, unified row height 25f, bottom bar ▲▼ sort buttons replace inline buttons;
+  3. [New] PromptSectionLayoutConfig now has Enabled field, supporting Section-level enable/disable control;
+  4. [Refactor] Module list sorted by Slot+Order (Section+Node interleaved), matching preview assembly order (WYSIWYG);
+  5. [New] Single entry preview: when Section/Node is selected, side panel shows only that entry's content; added "Full Preview" Tab toggle;
+  6. [Refactor] Editor toolbar aligned with RimTalk: module label + enable toggle + Slot selector + order display;
+  7. [Opt] Preview performance: frame budget increased from 0.002s to 0.008s, full preview build frozen while editor has focus;
+  8. [New] PromptWorkbenchInfoPanel.FullPreview enum, side panel has 3 tabs: Preview | Full Preview | Variables;
+- Version: bumped About/About.xml modVersion to 0.9.1012.
+
+0.9.1011
+- Prompt workbench large window restored and Section free-order sorting:
+  1. [Fix] Restored OpenPromptWorkbenchWindow to open large-size popup (Dialog_PromptWorkbenchLarge), mistakenly deprecated in previous version;
+  2. [New] Added PromptSectionLayoutConfig persistence model, supporting Section order state serialization (Scribe_Collections);
+  3. [New] PromptSectionSchemaCatalog.GetOrderedMainChainSections method, returns sections ordered by persisted layout data;
+  4. [New] Added ▲▼ sort buttons to Section items in DrawPromptWorkspaceModuleList, unified with Node sort operations;
+  5. [New] MovePromptSectionLayout/DrawSectionLayoutRowButtons methods, Section sort logic consistent with Node sort;
+  6. [Refactor] PromptWorkbenchModuleProjection.BuildModules now accepts sectionLayouts parameter, Section order driven by persisted data;
+  7. [Refactor] Prompt build pipeline fully integrated with Section custom ordering: PromptSectionAggregateBuilder, WorkspacePreviewIncremental, WorkbenchComposer, SectionAggregates;
+- Version: bumped About/About.xml modVersion to 0.9.1011.
+
+0.9.1010.
+
+0.9.1009.
 
 0.9.1008
 - Root fix: AI ignores its own observable state (e.g., eating but claiming nothing is in front of it), dialogue inertia overrides system-injected facts — systemic fix:
@@ -3678,3 +4569,12 @@ Version Update Log
 - Compatibility: legacy saves with long forced timers are clamped on refresh to `currentTick + cap` (2h offline / 4h DND).
 - UI: the `PresenceForcedOfflineHours` slider is retained, and its label now explicitly states it does not affect `go_offline/set_dnd` forced durations.
 - Docs: synchronized `doc/Index.md`, `doc/Api.md`, and `doc/config.md`.
+
+0.9.1018
+- Root fix: proactive diplomacy messages and social news now use precomputed `DiplomacyPromptRuntimeSnapshot`, removing synchronous heavy dynamic scans from the request hot path.
+- Added: `IDiplomacyPromptSnapshotCache` + `DiplomacyPromptSnapshotCache` with load-time frame-budget warmup, per-faction snapshot lookup, and invalidation by relation/memory/world-event/prompt-file changes.
+- Changed: `PromptPersistenceService.BuildUnifiedChannelSystemPrompt(...)` now accepts optional `runtimeSnapshot`; snapshot scope reuses precomputed dynamic blocks while preserving default behavior.
+- Changed: `GameComponent_NpcDialoguePushManager.StartGeneration(...)` now fail-fast defers when snapshot is not ready (short delayed requeue) instead of doing same-frame synchronous recompute.
+- Changed: `SocialNewsPromptBuilder.BuildMessages(...)` and `GameComponent_DiplomacyManager.SocialCircle.NewsRequests` now share the same snapshot cache; snapshot misses enter delayed retry queue to avoid seed loss and duplicate full scans.
+- Changed: `GameComponent_DiplomacyManager.GameComponentTick()` now runs snapshot warmup budget (1 build per tick) and drains deferred social-news retry items.
+- Version: bumped `About/About.xml` to `0.9.1018`.

@@ -15,7 +15,8 @@ namespace RimChat.Prompting
         internal static PromptSectionAggregate Build(
             RimTalkPromptEntryDefaultsConfig catalog,
             string promptChannel,
-            Func<string, string, string> renderSection)
+            Func<string, string, string> renderSection,
+            List<PromptSectionLayoutConfig> sectionLayouts = null)
         {
             string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
             RimTalkPromptEntryDefaultsConfig normalizedCatalog = catalog?.Clone() ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
@@ -26,7 +27,7 @@ namespace RimChat.Prompting
                 PromptChannel = normalizedChannel
             };
 
-            foreach (PromptSectionSchemaItem section in PromptSectionSchemaCatalog.GetMainChainSections())
+            foreach (PromptSectionSchemaItem section in PromptSectionSchemaCatalog.GetOrderedMainChainSections(sectionLayouts, enabledOnly: true))
             {
                 string template = ResolveTemplate(normalizedCatalog, normalizedChannel, section.Id);
                 string rendered = renderSection == null ? template : renderSection(section.Id, template);

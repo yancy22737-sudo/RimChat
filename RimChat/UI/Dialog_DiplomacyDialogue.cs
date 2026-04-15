@@ -2761,6 +2761,11 @@ namespace RimChat.UI
                 blocks.Add(airdropReferenceBlock);
             }
 
+            if (currentSession.TryBuildPendingRansomOfferReference(out string ransomOfferReferenceBlock))
+            {
+                blocks.Add(ransomOfferReferenceBlock);
+            }
+
             if (currentSession.TryBuildPendingRansomBatchReference(out string ransomBatchReferenceBlock))
             {
                 blocks.Add(ransomBatchReferenceBlock);
@@ -3122,6 +3127,23 @@ namespace RimChat.UI
                         Math.Max(0, payload.AcceptedSilver)).ToString(),
                     false,
                     DialogueMessageType.System);
+
+                if (payload.OfferedSilver > 0 &&
+                    payload.AcceptedSilver > 0 &&
+                    payload.OfferedSilver != payload.AcceptedSilver)
+                {
+                    currentSession.AddMessage(
+                        "System",
+                        "RimChat_RansomOfferNormalizedSystem".Translate(
+                            payload.OfferedSilver,
+                            Math.Max(1, payload.OfferWindowMinSilver),
+                            Math.Max(
+                                Math.Max(1, payload.OfferWindowMinSilver),
+                                payload.OfferWindowMaxSilver),
+                            payload.AcceptedSilver).ToString(),
+                        false,
+                        DialogueMessageType.System);
+                }
             }
         }
 
@@ -4095,5 +4117,3 @@ namespace RimChat.UI
         }
     }
 }
-
-

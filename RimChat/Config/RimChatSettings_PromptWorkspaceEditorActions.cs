@@ -129,6 +129,8 @@ namespace RimChat.Config
 
         private void TrySavePromptWorkspaceNow()
         {
+            TryScheduleValidation(immediate: true);
+            ForcePromptWorkspaceValidationNow();
             if (PersistPromptWorkspaceBufferNow(force: true, persistToDisk: true))
             {
                 if (_promptWorkspaceLastPersistHadMaterialChange)
@@ -221,12 +223,18 @@ namespace RimChat.Config
             _promptWorkspaceBufferedSectionId = _promptWorkspaceSelectedSectionId ?? string.Empty;
             _promptWorkspaceBufferedNodeId = _promptWorkspaceSelectedNodeId ?? string.Empty;
             _promptWorkspaceHasPendingPersist = true;
-            _promptWorkspaceLastEditUtc = DateTime.UtcNow;
+            NotifyPromptWorkspaceEditorTextChanged();
         }
 
         private void SetPromptWorkspaceCurrentEditorTextWithoutHistory(string text)
         {
-            _promptWorkspaceEditorBuffer = text ?? string.Empty;
+            string next = text ?? string.Empty;
+            if (string.Equals(next, _promptWorkspaceEditorBuffer ?? string.Empty, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _promptWorkspaceEditorBuffer = next;
             _promptWorkspaceBufferedChannel = _workbenchPromptChannel ?? string.Empty;
             _promptWorkspaceBufferedNodeMode = _promptWorkspaceEditNodeMode;
             _promptWorkspaceBufferedSectionId = _promptWorkspaceSelectedSectionId ?? string.Empty;

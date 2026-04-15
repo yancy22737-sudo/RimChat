@@ -58,6 +58,7 @@ namespace RimChat.Persistence
         public int TotalNodes;
         public PromptWorkspacePreviewBuildStage Stage = PromptWorkspacePreviewBuildStage.Completed;
         public PromptWorkspacePreviewErrorDiagnostic ErrorDiagnostic;
+        public bool UsesSnapshotData;
     }
 
     internal sealed class PromptWorkspacePreviewErrorDiagnostic
@@ -81,5 +82,15 @@ namespace RimChat.Persistence
         public readonly List<PromptUnifiedNodeLayoutConfig> NodeLayouts = new List<PromptUnifiedNodeLayoutConfig>();
         public int SectionCursor;
         public int NodeCursor;
+        // Cached compose values shared across all steps of the same build to avoid repeated CloneSnapshotValues
+        public Dictionary<string, object> CachedComposeValues;
+        public bool ComposeValuesInitialized;
+
+        // Incremental signature caches for hot-path preview updates.
+        public readonly List<int> BlockSignatureHashes = new List<int>();
+        public readonly Dictionary<int, List<int>> SubsectionSignatureHashesByBlock =
+            new Dictionary<int, List<int>>();
+        public readonly HashSet<int> DirtyBlockIndices = new HashSet<int>();
+        public bool SignatureCacheInitialized;
     }
 }

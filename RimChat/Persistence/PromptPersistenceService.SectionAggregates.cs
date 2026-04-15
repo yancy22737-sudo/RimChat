@@ -138,10 +138,13 @@ namespace RimChat.Persistence
             string normalizedChannel = RimTalkPromptEntryChannelCatalog.NormalizeForRoot(promptChannel, rootChannel);
             RimTalkPromptEntryDefaultsConfig catalog = RimChatMod.Settings?.GetPromptSectionCatalogClone()
                                                    ?? RimTalkPromptEntryDefaultsProvider.GetDefaultsSnapshot();
+            List<PromptSectionLayoutConfig> sectionLayouts =
+                RimChatMod.Settings?.GetPromptSectionLayouts(normalizedChannel);
             return PromptSectionAggregateBuilder.Build(
                 catalog,
                 normalizedChannel,
-                (_, template) => template);
+                (_, template) => template,
+                sectionLayouts);
         }
 
         private static PromptWorkspacePreviewBlock BuildSectionAggregateBlock(

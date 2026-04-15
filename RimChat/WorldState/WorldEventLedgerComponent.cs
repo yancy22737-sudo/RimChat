@@ -8,7 +8,7 @@ using Verse;
 
 namespace RimChat.WorldState
 {
-    /// <summary>/// Dependencies: Verse.GameComponent, LetterStack, map pawn state.
+    /// <summary>/// Dependencies: Verse.GameComponent, LetterStack, and RaidThreatSnapshotProvider.
  /// Responsibility: collect and persist recent world events and raid battle intel for prompt injection.
  ///</summary>
     public class WorldEventLedgerComponent : GameComponent
@@ -16,6 +16,9 @@ namespace RimChat.WorldState
         private const int DefaultMaxStoredRecords = 50;
         private const int LetterScanInterval = 250;
         private const int RaidScanInterval = 250;
+        private const int LetterScanOffsetTicks = 0;
+        private const int RaidScanOffsetTicks = 0;
+        private const int MaxLettersPerScanPass = 24;
         private const int OldEventAgeThresholdTicks = 60000 * 60 * 24;
         private const int MaxCompressedSummaryLength = 100;
         private const int MaxProcessedLetterIds = 512;
@@ -67,8 +70,10 @@ namespace RimChat.WorldState
         private List<int> processedLetterIds = new List<int>();
 
         private readonly HashSet<int> processedLetterIdSet = new HashSet<int>();
+        private readonly IRaidSnapshotProvider raidSnapshotProvider = RaidThreatSnapshotProvider.Instance;
         private int lastLetterScanTick = -LetterScanInterval;
         private int lastRaidScanTick = -RaidScanInterval;
+        private int letterScanCursor;
         private const int CompressionPerTickBudget = 3;
         private int compressionTickMarker = -1;
         private int compressionThisTickCount = 0;
@@ -82,6 +87,7 @@ namespace RimChat.WorldState
             base.StartedNewGame();
             RimChatTrackedEntityRegistry.Reset();
             RimChatTrackedEntityRegistry.PrimeFromCurrentGame();
+            raidSnapshotProvider.Reset();
             RebuildRuntimeCaches();
         }
 
@@ -90,6 +96,7 @@ namespace RimChat.WorldState
             base.LoadedGame();
             RimChatTrackedEntityRegistry.Reset();
             RimChatTrackedEntityRegistry.PrimeFromCurrentGame();
+            raidSnapshotProvider.Reset();
             RebuildRuntimeCaches();
             CleanupLoadedData();
         }
@@ -111,6 +118,7 @@ namespace RimChat.WorldState
                 raidBattleReports ??= new List<RaidBattleReportRecord>();
                 ongoingRaidBattles ??= new List<OngoingRaidBattleState>();
                 processedLetterIds ??= new List<int>();
+                raidSnapshotProvider.Reset();
                 RebuildRuntimeCaches();
                 CleanupLoadedData();
             }
@@ -124,13 +132,13 @@ namespace RimChat.WorldState
             }
 
             int tick = Find.TickManager.TicksGame;
-            if (tick - lastLetterScanTick >= LetterScanInterval)
+            if (ShouldRunScheduledTask(tick, lastLetterScanTick, LetterScanInterval, LetterScanOffsetTicks))
             {
                 lastLetterScanTick = tick;
                 PollLetterStackEvents(tick);
             }
 
-            if (tick - lastRaidScanTick >= RaidScanInterval)
+            if (ShouldRunScheduledTask(tick, lastRaidScanTick, RaidScanInterval, RaidScanOffsetTicks))
             {
                 lastRaidScanTick = tick;
                 UpdateRaidBattleStates(tick);
@@ -150,7 +158,7 @@ namespace RimChat.WorldState
 
             int tick = Find.TickManager.TicksGame;
             PollLetterStackEvents(tick);
-            UpdateRaidBattleStates(tick);
+            UpdateRaidBattleStates(tick, forceRefresh: true);
             lastLetterScanTick = tick;
             lastRaidScanTick = tick;
         }
@@ -255,12 +263,21 @@ namespace RimChat.WorldState
             List<Letter> letters = Find.LetterStack?.LettersListForReading;
             if (letters == null || letters.Count == 0)
             {
+                letterScanCursor = 0;
                 return;
             }
 
-            for (int i = 0; i < letters.Count; i++)
+            if (letterScanCursor < 0 || letterScanCursor >= letters.Count)
             {
-                Letter letter = letters[i];
+                letterScanCursor = 0;
+            }
+
+            int remainingBudget = MaxLettersPerScanPass;
+            while (letterScanCursor < letters.Count && remainingBudget > 0)
+            {
+                Letter letter = letters[letterScanCursor];
+                letterScanCursor++;
+                remainingBudget--;
                 if (letter == null || processedLetterIdSet.Contains(letter.ID))
                 {
                     continue;
@@ -271,7 +288,11 @@ namespace RimChat.WorldState
                 TryAddMapEventFromLetter(letter, tick);
             }
 
-            TrimProcessedLetterIds();
+            if (letterScanCursor >= letters.Count)
+            {
+                letterScanCursor = 0;
+                TrimProcessedLetterIds();
+            }
         }
 
         private void TryAddMapEventFromLetter(Letter letter, int tick)
@@ -310,24 +331,32 @@ namespace RimChat.WorldState
             AddWorldEventRecord(record);
         }
 
-        private void UpdateRaidBattleStates(int tick)
+        private void UpdateRaidBattleStates(int tick, bool forceRefresh = false)
         {
-            List<Map> homeMaps = Find.Maps?.Where(m => m != null && m.IsPlayerHome).ToList();
-            if (homeMaps == null || homeMaps.Count == 0)
+            bool available = forceRefresh
+                ? raidSnapshotProvider.TryForceRefreshNow(tick, out RaidThreatSnapshot snapshot)
+                : raidSnapshotProvider.TryGetSnapshot(tick, out snapshot);
+            if (!available || snapshot?.Maps == null || snapshot.Maps.Count == 0)
             {
                 return;
             }
 
             var activeKeys = new HashSet<string>(StringComparer.Ordinal);
-            for (int i = 0; i < homeMaps.Count; i++)
+            for (int i = 0; i < snapshot.Maps.Count; i++)
             {
-                Map map = homeMaps[i];
-                List<Faction> hostileFactions = GetActiveHostileFactions(map);
+                RaidThreatMapSnapshot mapSnapshot = snapshot.Maps[i];
+                Map map = mapSnapshot?.Map;
+                IReadOnlyList<Faction> hostileFactions = mapSnapshot?.HostileFactions;
+                if (map == null || hostileFactions == null || hostileFactions.Count == 0)
+                {
+                    continue;
+                }
+
                 for (int j = 0; j < hostileFactions.Count; j++)
                 {
                     Faction attacker = hostileFactions[j];
                     OngoingRaidBattleState state = GetOrCreateBattleState(map, attacker, tick);
-                    state.DefenderDownedPeak = Math.Max(state.DefenderDownedPeak, CountPlayerDowned(map));
+                    state.DefenderDownedPeak = Math.Max(state.DefenderDownedPeak, mapSnapshot.PlayerDownedCount);
                     state.LastUpdatedTick = tick;
                     activeKeys.Add(GetBattleKey(map.uniqueID, state.AttackerFactionId));
                 }
@@ -463,42 +492,11 @@ namespace RimChat.WorldState
                 DefenderFactionName = Faction.OfPlayer?.Name ?? "PlayerFaction",
                 AttackerDeaths = 0,
                 DefenderDeaths = 0,
-                DefenderDownedPeak = CountPlayerDowned(map)
+                DefenderDownedPeak = raidSnapshotProvider.ResolvePlayerDownedCount(map, tick)
             };
 
             ongoingRaidBattles.Add(state);
             return state;
-        }
-
-        private List<Faction> GetActiveHostileFactions(Map map)
-        {
-            IEnumerable<Pawn> allPawns = map?.mapPawns?.AllPawnsSpawned;
-            if (allPawns == null)
-            {
-                return new List<Faction>();
-            }
-
-            return allPawns
-                .Where(pawn => pawn != null && !pawn.Dead && pawn.Faction != null && pawn.Faction != Faction.OfPlayer)
-                .Where(pawn => pawn.Faction.HostileTo(Faction.OfPlayer))
-                .Select(pawn => pawn.Faction)
-                .Distinct()
-                .ToList();
-        }
-
-        private int CountPlayerDowned(Map map)
-        {
-            IEnumerable<Pawn> allPawns = map?.mapPawns?.AllPawnsSpawned;
-            if (allPawns == null)
-            {
-                return 0;
-            }
-
-            return allPawns.Count(pawn =>
-                pawn != null &&
-                pawn.Faction == Faction.OfPlayer &&
-                pawn.Downed &&
-                !pawn.Dead);
         }
 
         private Map ResolvePlayerHomeMapFromLetter(Letter letter)
@@ -703,6 +701,32 @@ namespace RimChat.WorldState
             }
 
             return knownFactionIds.Any(id => string.Equals(id, observerId, StringComparison.Ordinal));
+        }
+
+        private static bool ShouldRunScheduledTask(int tick, int lastRunTick, int interval, int offset)
+        {
+            if (tick <= 0 || interval <= 0)
+            {
+                return false;
+            }
+
+            if (!IsOnScheduleSlot(tick, interval, offset))
+            {
+                return false;
+            }
+
+            return lastRunTick <= 0 || tick - lastRunTick >= interval;
+        }
+
+        private static bool IsOnScheduleSlot(int tick, int interval, int offset)
+        {
+            int normalized = (tick - offset) % interval;
+            if (normalized < 0)
+            {
+                normalized += interval;
+            }
+
+            return normalized == 0;
         }
 
         private string GetFactionId(Faction faction)

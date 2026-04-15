@@ -1251,6 +1251,7 @@
     <RimChat_RansomCounterOfferSystem>{0} rejected offer {1} silver and counter-offered {2} silver (round {3}/{4}).</RimChat_RansomCounterOfferSystem>
     <RimChat_RansomRejectedFloorSystem>Ransom negotiation for {2} ended: offer {0} silver is below floor {1}. Raise the offer and retry.</RimChat_RansomRejectedFloorSystem>
     <RimChat_RansomPaymentSubmittedSystem>Ransom payment submitted: target {0}, received {1} silver. Player must manually release the prisoner to fulfill the contract.</RimChat_RansomPaymentSubmittedSystem>
+    <RimChat_RansomOfferNormalizedSystem>Offer {0} is outside the current window {1}-{2} silver. It was normalized to the nearest boundary {3} silver before execution.</RimChat_RansomOfferNormalizedSystem>
     <RimChat_RansomInvalidOfferSystem>Invalid ransom offer. Submit a silver amount greater than 0.</RimChat_RansomInvalidOfferSystem>
     <RimChat_RansomQuoteUnavailableSystem>Ransom quote is currently unavailable. Please retry later.</RimChat_RansomQuoteUnavailableSystem>
     <RimChat_RansomTargetUnavailableSystem>Target prisoner is currently unavailable. Re-select a prisoner and retry.</RimChat_RansomTargetUnavailableSystem>
@@ -2175,11 +2176,15 @@ Selected prisoners: {1}
     <RimChat_PromptWorkbench_RpgSubEntries>Common Entries</RimChat_PromptWorkbench_RpgSubEntries>
     <RimChat_PromptWorkbench_RpgSubPersona>Pawn Persona</RimChat_PromptWorkbench_RpgSubPersona>
     <RimChat_PromptWorkbench_PreviewEmpty>No prompt content is available for preview in the current channel.</RimChat_PromptWorkbench_PreviewEmpty>
+    <RimChat_PreviewSnapshotIndicator_Live>Runtime Preview (Live Data)</RimChat_PreviewSnapshotIndicator_Live>
+    <RimChat_PreviewSnapshotIndicator_Placeholder>Placeholder Preview (Run a dialogue to see live data)</RimChat_PreviewSnapshotIndicator_Placeholder>
     <RimChat_PromptWorkbench_PersonaPreviewHint>Persona mode edits per-pawn prompts directly. Open a pawn entry in the center panel to inspect details.</RimChat_PromptWorkbench_PersonaPreviewHint>
     <RimChat_PromptPreset_Create>Create</RimChat_PromptPreset_Create>
     <RimChat_PromptPreset_Duplicate>Duplicate</RimChat_PromptPreset_Duplicate>
     <RimChat_PromptPreset_Activate>Activate</RimChat_PromptPreset_Activate>
     <RimChat_PromptPreset_Delete>Delete</RimChat_PromptPreset_Delete>
+    <RimChat_RaceNotEligible_NullRace>Race data missing</RimChat_RaceNotEligible_NullRace>
+    <RimChat_RaceNotEligible_Incompatible>{0} is not eligible for dialogue</RimChat_RaceNotEligible_Incompatible>
     <RimChat_PromptPreset_Rename>Rename</RimChat_PromptPreset_Rename>
     <RimChat_PromptPreset_NoSelection>No preset selected.</RimChat_PromptPreset_NoSelection>
     <RimChat_PromptPreset_CreateSuccess>Preset created: {0}</RimChat_PromptPreset_CreateSuccess>
@@ -2232,6 +2237,7 @@ Selected prisoners: {1}
     <RimChat_PromptWorkbench_QuickPawnTypeAnimal>Tamed Animal</RimChat_PromptWorkbench_QuickPawnTypeAnimal>
     <RimChat_PromptWorkbench_QuickPawnTypeMech>Mech</RimChat_PromptWorkbench_QuickPawnTypeMech>
     <RimChat_PromptRenderFailed>Prompt page render failed. Check Player.log for details.</RimChat_PromptRenderFailed>
+    <RimChat_PromptRenderCompatibilityMode>Prompt page switched to compatibility rendering mode (IMGUI). Editing remains available; check Player.log for diagnostics.</RimChat_PromptRenderCompatibilityMode>
     <RimChat_PromptRenderBlocked>Prompt rendering blocked. Template={0}, Channel={1}, Line={2}, Column={3}.</RimChat_PromptRenderBlocked>
     <RimChat_RimTalkTabMigratedTitle>RimTalk Bridge</RimChat_RimTalkTabMigratedTitle>
     <RimChat_RimTalkTabMigratedHint>Native prompt structure now lives in Prompt Workbench. This page keeps only bridge availability, shared variables, and summary/persona bridge settings.</RimChat_RimTalkTabMigratedHint>
@@ -2259,6 +2265,9 @@ Selected prisoners: {1}
     <RimChat_PromptVariableTooltip_TypicalValues>Typical Values:\n{0}</RimChat_PromptVariableTooltip_TypicalValues>
     <RimChat_PromptVariableTooltip_NoTypicalValues>No typical values available</RimChat_PromptVariableTooltip_NoTypicalValues>
     <RimChat_PromptWorkspaceNodeLayoutHeader>Node Layout</RimChat_PromptWorkspaceNodeLayoutHeader>
+    <RimChat_PromptWorkspaceModuleHeader>Modules</RimChat_PromptWorkspaceModuleHeader>
+    <RimChat_PromptWorkspaceKind_Section>Section</RimChat_PromptWorkspaceKind_Section>
+    <RimChat_PromptWorkspaceKind_Node>Node</RimChat_PromptWorkspaceKind_Node>
     <RimChat_PromptWorkspaceMode_Sections>Sections</RimChat_PromptWorkspaceMode_Sections>
     <RimChat_PromptWorkspaceMode_Nodes>Nodes</RimChat_PromptWorkspaceMode_Nodes>
     <RimChat_PromptWorkspace_NodePlacementTitle>Node Placement Order</RimChat_PromptWorkspace_NodePlacementTitle>
@@ -2335,4 +2344,7 @@ Selected prisoners: {1}
     <RimChat_SpecialItemScarceTag>(+100%)</RimChat_SpecialItemScarceTag>
     <RimChat_SpecialItemRefreshTime>refresh in {0}d {1}h</RimChat_SpecialItemRefreshTime>
     <RimChat_SpecialItemIntelInsufficient>??? (intel insufficient, {0})</RimChat_SpecialItemIntelInsufficient>
+    <RimChat_PromptWorkbench_FullPreviewTab>Full Preview</RimChat_PromptWorkbench_FullPreviewTab>
+    <RimChat_PromptNodeSlot>Slot</RimChat_PromptNodeSlot>
+    <RimChat_PromptNodeOrder>Order</RimChat_PromptNodeOrder>
 </LanguageData>

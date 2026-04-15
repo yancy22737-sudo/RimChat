@@ -1,32 +1,143 @@
-﻿0.9.1009
-- 提示词沉浸感与格式优化七模块修复（沉浸感优先，token节省为辅）：
-  1. [P0] Hediff-Need状态融合：新增ResolveHediffLabelWithContext方法，当Hediff标签（如"营养不良"）与对应Need已恢复（如饮食>40%）矛盾时，附加上下文注释（如"eating"），防止LLM基于过时Hediff标签产生幻觉；
-  2. [P0] 协议违规重试消息历史泄漏：ConvertFromChatMessages新增IsProtocolViolationMessage过滤器，阻止DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION前缀的重试消息进入压缩后的持久化历史，避免后续对话轮次中出现格式指令泄漏；
-  3. [P1] Action Space条件性剪枝：新增ApplyActionExclusions方法，基于DialogueScenarioContext的社会身份信号自动排除不适用的动作——非囚犯NPC排除ReduceResistance/ReduceWill/Recruit，非玩家阵营领袖排除RomanceAttempt/MarriageProposal/Date；
-  4. [P1] FOV信息过滤：新增IsPawnPrivyToColonyInfo检查，当对话中另一方不属于玩家阵营成员时（囚犯/敌对/外邦），抑制殖民地库存和警报数据，防止全知信息泄漏；
-  5. [P2] action_rules格式指令去重：移除与api_limits/quest_guidance/response_contract重复的格式约束，精简为一条最小化原则+承诺-动作绑定；
-  6. [P2] rpg_state_anchor压缩：从~800字符压缩至~400字符，保留核心约束（实力感知/行为一致性/矛盾自纠），去除冗余示例；
-  7. [P2] thought_chain精简：从16条思考项压缩至8条核心条目，去除与repetition_reinforcement重复的细节约束条目；新增TurnCount到RpgPromptTurnContextRuntime为后续分层渲染预留；
-- 版本：About/About.xml modVersion 提升到 0.9.1009。
+0.9.1023
+- `/models` 缺失回退 + 结构化解析原文直出 + 响应契约前置格式要求（双链路根修）：
+  1. [诊断] `ApiUsabilityDiagnosticService.RunCloudDiagnosticCoroutine` 新增 `/models` 缺失状态码判定（仅 `404/405/501`）；命中后跳过模型可用性硬校验，改为 `chat probe + contract` 作为最终可用性判据。
+  2. [诊断] 云端可用性测试在“`/models` 缺失但 chat 可用”时改为成功并附带 warning 技术细节，不再误判失败；非缺失码（如 `429/5xx`）保持 fail-fast。
+  3. [本地诊断] `ProbeLocalServiceCoroutine` 对 OpenAI 兼容本地服务在 `/v1/models` 返回 `404/405/501` 时不再判定服务宕机，继续进入 chat 最终验证。
+  4. [对话链路] `AIChatServiceAsync.ProcessRequestCoroutine` 在结构化包络重试耗尽后，移除固定沉浸回退句注入，改为原始模型文本直出（raw passthrough），并新增明确日志标签。
+  5. [提示词] 响应契约段落最前新增强约束前置文本（`### 格式要求` + `visible_dialogue` JSON 示例），RPG 与外交通道统一生效，工作台预览可见。
+  6. [文档] 同步更新 `doc/Api.md`、`doc/Index.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+  7. [版本] About/About.xml modVersion 提升到 0.9.1023。
+0.9.1022
+- 构建与版本同步：
+  1. [版本] About/About.xml modVersion 提升到 0.9.1022。
+  2. [构建] 执行 build.ps1 并完成部署。
+  3. [文档] 同步更新 doc/Api.md、doc/Index.md、doc/VersionLog.txt、doc/VersionLog_en.txt 版本标识。
+0.9.1021
+- AI 赎金越界报价全链路钳制热修（接口层统一执行）：
+  1. [根修] PreparePrisonerRansom 新增实时窗口归一化：对越界 offer_silver 执行最近边界夹逼，覆盖 AI 直连与非 UI 快照路径。
+  2. [语义] OfferedSilver 固定表示原始报价，AcceptedSilver 固定表示实际执行报价。
+  3. [可观测性] 新增 prepare 阶段归一化日志（target/original/window/normalized/current_ask）。
+  4. [反馈] 赎金成功系统消息新增归一化提示（仅在发生归一化时显示），并补齐中英文语言键 RimChat_RansomOfferNormalizedSystem。
+  5. [模型] PrisonerRansomResultData 新增 OfferWindowMinSilver/OfferWindowMaxSilver，用于窗口边界回显与调试复盘。
+- 文档：同步更新 doc/Index.md、doc/Api.md、doc/VersionLog.txt、doc/VersionLog_en.txt。
+- 版本：About/About.xml modVersion 提升到 0.9.1021。
+0.9.1020
+- 提示词页“渲染失败”误报与半空白体验修复（CJK 兼容渲染语义纠偏）：
+  1. [修复] EvaluatePromptWorkspaceUguiCapability 在 CJK 字体能力不足时继续切换 IMGUI 兼容渲染，但不再触发 RimChat_PromptRenderFailed 误报。
+  2. [新增] 新增本地化键 RimChat_PromptRenderCompatibilityMode（中/英），兼容模式提示改为中性事件，避免用户将降级渲染误判为崩溃。
+  3. [诊断] 兼容渲染切换日志补充语言目录、字体名、SupportsCjk、UGUI 各面板开关状态，便于后续复盘定位。
+  4. [语义归位] RimChat_PromptRenderFailed 保留在异常捕获路径使用（真实渲染异常），不再用于正常降级链路。
+- 文档：同步更新 doc/config.md、doc/VersionLog.txt、doc/VersionLog_en.txt。
+0.9.1019
+- 赎金区间落点与社交新闻兼容修复（按执行链路根修）：
+  1. [社交新闻兼容] `BuildUnifiedChannelSystemPrompt` 对 `social_circle_post` 的原生渲染兼容失败由 fail-fast 改为“记录告警 + 降级继续”，不再中断新闻请求入队。
+  2. [单目标稳定引用] `FactionDialogueSession` 新增单目标赎金快照（`target/current_ask/min/max`）与 `[RansomOfferReference]` 构建；`BuildAiUserMessage` 每轮稳定注入，不再依赖历史压缩是否保留。
+  3. [单目标执行夹逼] `TryHandlePrisonerRansomActionWithSelection` 在执行前按快照窗口对越界 `offer_silver` 做最近边界夹逼，并记录归一化日志。
+  4. [批量总价自动改写] `BuildBatchRansomExecutionPlan` 将总价越界改为“总价夹逼到批量窗口边界 + 按原比例缩放 + 小数余量分配 + 精确求和回写”；极端不可分配边界保持 fail-fast。
+  5. [提示词契约去冲突] 清理“offer_silver 无上下限”旧文案，统一为“参考系统窗口；越界执行前归一化”，同步 `SystemPromptConfig`、默认 Prompt 与 `action_rules.txt`。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` modVersion 提升到 `0.9.1019`。
+0.9.1017
+- 载具 Pawn 闪退根修（RimTalk Persona 与 RPG 资格解耦）：
+  1. [根修] `PawnDialogueRoutingPolicy.IsRpgDialogueEligibleRace` 改为双层能力白名单：Humanlike/Mechanoid/Animal 保留 RPG 对话资格；ToolUser 必须具备 `story+skills` 才可进入 RPG 资格，阻断 VehiclePawn/空壳 Pawn 混入。
+  2. [新增] 新增 `IsRimTalkPersonaSyncEligible`：在 RPG 资格基础上再加 persona 子系统门槛，并明确排除 Animal 的 RimTalk Persona 同步链路（Animal 仅保留 RPG 对话）。
+  3. [阻断] `TrySyncPawnPersonaFromRimTalkSafely` 与 `IsEligibleRimTalkPersonaCopyTarget` 新增 fail-fast 资格检查，不满足条件时直接跳过，不进入 RimTalk `GetPersonality(Pawn)` 反射调用。
+  4. [清理] `CleanupInvalidRpgDictionaries` 新增 persona 字典资格清理：可解析但不再满足 RPG 资格的 Pawn（含载具类）其历史 persona 条目会自动移除，保留旧存档兼容。
+  5. [一致性] `ShouldUseRpgDialogue` 新增目标 Pawn 资格校验；`GetIneligibleRaceReason` 与资格规则统一，避免按钮可见性与实际可执行条件偏移。
+- 文档：同步更新 `doc/Index.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：`About/About.xml` modVersion 提升到 `0.9.1017`。
+0.9.1016
+- RPGManager Tick 性能根修（GameComponent 检测统一）：
+  1. [新增] 新增 `RimChat/Core/ModDependencyProbe.cs`，提供 `IsLoaded(token)` 依赖检测缓存；首次扫描后缓存命中，避免高频路径重复遍历模组列表。
+  2. [优化] `GameComponent_RPGManager.PersonaBootstrap.ProcessNpcPersonaRuntimeTick()` 调整执行顺序：先 Tick 节流，再做 RimTalk 依赖检测，减少每 Tick 固定开销。
+  3. [优化] `ProcessNpcPersonaBootstrapTick()` 在进入队列扫描前先做 RimTalk 可用性 fail-fast，避免无依赖时的无效队列初始化。
+  4. [重构] `TrySyncPawnPersonaFromRimTalk` / `TryCopyPawnPersonaFromRimTalk` 新增内部重载（可传入已解析模板），并在运行时扫描、bootstrap 队列扫描、手动全量同步中按“单轮一次模板解析”复用，消除重复配置归一化调用。
+  5. [重构] `IsRimTalkLoadedForPersonaBlock()` 改为通过 `ModDependencyProbe` 统一检测入口，不再在 Tick 链路内直接遍历 `LoadedModManager.RunningModsListForReading`。
+- 文档：同步更新 `doc/Index.md`、`doc/Api.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- 版本：About/About.xml modVersion 提升到 0.9.1016。
 
-0.9.1008。
+0.9.1015
+- 提示词工作台性能优化方案A（轻量级缓存优化）：
+  1. [优化] Token片段缓存：PromptWorkbenchChipEditor添加_cachedTokenFragments缓存，只在文本/矩形/样式变化时重新计算token位置，消除每帧TryBuildTokenFragments调用（昂贵的文本布局计算）；
+  2. [优化] 预览构建帧间隔：RimChatSettings_PromptSectionWorkspace添加PromptWorkspacePreviewFrameSkip=2，每3帧检查一次预览构建（从60fps降至20fps），降低66%预览构建CPU占用；
+  3. [优化] 内容高度缓存：EnhancedTextArea添加_cachedContentHeight缓存，只在文本/宽度/样式变化时重新计算高度，减少GC分配。
+- 版本：About/About.xml modVersion 提升到 0.9.1015。
 
-0.9.1007
-- 根修：character_persona 升级未实际生效——旧存档序列化数据覆盖文件默认值，导致"保持语气稳定"旧文本仍在运行时出现：
-  1. C# 常量 CurrentAnyPersona 更新为新文本；新增 LegacyCurrentAnyPersona 精确匹配升级路径；
-  2. UnifiedCatalogMigrationTargetVersion 5→6，新增 ApplyCharacterPersonaStateAnchorMigration 一次性迁移（覆盖 any/diplomacy/rpg 所有频道）；
-  3. PromptSectionCatalog_Default.json / RimTalkPromptEntries_Default.json any 频道 character_persona 同步更新；
-  4. TryUpgradeLegacyAnyDefaults 新增旧 CurrentAnyPersona → 新 CurrentAnyPersona 精确匹配升级行。
-- 版本：About/About.xml modVersion 提升到 0.9.1009
-- 提示词沉浸感与格式优化七模块修复（沉浸感优先，token节省为辅）：
-  1. [P0] Hediff-Need状态融合：新增ResolveHediffLabelWithContext方法，当Hediff标签（如"营养不良"）与对应Need已恢复（如饮食>40%）矛盾时，附加上下文注释（如"eating"），防止LLM基于过时Hediff标签产生幻觉；
-  2. [P0] 协议违规重试消息历史泄漏：ConvertFromChatMessages新增IsProtocolViolationMessage过滤器，阻止DIALOGUE_PROTOCOL_VIOLATION/RPG_CONTRACT_VIOLATION/TEXT_INTEGRITY_VIOLATION/IMMERSION_VIOLATION前缀的重试消息进入压缩后的持久化历史，避免后续对话轮次中出现格式指令泄漏；
-  3. [P1] Action Space条件性剪枝：新增ApplyActionExclusions方法，基于DialogueScenarioContext的社会身份信号自动排除不适用的动作——非囚犯NPC排除ReduceResistance/ReduceWill/Recruit，非玩家阵营领袖排除RomanceAttempt/MarriageProposal/Date；
-  4. [P1] FOV信息过滤：新增IsPawnPrivyToColonyInfo检查，当对话中另一方不属于玩家阵营成员时（囚犯/敌对/外邦），抑制殖民地库存和警报数据，防止全知信息泄漏；
-  5. [P2] action_rules格式指令去重：移除与api_limits/quest_guidance/response_contract重复的格式约束，精简为一条最小化原则+承诺-动作绑定；
-  6. [P2] rpg_state_anchor压缩：从~800字符压缩至~400字符，保留核心约束（实力感知/行为一致性/矛盾自纠），去除冗余示例；
-  7. [P2] thought_chain精简：从16条思考项压缩至8条核心条目，去除与repetition_reinforcement重复的细节约束条目；新增TurnCount到RpgPromptTurnContextRuntime为后续分层渲染预留；
-- 版本：About/About.xml modVersion 提升到 0.9.1009。
+0.9.1014
+- 提示词工作台UI渲染管线深度性能优化（消除每帧~200次堆分配）：
+  1. [优化] BuildModules结果缓存：添加 GetCachedPromptWorkspaceModules 方法，channel和layout不变时直接返回缓存的模块列表，消除每帧 BuildModules+LINQ排序+GetOrderedMainChainSections；
+  2. [优化] 消除Layout缓存冗余Clone：GetPromptWorkspaceNodeLayouts/SectionLayouts/EditableNodes 缓存命中时直接返回缓存列表（写入路径已通过缓存失效保证安全），消除每帧~50+Clone+6新List；
+  3. [优化] GetOrderedMainChainSections缓存：添加基于layout内容签名的缓存，避免每帧创建2个Dictionary+1个List+排序；
+  4. [优化] Color静态化：将渲染管线中约30处 new Color() 提取为 static readonly 字段，消除每帧构造开销；
+  5. [修复] 移除 DrawPromptWorkspaceEditorPanel 中重复调用的 HandlePromptWorkspaceKeyboardShortcuts。
+- 版本：About/About.xml modVersion 提升到 0.9.1014。
+
+0.9.1013
+- 提示词工作台预览渲染性能优化（帧率从~80fps恢复至~800fps）：
+  1. [优化] 子部分布局缓存：添加 SubsectionLayoutEntry 列表缓存，将每帧 CalcHeight 调用移至 EnsureLayoutCache，消除每帧高度计算；
+  2. [优化] SectionLayout列表缓存：在 RimChatSettings_PromptSectionWorkspace.NodeLayout.cs 中添加 _promptWorkspaceSectionLayoutCacheChannel 缓存，避免每帧克隆列表；
+  3. [优化] ComposeValues缓存：在 PromptWorkspacePreviewModels.cs 的增量预览构建状态中添加 CachedComposeValues 字典，确保 BuildDeterministicComposeValues 每构建会话只调用一次；
+  4. [优化] GUIStyle缓存：将 new GUIStyle() 调用替换为实例字段缓存，消除每帧GC分配；
+  5. [修复] CS0162警告：修正 DrawSubsectionBody 中的循环逻辑错误。
+- 版本：About/About.xml modVersion 提升到 0.9.1013。
+
+0.9.1012
+- 提示词工作台UI高保真对齐RimTalk与预览优化：
+  1. [修复] 点击"提示词工作台"Tab直接弹出大窗口（Dialog_PromptWorkbenchLarge），去除Launcher中间页；
+  2. [重构] 模块列表对齐RimTalk条目UI：Section新增复选框启用/禁用、统一行高25f、底栏▲▼排序按钮替代行内按钮；
+  3. [新增] PromptSectionLayoutConfig新增Enabled字段，支持Section级别的启用/禁用控制；
+  4. [重构] 模块列表按Slot+Order混合排序（Section+Node交织），与预览组装顺序一致（所见即所得）；
+  5. [新增] 单条目预览：选中Section/Node时右侧面板仅显示该条目内容，新增"完整预览"Tab切换；
+  6. [重构] 编辑器上方控件对齐RimTalk：模块标签+启用开关+Slot选择器+排序显示；
+  7. [优化] 预览性能：帧预算从0.002s增至0.008s，编辑器获焦时冻结完整预览构建；
+  8. [新增] PromptWorkbenchInfoPanel.FullPreview枚举，侧面板三Tab：预览|完整预览|变量；
+- 版本：About/About.xml modVersion 提升到 0.9.1012。
+
+0.9.1011
+- 提示词工作台大尺寸窗口恢复与Section排序自由调整：
+  1. [修复] 恢复OpenPromptWorkbenchWindow打开大尺寸弹窗（Dialog_PromptWorkbenchLarge），上次版本误废弃；
+  2. [新增] 新增PromptSectionLayoutConfig持久化模型，支持Section排序状态序列化（Scribe_Collections）；
+  3. [新增] PromptSectionSchemaCatalog.GetOrderedMainChainSections方法，根据持久化排序返回Section列表；
+  4. [新增] DrawPromptWorkspaceModuleList中Section项添加▲▼排序按钮，与Node排序操作统一；
+  5. [新增] MovePromptSectionLayout/DrawSectionLayoutRowButtons方法，Section排序逻辑与Node排序一致；
+  6. [重构] PromptWorkbenchModuleProjection.BuildModules新增sectionLayouts参数，Section顺序由持久化数据驱动；
+  7. [重构] 提示词构建管道全面接入Section自定义排序：PromptSectionAggregateBuilder、WorkspacePreviewIncremental、WorkbenchComposer、SectionAggregates；
+- 版本：About/About.xml modVersion 提升到 0.9.1011。
+
+0.9.1013
+- 提示词工作台预览渲染性能优化（帧率从~80fps恢复至~800fps）：
+  1. [优化] 子部分布局缓存：添加 SubsectionLayoutEntry 列表缓存，将每帧 CalcHeight 调用移至 EnsureLayoutCache，消除每帧高度计算；
+  2. [优化] SectionLayout列表缓存：在 RimChatSettings_PromptSectionWorkspace.NodeLayout.cs 中添加 _promptWorkspaceSectionLayoutCacheChannel 缓存，避免每帧克隆列表；
+  3. [优化] ComposeValues缓存：在 PromptWorkspacePreviewModels.cs 的增量预览构建状态中添加 CachedComposeValues 字典，确保 BuildDeterministicComposeValues 每构建会话只调用一次；
+  4. [优化] GUIStyle缓存：将 new GUIStyle() 调用替换为实例字段缓存，消除每帧GC分配；
+  5. [修复] CS0162警告：修正 DrawSubsectionBody 中的循环逻辑错误。
+- 版本：About/About.xml modVersion 提升到 0.9.1013。
+
+0.9.1012
+- 提示词工作台UI高保真对齐RimTalk与预览优化：
+  1. [修复] 点击"提示词工作台"Tab直接弹出大窗口（Dialog_PromptWorkbenchLarge），去除Launcher中间页；
+  2. [重构] 模块列表对齐RimTalk条目UI：Section新增复选框启用/禁用、统一行高25f、底栏▲▼排序按钮替代行内按钮；
+  3. [新增] PromptSectionLayoutConfig新增Enabled字段，支持Section级别的启用/禁用控制；
+  4. [重构] 模块列表按Slot+Order混合排序（Section+Node交织），与预览组装顺序一致（所见即所得）；
+  5. [新增] 单条目预览：选中Section/Node时右侧面板仅显示该条目内容，新增"完整预览"Tab切换；
+  6. [重构] 编辑器上方控件对齐RimTalk：模块标签+启用开关+Slot选择器+排序显示；
+  7. [优化] 预览性能：帧预算从0.002s增至0.008s，编辑器获焦时冻结完整预览构建；
+  8. [新增] PromptWorkbenchInfoPanel.FullPreview枚举，侧面板三Tab：预览|完整预览|变量；
+- 版本：About/About.xml modVersion 提升到 0.9.1012。
+
+0.9.1011。
+
+0.9.1010
+- 提示词工作台底层重构（保持业务功能和入口不变）：
+  1. [重构] 废弃Dialog_PromptWorkbenchLarge弹窗入口，改为内嵌Tab2导航，消除弹窗与嵌入面板的状态同步问题；
+  2. [重构] 新增PromptWorkbenchModuleProjection投影模型，将Section/Node双列表合并为统一模块列表，消除编辑模式切换UI复杂度；
+  3. [重构] RimChatSettings_PromptSectionWorkspace左侧面板由Section/Node双模式切换改为单一模块列表渲染（DrawPromptWorkspaceModuleList），Section项带左侧色条可点击，Node项带勾选框与排序按钮；
+  4. [重构] 编辑面板移除模式切换开关与Node选择器，改为DrawPromptWorkspaceCurrentModuleLabel显示当前模块类型标签+名称；
+  5. [新增] 预览面板新增快照数据状态指示器：绿色"实时数据"或灰色"占位数据"，让用户了解预览内容是否基于运行时快照；
+  6. [新增] PawnDialogueRoutingPolicy新增GetIneligibleRaceReason方法，返回种族不符合对话条件的本地化原因；
+  7. [新增] FactionDialogueSession新增messageVersion字段，所有Add*Message方法中自增并在ExposeData中持久化，为消息版本追踪提供基础；
+- 版本：About/About.xml modVersion 提升到 0.9.1010。
+0.9.1009。
 
 0.9.1008
 - 根修：AI无视自身可观测状态（如正在进食却声称面前什么都没有），对话惯性覆盖系统注入事实——系统性修复：
@@ -70,7 +181,7 @@
 
 0.9.1002
 - 增强：右键对话选项兼容性提升——新增运行时兆底注入机制。
-- 新增：快速行动菜单添加“结束会话”选项。
+- 新增：快速行动菜单添加"结束会话"选项。
 - 版本：About/About.xml modVersion 提升到 0.9.1002。
 
 0.9.1001
@@ -3589,3 +3700,12 @@
 - 兼容：旧存档中的强制态长计时在刷新时按"当前时间 + 新上限"即时截断（离线 2h、免打扰 4h）。
 - UI：保留 `PresenceForcedOfflineHours` 滑条，但文案明确其不再影响 `go_offline/set_dnd` 强制时长。
 - 文档：同步 `doc/Index.md`、`doc/Api.md`、`doc/config.md`。
+
+0.9.1018
+- 根修：主动派系消息与社交新闻新增 `DiplomacyPromptRuntimeSnapshot` 预计算快照，主线程请求路径不再同步重算记忆/谈判者/据点/事件情报块。
+- 新增：`IDiplomacyPromptSnapshotCache` + `DiplomacyPromptSnapshotCache`，支持读档后分帧预热、按派系取快照、按关系/记忆修订/世界事件与提示词文件变更自动失效。
+- 调整：`PromptPersistenceService.BuildUnifiedChannelSystemPrompt(...)` 新增可选 `runtimeSnapshot` 入参，通过线程作用域复用预计算动态块，默认调用语义保持不变。
+- 调整：`GameComponent_NpcDialoguePushManager.StartGeneration(...)` 改为先取快照，未就绪则 fail-fast 短延迟重排队，不再在当前帧兜底同步构建。
+- 调整：`SocialNewsPromptBuilder.BuildMessages(...)` 与 `GameComponent_DiplomacyManager.SocialCircle.NewsRequests` 复用同一快照缓存；快照未就绪时进入延迟重试队列，避免丢种子与重复全量扫描。
+- 调整：`GameComponent_DiplomacyManager.GameComponentTick()` 每 tick 执行快照缓存预算构建（每 tick 1 个）并处理社交新闻延迟重试队列。
+- 版本：`About/About.xml` 升级为 `0.9.1018`。

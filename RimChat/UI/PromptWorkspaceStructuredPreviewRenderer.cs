@@ -8,10 +8,11 @@ using Verse;
 namespace RimChat.UI
 {
     /// <summary>
-    /// Dependencies: structured preview model, node schema labels, and Verse GUI APIs.
-    /// Responsibility: render lightweight structured prompt preview blocks with layout caching.
+    /// Dependencies: structured preview model, node schema labels, Verse GUI APIs, and CachedRenderTexture.
+    /// Responsibility: render lightweight structured prompt preview blocks with layout caching
+    /// and RenderTexture offscreen caching to reduce per-frame DrawCall count.
     /// </summary>
-    internal sealed class PromptWorkspaceStructuredPreviewRenderer
+    internal sealed class PromptWorkspaceStructuredPreviewRenderer : IDisposable
     {
         private const float StatusHeight = 30f;
         private const float StatusGap = 6f;
@@ -31,11 +32,80 @@ namespace RimChat.UI
         private GUIStyle _headerStyle;
         private GUIStyle _subHeaderStyle;
         private GUIStyle _bodyStyle;
+        private GUIStyle _indicatorStyle;
+        // Subsection-level height cache: block index -> list of (headerHeight, contentHeight)
+        private readonly List<List<SubsectionLayoutEntry>> _cachedSubsectionLayouts = new List<List<SubsectionLayoutEntry>>();
+
+        // RenderTexture cache for offscreen rendering (reduces DrawCalls from N to 1)
+        private readonly CachedRenderTexture _rtCache = new CachedRenderTexture();
+
+        private struct SubsectionLayoutEntry
+        {
+            public float HeaderHeight;
+            public float ContentHeight;
+        }
+
+        // Static color constants to avoid per-frame allocations
+        private static readonly Color StatusBg = new Color(0.10f, 0.12f, 0.15f);
+        private static readonly Color ProgressBarBg = new Color(0.20f, 0.22f, 0.24f);
+        private static readonly Color ProgressError = new Color(0.72f, 0.20f, 0.20f);
+        private static readonly Color ProgressSuccess = new Color(0.28f, 0.62f, 0.35f);
+        private static readonly Color SubtitleBg = new Color(0.16f, 0.18f, 0.13f);
+        private static readonly Color SnapshotLiveBg = new Color(0.12f, 0.18f, 0.12f);
+        private static readonly Color SnapshotLiveText = new Color(0.45f, 0.80f, 0.45f);
+        private static readonly Color SnapshotPlaceholderBg = new Color(0.14f, 0.14f, 0.16f);
+        private static readonly Color SnapshotPlaceholderText = new Color(0.55f, 0.55f, 0.55f);
+        private static readonly Color BlockBgSystemRules = new Color(0.22f, 0.30f, 0.40f);
+        private static readonly Color BlockBgCharacter = new Color(0.25f, 0.28f, 0.18f);
+        private static readonly Color BlockBgGeneric = new Color(0.22f, 0.22f, 0.22f);
+        private static readonly Color BlockBgActionRules = new Color(0.40f, 0.18f, 0.18f);
+        private static readonly Color BlockBgOutputSpec = new Color(0.20f, 0.24f, 0.30f);
+
+        /// <summary>
+        /// Mark the RenderTexture cache as dirty so it will be redrawn on next frame.
+        /// Call this when preview data or scroll position changes.
+        /// </summary>
+        internal void MarkDirty()
+        {
+            _rtCache.MarkDirty();
+        }
 
         internal void Draw(
             Rect rect,
             PromptWorkspaceStructuredPreview preview,
             ref Vector2 scroll)
+        {
+            // Build a signature from the preview data + rect dimensions (excluding scroll
+            // since scroll changes every frame during user interaction).
+            // Dirty flag signals whether layout recalculation is needed.
+            string signature = BuildRenderSignature(preview, rect);
+            _rtCache.MarkDirtyIfChanged(signature);
+
+            // IMGUI requires rendering every frame to avoid flicker.
+            // The dirty flag only controls whether layout calculations are skipped.
+            Vector2 capturedScroll = scroll;
+            _rtCache.DrawWithCacheTracking(rect, localRect =>
+            {
+                DrawContent(localRect, preview, ref capturedScroll, _rtCache.Dirty);
+            });
+
+            // Update scroll from the rendered state (scroll may have been clamped)
+            scroll = capturedScroll;
+        }
+
+        private string BuildRenderSignature(PromptWorkspaceStructuredPreview preview, Rect rect)
+        {
+            string previewSig = preview?.Signature ?? string.Empty;
+            string stageSig = preview?.Stage.ToString() ?? "null";
+            string progressSig = $"{preview?.Completed ?? 0}/{preview?.Total ?? 0}";
+            return $"{previewSig}|{stageSig}|{progressSig}|{rect.width:F0}|{rect.height:F0}";
+        }
+
+        private void DrawContent(
+            Rect rect,
+            PromptWorkspaceStructuredPreview preview,
+            ref Vector2 scroll,
+            bool needsLayoutRecalc)
         {
             EnsureStyles();
             Rect contentRect = ResolveContentRectWithStatus(rect, preview);
@@ -46,9 +116,23 @@ namespace RimChat.UI
                 return;
             }
 
+            // Snapshot data source indicator (shown after build completes)
+            if (preview != null && preview.Stage == PromptWorkspacePreviewBuildStage.Completed)
+            {
+                float indicatorHeight = 20f;
+                Rect indicatorRect = new Rect(contentRect.x, contentRect.y, contentRect.width, indicatorHeight);
+                DrawSnapshotIndicator(indicatorRect, preview.UsesSnapshotData);
+                contentRect = new Rect(contentRect.x, contentRect.y + indicatorHeight + 2f, contentRect.width, Mathf.Max(1f, contentRect.height - indicatorHeight - 2f));
+            }
+
             float width = Mathf.Max(1f, contentRect.width - 16f);
             string signature = preview?.Signature ?? string.Empty;
-            EnsureLayoutCache(signature, blocks, width);
+
+            // Only recalculate layout if content signature or dimensions changed
+            if (needsLayoutRecalc)
+            {
+                EnsureLayoutCache(signature, blocks, width);
+            }
 
             Rect viewRect = new Rect(0f, 0f, width, _cachedContentHeight);
             float maxScrollY = Mathf.Max(0f, viewRect.height - contentRect.height);
@@ -78,7 +162,7 @@ namespace RimChat.UI
                 y += headerHeight;
 
                 Rect bodyRect = new Rect(0f, y, width, bodyHeight);
-                DrawBodyContent(bodyRect, block);
+                DrawBodyContent(bodyRect, block, i);
                 y += bodyHeight + BlockGap;
             }
 
@@ -93,13 +177,13 @@ namespace RimChat.UI
             }
 
             Rect statusRect = new Rect(rect.x, rect.y, rect.width, StatusHeight);
-            Widgets.DrawBoxSolid(statusRect, new Color(0.10f, 0.12f, 0.15f));
+            Widgets.DrawBoxSolid(statusRect, StatusBg);
             float progress = ResolveProgress(preview);
             Rect barRect = new Rect(statusRect.x + 8f, statusRect.y + 6f, Mathf.Max(1f, statusRect.width - 16f), 8f);
-            Widgets.DrawBoxSolid(barRect, new Color(0.20f, 0.22f, 0.24f));
+            Widgets.DrawBoxSolid(barRect, ProgressBarBg);
             Widgets.DrawBoxSolid(
                 new Rect(barRect.x, barRect.y, barRect.width * progress, barRect.height),
-                preview?.IsFailed == true ? new Color(0.72f, 0.20f, 0.20f) : new Color(0.28f, 0.62f, 0.35f));
+                preview?.IsFailed == true ? ProgressError : ProgressSuccess);
             GUI.Label(
                 new Rect(statusRect.x + 8f, barRect.yMax + 1f, statusRect.width - 16f, statusRect.height - 16f),
                 ResolveStatusText(preview),
@@ -196,6 +280,7 @@ namespace RimChat.UI
             _cachedWidth = width;
             _cachedHeaderHeights.Clear();
             _cachedBodyHeights.Clear();
+            _cachedSubsectionLayouts.Clear();
 
             float contentHeight = 0f;
             for (int i = 0; i < blocks.Count; i++)
@@ -203,9 +288,21 @@ namespace RimChat.UI
                 PromptWorkspacePreviewBlock block = blocks[i];
                 string headerText = ResolveHeaderText(block);
                 float headerHeight = ResolveHeaderHeight(headerText, width);
-                float bodyHeight = ResolveBodyHeight(block, width);
+                float bodyHeight;
+                List<SubsectionLayoutEntry> subsectionEntries = null;
+                if (HasSubsections(block))
+                {
+                    subsectionEntries = new List<SubsectionLayoutEntry>();
+                    bodyHeight = ResolveSubsectionBodyHeightCached(block, width, subsectionEntries);
+                }
+                else
+                {
+                    bodyHeight = ResolveBodyHeight(block, width);
+                }
+
                 _cachedHeaderHeights.Add(headerHeight);
                 _cachedBodyHeights.Add(bodyHeight);
+                _cachedSubsectionLayouts.Add(subsectionEntries);
                 contentHeight += headerHeight + bodyHeight + BlockGap;
             }
 
@@ -226,6 +323,41 @@ namespace RimChat.UI
 
             string text = block?.Content ?? string.Empty;
             return Mathf.Max(16f, _bodyStyle.CalcHeight(new GUIContent(text), Mathf.Max(1f, width - BodyPadding * 2f)));
+        }
+
+        private float ResolveSubsectionBodyHeightCached(
+            PromptWorkspacePreviewBlock block,
+            float width,
+            List<SubsectionLayoutEntry> entries)
+        {
+            float subsectionWidth = Mathf.Max(1f, width - BodyPadding * 2f);
+            float subsectionContentWidth = Mathf.Max(1f, subsectionWidth - SubsectionIndent);
+            float totalHeight = 0f;
+            int subsectionCount = 0;
+            foreach (PromptWorkspacePreviewSubsection subsection in block.Subsections ?? new List<PromptWorkspacePreviewSubsection>())
+            {
+                if (subsection == null || string.IsNullOrWhiteSpace(subsection.Content))
+                {
+                    continue;
+                }
+
+                float headerHeight = ResolveSubsectionHeaderHeight(ResolveSubsectionTitle(subsection), subsectionWidth);
+                float contentHeight = Mathf.Max(
+                    16f,
+                    _bodyStyle.CalcHeight(new GUIContent(subsection.Content), subsectionContentWidth));
+                entries.Add(new SubsectionLayoutEntry { HeaderHeight = headerHeight, ContentHeight = contentHeight });
+                totalHeight += headerHeight + contentHeight + SubsectionGap;
+                subsectionCount++;
+            }
+
+            if (subsectionCount == 0)
+            {
+                return Mathf.Max(
+                    16f,
+                    _bodyStyle.CalcHeight(new GUIContent(block?.Content ?? string.Empty), Mathf.Max(1f, width - BodyPadding * 2f)));
+            }
+
+            return Mathf.Max(16f, totalHeight);
         }
 
         private float ResolveSubsectionBodyHeight(PromptWorkspacePreviewBlock block, float width)
@@ -264,18 +396,18 @@ namespace RimChat.UI
             return Mathf.Max(18f, _subHeaderStyle.CalcHeight(new GUIContent(text ?? string.Empty), Mathf.Max(1f, width)));
         }
 
-        private void DrawBodyContent(Rect bodyRect, PromptWorkspacePreviewBlock block)
+        private void DrawBodyContent(Rect bodyRect, PromptWorkspacePreviewBlock block, int blockIndex)
         {
             if (HasSubsections(block))
             {
-                DrawSubsectionBody(bodyRect, block);
+                DrawSubsectionBody(bodyRect, block, blockIndex);
                 return;
             }
 
             DrawPlainBody(bodyRect, block?.Content ?? string.Empty);
         }
 
-        private void DrawSubsectionBody(Rect bodyRect, PromptWorkspacePreviewBlock block)
+        private void DrawSubsectionBody(Rect bodyRect, PromptWorkspacePreviewBlock block, int blockIndex)
         {
             float headerX = bodyRect.x + BodyPadding;
             float headerWidth = Mathf.Max(1f, bodyRect.width - BodyPadding * 2f);
@@ -284,6 +416,11 @@ namespace RimChat.UI
             float y = bodyRect.y;
             bool hasRenderableSubsection = false;
 
+            List<SubsectionLayoutEntry> cachedEntries = blockIndex >= 0 && blockIndex < _cachedSubsectionLayouts.Count
+                ? _cachedSubsectionLayouts[blockIndex]
+                : null;
+
+            int subsectionIdx = 0;
             foreach (PromptWorkspacePreviewSubsection subsection in block.Subsections ?? new List<PromptWorkspacePreviewSubsection>())
             {
                 if (subsection == null || string.IsNullOrWhiteSpace(subsection.Content))
@@ -292,9 +429,22 @@ namespace RimChat.UI
                 }
 
                 string subtitle = ResolveSubsectionTitle(subsection);
-                float subtitleHeight = ResolveSubsectionHeaderHeight(subtitle, headerWidth);
+
+                // Use cached height when available, otherwise compute
+                float subtitleHeight, contentHeight;
+                if (cachedEntries != null && subsectionIdx < cachedEntries.Count)
+                {
+                    subtitleHeight = cachedEntries[subsectionIdx].HeaderHeight;
+                    contentHeight = cachedEntries[subsectionIdx].ContentHeight;
+                }
+                else
+                {
+                    subtitleHeight = ResolveSubsectionHeaderHeight(subtitle, headerWidth);
+                    contentHeight = Mathf.Max(16f, _bodyStyle.CalcHeight(new GUIContent(subsection.Content), contentWidth));
+                }
+
                 Rect subtitleRect = new Rect(headerX, y, headerWidth, subtitleHeight);
-                Widgets.DrawBoxSolid(subtitleRect, new Color(0.16f, 0.18f, 0.13f));
+                Widgets.DrawBoxSolid(subtitleRect, SubtitleBg);
                 GUI.Label(new Rect(
                     subtitleRect.x + SubsectionHeaderPadding,
                     subtitleRect.y + 1f,
@@ -304,12 +454,10 @@ namespace RimChat.UI
                     _subHeaderStyle);
                 y += subtitleHeight;
 
-                float contentHeight = Mathf.Max(
-                    16f,
-                    _bodyStyle.CalcHeight(new GUIContent(subsection.Content), contentWidth));
                 GUI.Label(new Rect(contentX, y, contentWidth, contentHeight), subsection.Content, _bodyStyle);
                 y += contentHeight + SubsectionGap;
                 hasRenderableSubsection = true;
+                subsectionIdx++;
             }
 
             if (!hasRenderableSubsection)
@@ -353,6 +501,7 @@ namespace RimChat.UI
 
         private void EnsureStyles()
         {
+            _instance = this;
             if (_headerStyle == null)
             {
                 _headerStyle = new GUIStyle(GUI.skin.label)
@@ -381,6 +530,16 @@ namespace RimChat.UI
                     richText = false
                 };
             }
+
+            if (_indicatorStyle == null)
+            {
+                _indicatorStyle = new GUIStyle(GUI.skin.label)
+                {
+                    fontStyle = FontStyle.Bold,
+                    wordWrap = false
+                };
+                SnapshotIndicatorStyle = _indicatorStyle;
+            }
         }
 
         private string ResolveHeaderText(PromptWorkspacePreviewBlock block)
@@ -408,16 +567,56 @@ namespace RimChat.UI
             switch (kind)
             {
                 case PromptWorkspacePreviewBlockKind.Context:
-                    return new Color(0.22f, 0.30f, 0.40f);
+                    return BlockBgSystemRules;
                 case PromptWorkspacePreviewBlockKind.SectionAggregate:
-                    return new Color(0.25f, 0.28f, 0.18f);
+                    return BlockBgCharacter;
                 case PromptWorkspacePreviewBlockKind.Footer:
-                    return new Color(0.22f, 0.22f, 0.22f);
+                    return BlockBgGeneric;
                 case PromptWorkspacePreviewBlockKind.Error:
-                    return new Color(0.40f, 0.18f, 0.18f);
+                    return BlockBgActionRules;
                 default:
-                    return new Color(0.20f, 0.24f, 0.30f);
+                    return BlockBgOutputSpec;
             }
+        }
+
+        private static void DrawSnapshotIndicator(Rect rect, bool usesSnapshot)
+        {
+            Color oldColor = GUI.color;
+            TextAnchor oldAnchor = Text.Anchor;
+            Text.Anchor = TextAnchor.MiddleLeft;
+
+            // Reuse the shared static indicator style (cached per-instance via EnsureStyles)
+            GUIStyle indicatorStyle = _instance?._indicatorStyle ?? SnapshotIndicatorStyle;
+
+            if (usesSnapshot)
+            {
+                // Green indicator: runtime snapshot data
+                Widgets.DrawBoxSolid(rect, SnapshotLiveBg);
+                GUI.color = SnapshotLiveText;
+                GUI.Label(new Rect(rect.x + 6f, rect.y, rect.width - 12f, rect.height),
+                    "RimChat_PreviewSnapshotIndicator_Live".Translate().ToString(),
+                    indicatorStyle);
+            }
+            else
+            {
+                // Gray indicator: placeholder data
+                Widgets.DrawBoxSolid(rect, SnapshotPlaceholderBg);
+                GUI.color = SnapshotPlaceholderText;
+                GUI.Label(new Rect(rect.x + 6f, rect.y, rect.width - 12f, rect.height),
+                    "RimChat_PreviewSnapshotIndicator_Placeholder".Translate().ToString(),
+                    indicatorStyle);
+            }
+
+            GUI.color = oldColor;
+            Text.Anchor = oldAnchor;
+        }
+
+        private static GUIStyle SnapshotIndicatorStyle;
+        private static PromptWorkspaceStructuredPreviewRenderer _instance;
+
+        public void Dispose()
+        {
+            _rtCache.Dispose();
         }
     }
 }

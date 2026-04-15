@@ -513,6 +513,18 @@ namespace RimChat.Config
             EnsureDiplomacyImageDefaults();
             UserDefinedPromptVariableService.NormalizeSettingsCollections(this);
 
+            // UGUI rendering feature flags (persisted, synchronized to static accessors)
+            Scribe_Values.Look(ref _useUguiRendering, "UseUguiRendering", true);
+            Scribe_Values.Look(ref _useUguiPreviewPanel, "UseUguiPreviewPanel", true);
+            Scribe_Values.Look(ref _useUguiSidePanel, "UseUguiSidePanel", true);
+            Scribe_Values.Look(ref _useUguiChatMessages, "UseUguiChatMessages", false);
+            Scribe_Values.Look(ref _useUguiHeaderPanel, "UseUguiHeaderPanel", true);
+            Scribe_Values.Look(ref _useUguiPresetPanel, "UseUguiPresetPanel", true);
+            Scribe_Values.Look(ref _useUguiEditorPanel, "UseUguiEditorPanel", true);
+            UI.UGui.UGuiFeatureFlags.SyncFromSettings(
+                _useUguiRendering, _useUguiPreviewPanel, _useUguiSidePanel, _useUguiChatMessages,
+                _useUguiHeaderPanel, _useUguiPresetPanel, _useUguiEditorPanel);
+
             base.ExposeData();
         }
 
@@ -1313,7 +1325,10 @@ namespace RimChat.Config
             }
             else if (selectedTab == 2)
             {
-                DrawTab_PromptSettingsDirect(contentRect);
+                // selectedTab=2 should never be reached (Tab 2 click opens popup directly),
+                // but if it does, open the workbench and reset to tab 0.
+                OpenPromptWorkbenchWindow();
+                selectedTab = 0;
             }
             else if (selectedTab == 3)
             {
@@ -1466,6 +1481,15 @@ namespace RimChat.Config
 
         private Vector2 promptTabScrollPosition = Vector2.zero;
         private bool _promptWorkbenchExperimentalEnabled;
+
+        // UGUI rendering feature flags
+        private bool _useUguiRendering = true;
+        private bool _useUguiPreviewPanel = true;
+        private bool _useUguiSidePanel = true;
+        private bool _useUguiChatMessages;
+        private bool _useUguiHeaderPanel = true;
+        private bool _useUguiPresetPanel = true;
+        private bool _useUguiEditorPanel = true;
 
         internal void DrawTab_PromptSettingsDirect(Rect rect)
         {

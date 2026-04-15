@@ -12,6 +12,7 @@ using RimChat.Util;
 using RimChat.Core;
 using RimChat.Config;
 using RimChat.AI;
+using RimChat.Persistence;
 
 namespace RimChat.DiplomacySystem
 {
@@ -45,6 +46,7 @@ namespace RimChat.DiplomacySystem
             InitializeSocialCircleOnNewGame();
             // Initializeleadermemorysystem
             LeaderMemoryManager.Instance.OnNewGame();
+            DiplomacyPromptSnapshotCache.Instance.WarmupOnLoad();
         }
 
         public override void LoadedGame()
@@ -73,6 +75,7 @@ namespace RimChat.DiplomacySystem
             CleanupInvalidPresenceStates();
             // Loadleadermemorysystem
             LeaderMemoryManager.Instance.OnLoadedGame();
+            DiplomacyPromptSnapshotCache.Instance.WarmupOnLoad();
         }
 
         private void InitializeAIControlledFactions()
@@ -481,6 +484,8 @@ namespace RimChat.DiplomacySystem
         public override void GameComponentTick()
         {
             int currentTick = Find.TickManager.TicksGame;
+            DiplomacyPromptSnapshotCache.Instance.Tick(currentTick, maxBuildsPerTick: 1);
+            ProcessDeferredSocialNewsSeeds(currentTick);
 
             // 每 60 ticks (约 1 秒) 检查一次
             if (currentTick % 60 == 0)

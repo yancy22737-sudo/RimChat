@@ -77,40 +77,52 @@ namespace RimChat.Config
             yield return SendProbeCoroutine(
                 BuildProbeRequest(runtime.ModelsEndpoint, "GET", null, config.Provider, config.ApiKey, CloudTimeoutSeconds),
                 probe => modelsProbe = probe);
+            bool modelsEndpointMissing = false;
+            string modelsFallbackDetail = string.Empty;
 
             if (!modelsProbe.IsHttpSuccess)
             {
-                onCompleted?.Invoke(BuildFailureFromProbe(
-                    ApiUsabilityStep.ModelsProbe,
-                    modelsProbe,
-                    runtime.ModelsEndpoint,
-                    startedAtUtc,
-                    steps,
-                    modelName,
-                    true,
-                    null));
-                yield break;
+                if (!IsModelsEndpointMissingStatusCode(modelsProbe.HttpCode))
+                {
+                    onCompleted?.Invoke(BuildFailureFromProbe(
+                        ApiUsabilityStep.ModelsProbe,
+                        modelsProbe,
+                        runtime.ModelsEndpoint,
+                        startedAtUtc,
+                        steps,
+                        modelName,
+                        true,
+                        null));
+                    yield break;
+                }
+
+                modelsEndpointMissing = true;
+                modelsFallbackDetail = BuildMissingModelsFallbackDetail(modelsProbe.HttpCode);
+                Log.Warning($"[RimChat] Models endpoint missing (HTTP {modelsProbe.HttpCode}), fallback to chat probe. endpoint={runtime.ModelsEndpoint}");
             }
 
             steps.Add(BuildStepSuccess(ApiUsabilityStep.ModelsProbe, runtime.ModelsEndpoint, startedAtUtc));
             NotifyProgress(onProgress, ApiUsabilityStep.ModelAvailability, 4, totalSteps);
-            List<string> cloudModels = ParseCloudModels(modelsProbe.ResponseBody, config.Provider);
-            if (!ContainsModel(cloudModels, modelName))
+            if (!modelsEndpointMissing)
             {
-                string detail = BuildMissingModelDetail(modelName, cloudModels);
-                onCompleted?.Invoke(BuildFailure(
-                    ApiUsabilityStep.ModelAvailability,
-                    ApiUsabilityErrorCode.MODEL_NOT_FOUND,
-                    detail,
-                    modelsProbe.HttpCode,
-                    runtime.ModelsEndpoint,
-                    startedAtUtc,
-                    steps,
-                    modelName,
-                    true,
-                    null,
-                    modelsProbe.ResponseBody));
-                yield break;
+                List<string> cloudModels = ParseCloudModels(modelsProbe.ResponseBody, config.Provider);
+                if (!ContainsModel(cloudModels, modelName))
+                {
+                    string detail = BuildMissingModelDetail(modelName, cloudModels);
+                    onCompleted?.Invoke(BuildFailure(
+                        ApiUsabilityStep.ModelAvailability,
+                        ApiUsabilityErrorCode.MODEL_NOT_FOUND,
+                        detail,
+                        modelsProbe.HttpCode,
+                        runtime.ModelsEndpoint,
+                        startedAtUtc,
+                        steps,
+                        modelName,
+                        true,
+                        null,
+                        modelsProbe.ResponseBody));
+                    yield break;
+                }
             }
 
             steps.Add(BuildStepSuccess(ApiUsabilityStep.ModelAvailability, runtime.ModelsEndpoint, startedAtUtc));
@@ -185,6 +197,10 @@ namespace RimChat.Config
 
             steps.Add(BuildStepSuccess(ApiUsabilityStep.ResponseContractValidation, runtime.ChatEndpoint, startedAtUtc));
             string cloudSuccessDetail = BuildContractValidationSuccessDetail(cloudContract, cloudRetried);
+            if (modelsEndpointMissing)
+            {
+                cloudSuccessDetail = AppendDiagnosticDetail(cloudSuccessDetail, modelsFallbackDetail);
+            }
             onCompleted?.Invoke(BuildSuccess(
                 ApiUsabilityStep.ResponseContractValidation,
                 cloudFinalProbe.HttpCode,
@@ -733,6 +749,19 @@ namespace RimChat.Config
                 yield break;
             }
 
+            if (IsModelsEndpointMissingStatusCode(openAiProbe.HttpCode))
+            {
+                Log.Warning($"[RimChat] Local OpenAI-compatible models endpoint missing (HTTP {openAiProbe.HttpCode}), fallback to chat probe. endpoint={openAiEndpoint}");
+                onCompleted?.Invoke(new ApiUsabilityLocalServiceProbe
+                {
+                    IsSuccess = true,
+                    EndpointUsed = openAiEndpoint,
+                    ServiceType = ApiUsabilityLocalServiceType.OpenAiCompatible,
+                    Response = openAiProbe
+                });
+                yield break;
+            }
+
             ApiUsabilityProbeResponse failed = openAiProbe.HttpCode > 0 ? openAiProbe : ollamaProbe;
             onCompleted?.Invoke(new ApiUsabilityLocalServiceProbe
             {
@@ -904,6 +933,17 @@ namespace RimChat.Config
                 model.StartsWith(normalized + ":", StringComparison.OrdinalIgnoreCase));
         }
 
+        private static bool IsModelsEndpointMissingStatusCode(long httpCode)
+        {
+            return httpCode == 404 || httpCode == 405 || httpCode == 501;
+        }
+
+        private static string BuildMissingModelsFallbackDetail(long httpCode)
+        {
+            string codeText = httpCode > 0 ? httpCode.ToString() : "unknown";
+            return $"models_endpoint_missing_http={codeText}; fallback_to_chat_probe=true";
+        }
+
         private static string BuildOpenAiChatPayload(string modelName)
         {
             string escapedModel = EscapeJsonString(modelName);
@@ -1023,6 +1063,23 @@ namespace RimChat.Config
             }
 
             return string.Empty;
+        }
+
+        private static string AppendDiagnosticDetail(string primary, string extra)
+        {
+            bool hasPrimary = !string.IsNullOrWhiteSpace(primary);
+            bool hasExtra = !string.IsNullOrWhiteSpace(extra);
+            if (!hasPrimary)
+            {
+                return hasExtra ? extra.Trim() : string.Empty;
+            }
+
+            if (!hasExtra)
+            {
+                return primary.Trim();
+            }
+
+            return $"{primary.Trim()}; {extra.Trim()}";
         }
 
         private static bool ContainsJsonField(string responseBody, string fieldToken)

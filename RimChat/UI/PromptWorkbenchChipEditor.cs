@@ -63,6 +63,12 @@ namespace RimChat.UI
         private GUIStyle _editorTextAreaStyle;
         private GUIStyle _readOnlyTextStyle;
 
+        // Token fragment cache to avoid per-frame recalculation of text positions (A optimization)
+        private string _cachedFragmentSource = string.Empty;
+        private Rect _cachedFragmentTextRect;
+        private GUIStyle _cachedFragmentStyle;
+        private readonly List<List<TokenFragment>> _cachedTokenFragments = new List<List<TokenFragment>>();
+
         public PromptWorkbenchChipEditor(string controlName)
         {
             _controlName = string.IsNullOrWhiteSpace(controlName)
@@ -188,24 +194,19 @@ namespace RimChat.UI
                 return;
             }
 
-            GUIContent content = GetCachedContent(text);
-            float lineHeight = Mathf.Max(12f, textAreaStyle.lineHeight);
-            float lineTolerance = lineHeight * LineToleranceScale;
+            // Rebuild fragment cache only when text, rect, or style changes (A optimization)
+            EnsureTokenFragmentCache(text, textRect, textAreaStyle, tokens);
+
             bool shouldPaint = Event.current.type == EventType.Repaint;
 
-            for (int i = 0; i < tokens.Count; i++)
+            for (int i = 0; i < tokens.Count && i < _cachedTokenFragments.Count; i++)
             {
-                PromptTokenSegment token = tokens[i];
-                _tokenFragmentBuffer.Clear();
-                if (!TryBuildTokenFragments(textRect, textAreaStyle, content, token, lineTolerance, lineHeight, _tokenFragmentBuffer))
-                {
-                    continue;
-                }
+                List<TokenFragment> fragments = _cachedTokenFragments[i];
+                string tooltip = GetTooltipCached(tokens[i].VariableName);
 
-                string tooltip = GetTooltipCached(token.VariableName);
-                for (int fragmentIndex = 0; fragmentIndex < _tokenFragmentBuffer.Count; fragmentIndex++)
+                for (int fragmentIndex = 0; fragmentIndex < fragments.Count; fragmentIndex++)
                 {
-                    TokenFragment fragment = _tokenFragmentBuffer[fragmentIndex];
+                    TokenFragment fragment = fragments[fragmentIndex];
                     TooltipHandler.TipRegion(fragment.Rect, tooltip);
                     if (!shouldPaint)
                     {
@@ -214,6 +215,37 @@ namespace RimChat.UI
 
                     DrawTokenLabel(fragment.Rect, SliceText(text, fragment.StartIndex, fragment.EndIndex), textAreaStyle);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Rebuilds token fragment cache only when text, rect, or style changes.
+        /// This eliminates per-frame text layout calculations.
+        /// </summary>
+        private void EnsureTokenFragmentCache(string text, Rect textRect, GUIStyle textAreaStyle, List<PromptTokenSegment> tokens)
+        {
+            if (string.Equals(_cachedFragmentSource, text, StringComparison.Ordinal) &&
+                _cachedFragmentTextRect == textRect &&
+                _cachedFragmentStyle == textAreaStyle &&
+                _cachedTokenFragments.Count == tokens.Count)
+            {
+                return;
+            }
+
+            _cachedFragmentSource = text ?? string.Empty;
+            _cachedFragmentTextRect = textRect;
+            _cachedFragmentStyle = textAreaStyle;
+            _cachedTokenFragments.Clear();
+
+            GUIContent content = GetCachedContent(text);
+            float lineHeight = Mathf.Max(12f, textAreaStyle.lineHeight);
+            float lineTolerance = lineHeight * LineToleranceScale;
+
+            for (int i = 0; i < tokens.Count; i++)
+            {
+                var fragments = new List<TokenFragment>();
+                TryBuildTokenFragments(textRect, textAreaStyle, content, tokens[i], lineTolerance, lineHeight, fragments);
+                _cachedTokenFragments.Add(fragments);
             }
         }
 

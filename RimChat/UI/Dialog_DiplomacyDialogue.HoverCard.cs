@@ -18,6 +18,8 @@ namespace RimChat.UI
         private const float HoverCardLineHeight = 22f;
         private const float HoverCardRevealDuration = 0.16f;
         private const float HoverCardExpandMargin = 5f;
+        private const int SpeakerHoverBioMaxLength = 500;
+        private const string SpeakerHoverBioOverflowSuffix = "...";
         private const int GoodwillRevealTierHostile = -60;
         private const int GoodwillRevealTierLow = 0;
         private const int GoodwillRevealTierMedium = 40;
@@ -252,6 +254,26 @@ namespace RimChat.UI
             }
 
             return text.Trim().Replace("\r", string.Empty);
+        }
+
+        private static string BuildSpeakerHoverBioText(Faction resolvedFaction, bool isPlayer, Pawn activePawn)
+        {
+            string rawText = isPlayer
+                ? (activePawn?.story?.TitleCap ?? "Colonist")
+                : BuildFactionBioText(resolvedFaction);
+
+            if (string.IsNullOrEmpty(rawText))
+            {
+                return string.Empty;
+            }
+
+            string normalized = rawText.Replace("\r", string.Empty);
+            if (normalized.Length <= SpeakerHoverBioMaxLength)
+            {
+                return normalized;
+            }
+
+            return normalized.Substring(0, SpeakerHoverBioMaxLength) + SpeakerHoverBioOverflowSuffix;
         }
 
         private static string BuildIdentityText(Faction targetFaction, Pawn subjectPawn)
@@ -512,7 +534,7 @@ namespace RimChat.UI
 
             float labelWidth = 74f;
             float valueWidth = cardWidth - padding * 2 - labelWidth;
-            string bioText = isPlayer ? (activeHoverPawn?.story?.TitleCap ?? "Colonist") : BuildFactionBioText(resolvedFaction);
+            string bioText = BuildSpeakerHoverBioText(resolvedFaction, isPlayer, activeHoverPawn);
             bool bioRevealed = isPlayer || tier >= FactionIntelRevealTier.Low;
             string bioDisplay = bioRevealed ? (bioText ?? "???") : "???";
 
@@ -629,7 +651,7 @@ namespace RimChat.UI
 
             if (isPlayer)
             {
-                DrawIntelLine(cardRect, ref linesY, padding, labelWidth, "RimChat_HoverCardBio".Translate(), activeHoverPawn?.story?.TitleCap ?? "Colonist", true, speakerHoverCardAlpha, bioLineHeight);
+                DrawIntelLine(cardRect, ref linesY, padding, labelWidth, "RimChat_HoverCardBio".Translate(), bioText, true, speakerHoverCardAlpha, bioLineHeight);
                 DrawIntelLine(cardRect, ref linesY, padding, labelWidth, "RimChat_HoverCardFaction".Translate(), Faction.OfPlayer.Name ?? "RimChat_HoverCardPlayerFaction".Translate(), true, speakerHoverCardAlpha);
                 if (activeHoverPawn != null)
                 {
@@ -639,7 +661,7 @@ namespace RimChat.UI
             }
             else
             {
-                DrawIntelLine(cardRect, ref linesY, padding, labelWidth, "RimChat_HoverCardBio".Translate(), BuildFactionBioText(resolvedFaction), tier >= FactionIntelRevealTier.Low, speakerHoverCardAlpha, bioLineHeight);
+                DrawIntelLine(cardRect, ref linesY, padding, labelWidth, "RimChat_HoverCardBio".Translate(), bioText, tier >= FactionIntelRevealTier.Low, speakerHoverCardAlpha, bioLineHeight);
                 DrawIntelLine(cardRect, ref linesY, padding, labelWidth, "RimChat_HoverCardIdentity".Translate(), BuildIdentityText(resolvedFaction, activeHoverPawn), tier >= FactionIntelRevealTier.Low, speakerHoverCardAlpha);
                 DrawIntelLine(cardRect, ref linesY, padding, labelWidth, "RimChat_HoverCardAge".Translate(), BuildAgeText(activeHoverPawn), tier >= FactionIntelRevealTier.Medium, speakerHoverCardAlpha);
                 DrawIntelLine(cardRect, ref linesY, padding, labelWidth, "RimChat_HoverCardGender".Translate(), BuildGenderText(activeHoverPawn), tier >= FactionIntelRevealTier.Low, speakerHoverCardAlpha);

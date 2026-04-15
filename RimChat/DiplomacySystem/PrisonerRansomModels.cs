@@ -26,6 +26,8 @@ namespace RimChat.DiplomacySystem
         public int OfferedSilver { get; set; }
         public int AcceptedSilver { get; set; }
         public int CurrentAskSilver { get; set; }
+        public int OfferWindowMinSilver { get; set; }
+        public int OfferWindowMaxSilver { get; set; }
         public int FloorSilver { get; set; }
         public int RoundIndex { get; set; }
         public int MaxRounds { get; set; }
@@ -61,6 +63,8 @@ namespace RimChat.DiplomacySystem
         public Pawn TargetPawn;
         public int OfferedSilver;
         public int AcceptedSilver;
+        public int OfferWindowMinSilver;
+        public int OfferWindowMaxSilver;
         public PrisonerRansomNegotiationState State;
         public bool IsBatchRansom;
         public string BatchGroupId = string.Empty;

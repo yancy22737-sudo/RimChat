@@ -505,18 +505,7 @@ namespace RimChat.Persistence
                         break;
                     case "thought_chain_node_template":
                         placement.OutputTag = "thought_chain";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "thought_chain_node_template"));
-                        break;
-                    case "diplomacy_state_override":
-                        placement.OutputTag = "state_override";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "diplomacy_state_override",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "diplomacy_state_override"));
-                        break;
-                    case "diplomacy_alive_feeling":
-                        placement.OutputTag = "alive_feeling";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "diplomacy_alive_feeling",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "diplomacy_alive_feeling"));
+                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
                         break;
                     case "response_contract_node_template":
                         placement.OutputTag = "response_contract";
@@ -632,28 +621,7 @@ namespace RimChat.Persistence
                         break;
                     case "thought_chain_node_template":
                         placement.OutputTag = "thought_chain";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "thought_chain_node_template"));
-                        break;
-                    case "rpg_body_emotion_override":
-                        placement.OutputTag = "body_emotion_override";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "rpg_body_emotion_override",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "rpg_body_emotion_override"));
-                        break;
-                    case "rpg_state_anchor":
-                        placement.OutputTag = "state_anchor";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "rpg_state_anchor",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "rpg_state_anchor"));
-                        break;
-                    case "rpg_survival_instinct":
-                        placement.OutputTag = "survival_instinct";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "rpg_survival_instinct",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "rpg_survival_instinct"));
-                        break;
-                    case "rpg_alive_feeling":
-                        placement.OutputTag = "alive_feeling";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "rpg_alive_feeling",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "rpg_alive_feeling"));
+                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
                         break;
                     default:
                         placement.Content = string.Empty;
@@ -746,8 +714,7 @@ namespace RimChat.Persistence
                         break;
                     case "thought_chain_node_template":
                         placement.OutputTag = "thought_chain";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template",
-                            PromptUnifiedCatalog.CreateFallback().ResolveNode(promptChannel, "thought_chain_node_template"));
+                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
                         break;
                     default:
                         placement.Content = string.Empty;
@@ -1786,8 +1753,8 @@ namespace RimChat.Persistence
 
             return BuildTextBlock(sb =>
             {
+                AppendStrictJsonFormatPreamble(sb);
                 RpgApiActionPromptConfig apiPrompt = settings?.RPGApiActionPromptConfig?.Clone() ?? RpgApiActionPromptConfig.CreateFallback();
-                ApplyActionExclusions(apiPrompt, context);
                 if (preferCompact)
                 {
                     RpgApiPromptTextBuilder.AppendActionDefinitionsCompact(sb, apiPrompt);
@@ -1813,40 +1780,6 @@ namespace RimChat.Persistence
                     sb.AppendLine();
                 }
             });
-        }
-
-        /// <summary>
-        /// Prune the action space based on the dialogue scenario context.
-        /// Remove actions that are irrelevant or inconsistent with the NPC's
-        /// social identity (prisoner, hostile, faction leader, etc.).
-        /// </summary>
-        private static void ApplyActionExclusions(RpgApiActionPromptConfig config, DialogueScenarioContext context)
-        {
-            if (config == null || context == null || !context.IsRpg)
-            {
-                return;
-            }
-
-            var exclude = config.ExcludeActionNames ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            // Non-prisoner: remove prisoner-specific actions
-            if (!context.IsTargetPrisoner)
-            {
-                exclude.Add("ReduceResistance");
-                exclude.Add("ReduceWill");
-                exclude.Add("Recruit");
-            }
-
-            // Faction leader of non-player faction: remove romance actions
-            // (leaders rarely engage in romance with random interlocutors)
-            if (context.IsTargetFactionLeader && context.Target?.Faction != Faction.OfPlayer)
-            {
-                exclude.Add("RomanceAttempt");
-                exclude.Add("MarriageProposal");
-                exclude.Add("Date");
-            }
-
-            config.ExcludeActionNames = exclude;
         }
 
         private string BuildRpgFormatConstraintText(

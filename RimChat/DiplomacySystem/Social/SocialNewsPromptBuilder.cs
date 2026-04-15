@@ -23,7 +23,9 @@ namespace RimChat.DiplomacySystem
             "personal_chronicle"
         };
 
-        public static List<ChatMessageData> BuildMessages(SocialNewsSeed seed)
+        public static List<ChatMessageData> BuildMessages(
+            SocialNewsSeed seed,
+            DiplomacyPromptRuntimeSnapshot runtimeSnapshot = null)
         {
             var variables = new Dictionary<string, object>(System.StringComparer.OrdinalIgnoreCase);
             foreach (KeyValuePair<string, object> entry in BuildVariables(seed))
@@ -46,7 +48,8 @@ namespace RimChat.DiplomacySystem
                 null,
                 variables,
                 "social_news_input",
-                BuildPromptInputPayload(seed));
+                BuildPromptInputPayload(seed),
+                runtimeSnapshot: runtimeSnapshot);
             return new List<ChatMessageData>
             {
                 new ChatMessageData

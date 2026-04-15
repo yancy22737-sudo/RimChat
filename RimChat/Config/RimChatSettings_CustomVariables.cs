@@ -19,6 +19,7 @@ namespace RimChat.Config
             _rimTalkVariableCacheRefreshAt = -1f;
             _rimTalkVariableTooltipCache.Clear();
             InvalidatePromptVariableRowCache();
+            MarkWorkspaceDirty(WorkspaceDirtySidePanel);
         }
 
         internal void OpenUserDefinedPromptVariableEditor(string path = null)

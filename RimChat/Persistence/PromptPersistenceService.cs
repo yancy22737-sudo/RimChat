@@ -55,6 +55,28 @@ namespace RimChat.Persistence
         private bool _hasPendingPromptDomainRepairs;
         private PromptBundleImportFailure _lastPromptBundleImportFailure = PromptBundleImportFailure.None;
         private string _lastPromptBundleImportErrorCode = string.Empty;
+        [ThreadStatic] private static Stack<DiplomacyPromptRuntimeSnapshot> _runtimeSnapshotScope;
+
+        private sealed class RuntimeSnapshotScope : IDisposable
+        {
+            private bool disposed;
+
+            public void Dispose()
+            {
+                if (disposed)
+                {
+                    return;
+                }
+
+                disposed = true;
+                if (_runtimeSnapshotScope == null || _runtimeSnapshotScope.Count == 0)
+                {
+                    return;
+                }
+
+                _runtimeSnapshotScope.Pop();
+            }
+        }
 
         private PromptPersistenceService()
         {
@@ -63,6 +85,90 @@ namespace RimChat.Persistence
             _diplomacyPromptBuilder = new DiplomacyPromptBuilder(this);
             _diplomacyStrategyPromptBuilder = new DiplomacyStrategyPromptBuilder(this);
             _rpgPromptBuilder = new RpgPromptBuilder(this);
+        }
+
+        internal IDisposable PushRuntimeSnapshotScope(DiplomacyPromptRuntimeSnapshot snapshot)
+        {
+            if (snapshot == null)
+            {
+                return null;
+            }
+
+            _runtimeSnapshotScope ??= new Stack<DiplomacyPromptRuntimeSnapshot>();
+            _runtimeSnapshotScope.Push(snapshot);
+            return new RuntimeSnapshotScope();
+        }
+
+        private static bool TryGetScopedRuntimeSnapshotForFaction(Faction faction, out DiplomacyPromptRuntimeSnapshot snapshot)
+        {
+            snapshot = null;
+            if (faction == null || _runtimeSnapshotScope == null || _runtimeSnapshotScope.Count == 0)
+            {
+                return false;
+            }
+
+            DiplomacyPromptRuntimeSnapshot scoped = _runtimeSnapshotScope.Peek();
+            if (scoped == null)
+            {
+                return false;
+            }
+
+            string factionId = faction.GetUniqueLoadID() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(factionId))
+            {
+                return false;
+            }
+
+            if (!string.Equals(scoped.FactionLoadId, factionId, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            snapshot = scoped;
+            return true;
+        }
+
+        internal DiplomacyPromptRuntimeSnapshot BuildRuntimeSnapshotForFaction(
+            Faction faction,
+            Pawn preferredNegotiator,
+            int builtTick,
+            int memoryRevision,
+            int worldEventRevision,
+            long promptFilesStampUtcTicks,
+            int settingsSignature)
+        {
+            if (faction == null)
+            {
+                return null;
+            }
+
+            SystemPromptConfig config = LoadConfigReadOnly() ?? CreateDefaultConfig();
+            DialogueScenarioContext context = DialogueScenarioContext.CreateDiplomacy(
+                faction,
+                false,
+                new[] { "scene:social" });
+            string environmentBlock = BuildEnvironmentPromptBlocks(config, context);
+            string memoryDataBlock = BuildTextBlock(sb => AppendMemoryData(sb, faction));
+            string factionInfoBlock = BuildTextBlock(sb => AppendFactionInfo(sb, faction));
+            string playerPawnProfileBlock = BuildPlayerPawnContextForPrompt(faction, preferredNegotiator);
+            string playerRoyaltySummaryBlock = BuildPlayerRoyaltySummaryForPrompt(faction, preferredNegotiator);
+            string factionSettlementSummaryBlock = BuildFactionSettlementSummaryForPrompt(faction);
+
+            return new DiplomacyPromptRuntimeSnapshot(
+                faction.GetUniqueLoadID(),
+                environmentBlock,
+                memoryDataBlock,
+                factionInfoBlock,
+                playerPawnProfileBlock,
+                playerRoyaltySummaryBlock,
+                factionSettlementSummaryBlock,
+                builtTick,
+                memoryRevision,
+                worldEventRevision,
+                faction.PlayerGoodwill,
+                faction.RelationKindWith(Faction.OfPlayer),
+                promptFilesStampUtcTicks,
+                settingsSignature);
         }
 
         /// <summary>/// Promptfoldername
@@ -606,7 +712,17 @@ namespace RimChat.Persistence
 
         public string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags)
         {
-            return BuildFullSystemPrompt(faction, config, isProactive, additionalSceneTags, null);
+            return BuildFullSystemPrompt(faction, config, isProactive, additionalSceneTags, null, null);
+        }
+
+        public string BuildFullSystemPrompt(
+            Faction faction,
+            SystemPromptConfig config,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags,
+            DiplomacyPromptRuntimeSnapshot runtimeSnapshot)
+        {
+            return BuildFullSystemPrompt(faction, config, isProactive, additionalSceneTags, null, runtimeSnapshot);
         }
 
         public string BuildFullSystemPrompt(
@@ -615,6 +731,17 @@ namespace RimChat.Persistence
             bool isProactive,
             IEnumerable<string> additionalSceneTags,
             Pawn playerNegotiator)
+        {
+            return BuildFullSystemPrompt(faction, config, isProactive, additionalSceneTags, playerNegotiator, null);
+        }
+
+        public string BuildFullSystemPrompt(
+            Faction faction,
+            SystemPromptConfig config,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags,
+            Pawn playerNegotiator,
+            DiplomacyPromptRuntimeSnapshot runtimeSnapshot)
         {
             DialogueScenarioContext scenarioContext = DialogueScenarioContext.CreateDiplomacy(
                 faction,
@@ -635,7 +762,8 @@ namespace RimChat.Persistence
                 scenarioContext,
                 config?.EnvironmentPrompt,
                 additionalValues,
-                deterministicPreview: false);
+                deterministicPreview: false,
+                runtimeSnapshot: runtimeSnapshot);
         }
 
         public string BuildDiplomacyStrategySystemPrompt(
@@ -736,6 +864,12 @@ namespace RimChat.Persistence
             if (config?.EnvironmentPrompt == null || context == null)
             {
                 return string.Empty;
+            }
+
+            if (TryGetScopedRuntimeSnapshotForFaction(context.Faction, out DiplomacyPromptRuntimeSnapshot snapshot) &&
+                !string.IsNullOrWhiteSpace(snapshot.EnvironmentPromptBlock))
+            {
+                return snapshot.EnvironmentPromptBlock;
             }
 
             var env = config.EnvironmentPrompt;
@@ -3576,6 +3710,18 @@ namespace RimChat.Persistence
 
         private void AppendMemoryData(StringBuilder sb, Faction faction)
         {
+            if (sb == null)
+            {
+                return;
+            }
+
+            if (TryGetScopedRuntimeSnapshotForFaction(faction, out DiplomacyPromptRuntimeSnapshot snapshot) &&
+                !string.IsNullOrWhiteSpace(snapshot.MemoryDataBlock))
+            {
+                sb.AppendLine(snapshot.MemoryDataBlock);
+                return;
+            }
+
             try
             {
                 var memoryManager = LeaderMemoryManager.Instance;
@@ -3684,6 +3830,18 @@ namespace RimChat.Persistence
 
         private void AppendFactionInfo(StringBuilder sb, Faction faction)
         {
+            if (sb == null || faction == null)
+            {
+                return;
+            }
+
+            if (TryGetScopedRuntimeSnapshotForFaction(faction, out DiplomacyPromptRuntimeSnapshot snapshot) &&
+                !string.IsNullOrWhiteSpace(snapshot.FactionInfoBlock))
+            {
+                sb.AppendLine(snapshot.FactionInfoBlock);
+                return;
+            }
+
             sb.AppendLine();
             sb.AppendLine($"=== FACTION INFO ===");
             sb.AppendLine($"Name: {faction.Name}");
@@ -3762,6 +3920,11 @@ namespace RimChat.Persistence
 
         internal string BuildPlayerPawnContextForPrompt(Faction faction, Pawn preferredNegotiator, int maxChars = 900)
         {
+            if (TryGetScopedRuntimeSnapshotForFaction(faction, out DiplomacyPromptRuntimeSnapshot snapshot))
+            {
+                return snapshot.PlayerPawnProfileBlock ?? string.Empty;
+            }
+
             Pawn selected = ResolveBestPlayerNegotiator(preferredNegotiator);
             if (selected == null)
             {
@@ -3794,6 +3957,11 @@ namespace RimChat.Persistence
 
         internal string BuildPlayerRoyaltySummaryForPrompt(Faction faction, Pawn preferredNegotiator, int maxChars = 1400)
         {
+            if (TryGetScopedRuntimeSnapshotForFaction(faction, out DiplomacyPromptRuntimeSnapshot snapshot))
+            {
+                return snapshot.PlayerRoyaltySummaryBlock ?? string.Empty;
+            }
+
             if (!ModsConfig.RoyaltyActive || faction == null || faction.def != FactionDefOf.Empire)
             {
                 return string.Empty;
@@ -3866,6 +4034,11 @@ namespace RimChat.Persistence
 
         internal string BuildFactionSettlementSummaryForPrompt(Faction faction, int maxChars = 0)
         {
+            if (TryGetScopedRuntimeSnapshotForFaction(faction, out DiplomacyPromptRuntimeSnapshot snapshot))
+            {
+                return snapshot.FactionSettlementSummaryBlock ?? string.Empty;
+            }
+
             if (faction == null)
             {
                 return string.Empty;
@@ -4278,7 +4451,7 @@ namespace RimChat.Persistence
             List<string> values = pawn.health.hediffSet.hediffs
                 .Where(h => h != null && h.Visible)
                 .Take(6)
-                .Select(h => ResolveHediffLabelWithContext(h, pawn))
+                .Select(h => h.LabelCap)
                 .Where(label => !string.IsNullOrWhiteSpace(label))
                 .ToList();
 
@@ -4286,85 +4459,6 @@ namespace RimChat.Persistence
             {
                 sb.AppendLine($"Visible Conditions: {string.Join(", ", values)}");
             }
-        }
-
-        /// <summary>
-        /// Cross-validate Hediff labels against Need levels to prevent hallucination.
-        /// When a Hediff describes a deficit but the corresponding Need has recovered,
-        /// append a contextual note so the LLM does not act on stale state.
-        /// </summary>
-        private static string ResolveHediffLabelWithContext(Hediff hediff, Pawn pawn)
-        {
-            if (hediff == null)
-            {
-                return string.Empty;
-            }
-
-            string label = hediff.LabelCap;
-            if (string.IsNullOrWhiteSpace(label))
-            {
-                return string.Empty;
-            }
-
-            string labelLower = label.ToLowerInvariant();
-            string note = ResolveHediffNeedNote(labelLower, pawn);
-            return string.IsNullOrEmpty(note) ? label : $"{label}({note})";
-        }
-
-        /// <summary>
-        /// Detect Hediff-Need conflicts. Returns a short annotation when a Hediff
-        /// label implies a deficit but the corresponding Need has recovered.
-        /// </summary>
-        private static string ResolveHediffNeedNote(string labelLower, Pawn pawn)
-        {
-            if (pawn?.needs == null)
-            {
-                return string.Empty;
-            }
-
-            // Malnutrition vs Food need
-            if (labelLower.Contains("营养不良") || labelLower.Contains("malnutrition"))
-            {
-                float food = GetNeedLevel(pawn, NeedDefOf.Food);
-                if (food > 0.4f)
-                {
-                    return "eating";
-                }
-            }
-
-            // Exhaustion vs Rest need
-            if (labelLower.Contains("极度疲劳") || labelLower.Contains("exhaustion"))
-            {
-                float rest = GetNeedLevel(pawn, NeedDefOf.Rest);
-                if (rest > 0.4f)
-                {
-                    return "resting";
-                }
-            }
-
-            // Hypothermia/Heatstroke vs Comfort range (check current temperature comfort)
-            if (labelLower.Contains("失温") || labelLower.Contains("hypothermia")
-                || labelLower.Contains("中暑") || labelLower.Contains("heatstroke"))
-            {
-                float comfort = GetNeedLevel(pawn, DefDatabase<NeedDef>.GetNamedSilentFail("Comfort"));
-                if (comfort > 0.4f)
-                {
-                    return "comfortable";
-                }
-            }
-
-            return string.Empty;
-        }
-
-        private static float GetNeedLevel(Pawn pawn, NeedDef needDef)
-        {
-            if (needDef == null)
-            {
-                return -1f;
-            }
-
-            Need need = pawn.needs.TryGetNeed(needDef);
-            return need?.CurLevelPercentage ?? -1f;
         }
 
         private void AppendRpgSkills(StringBuilder sb, Pawn pawn)
@@ -5134,7 +5228,8 @@ namespace RimChat.Persistence
                 if (string.IsNullOrWhiteSpace(target.Requirement) ||
                     hasLegacyHardGate ||
                     target.Requirement.IndexOf("payment_mode may be omitted", StringComparison.OrdinalIgnoreCase) < 0 ||
-                    target.Requirement.IndexOf("offer_silver must stay inside the current offer window", StringComparison.OrdinalIgnoreCase) < 0 ||
+                    (target.Requirement.IndexOf("offer_silver must stay inside the current offer window", StringComparison.OrdinalIgnoreCase) < 0 &&
+                     target.Requirement.IndexOf("offer_silver must reference the current offer window", StringComparison.OrdinalIgnoreCase) < 0) ||
                     target.Requirement.IndexOf("single payment submit", StringComparison.OrdinalIgnoreCase) < 0 ||
                     target.Requirement.IndexOf("must include pay_prisoner_ransom action", StringComparison.OrdinalIgnoreCase) < 0 ||
                     target.Requirement.IndexOf("submitted/paid/settled/released", StringComparison.OrdinalIgnoreCase) < 0)
@@ -5195,6 +5290,22 @@ namespace RimChat.Persistence
                 changed = true;
             }
 
+            if (rules.IndexOf("offer_silver must be a positive integer with no upper/lower limits.", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                rules = rules.Replace(
+                    "offer_silver must be a positive integer with no upper/lower limits.",
+                    "For pay_prisoner_ransom, offer_silver must reference the current offer window from system messages; execution clamps out-of-range values to the nearest boundary before submit.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("offer_silver 必须为正整数，无上下限限制。", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                rules = rules.Replace(
+                    "offer_silver 必须为正整数，无上下限限制。",
+                    "offer_silver 必须参考系统消息给出的当前可报价区间；若越界，执行前会自动夹逼到最近边界。");
+                changed = true;
+            }
+
             if (rules.IndexOf("Use request_info(info_type=prisoner) only when ransom target information is missing.", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 rules = AppendRuleLine(rules, "Use request_info(info_type=prisoner) only when ransom target information is missing.");
@@ -5219,6 +5330,12 @@ namespace RimChat.Persistence
                 changed = true;
             }
 
+            if (rules.IndexOf("execution will clamp out-of-range offer_silver to the nearest window boundary", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "For pay_prisoner_ransom, execution will clamp out-of-range offer_silver to the nearest window boundary before submit.");
+                changed = true;
+            }
+
             if (rules.IndexOf("single payment submit", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 rules = AppendRuleLine(rules, "For pay_prisoner_ransom, normal flow executes a single payment submit only; in [RansomBatchSelection] flow, if pay_prisoner_ransom is emitted this turn, output one action per listed target in the same response.");
@@ -5228,6 +5345,12 @@ namespace RimChat.Persistence
             if (rules.IndexOf("RansomBatchSelection", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 rules = AppendRuleLine(rules, "When [RansomBatchSelection] exists and pay_prisoner_ransom is emitted, keep total offer_silver within the batch offer window.");
+                changed = true;
+            }
+
+            if (rules.IndexOf("rewrites each target offer proportionally", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                rules = AppendRuleLine(rules, "If [RansomBatchSelection] total offer_silver is out of batch window, execution clamps total to nearest boundary and rewrites each target offer proportionally with integer residual distribution.");
                 changed = true;
             }
 
@@ -5769,10 +5892,21 @@ namespace RimChat.Persistence
                     });
             }
 
+            AppendStrictJsonFormatPreamble(sb);
             sb.AppendLine(PromptTextConstants.OutputSpecificationAuthorityHeader);
             sb.AppendLine(PromptTextConstants.OutputSpecificationAuthorityReference);
             AppendOutputSpecificationAuthorityRules(sb);
             AppendOutputSpecificationAuthorityTemplate(sb, jsonTemplate);
+        }
+
+        private static void AppendStrictJsonFormatPreamble(StringBuilder sb)
+        {
+            sb.AppendLine(PromptTextConstants.StrictJsonFormatHeader);
+            sb.AppendLine(PromptTextConstants.StrictJsonFormatRequirement);
+            sb.AppendLine("```json");
+            sb.AppendLine(PromptTextConstants.StrictJsonFormatTemplate);
+            sb.AppendLine("```");
+            sb.AppendLine();
         }
 
         private static void AppendOutputSpecificationAuthorityRules(StringBuilder sb)

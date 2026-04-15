@@ -11,6 +11,11 @@ namespace RimChat.Config
     /// </summary>
     internal static class PromptSectionSchemaCatalog
     {
+        // Cache for GetOrderedMainChainSections to avoid per-frame allocations (C optimization)
+        private static string _orderedSectionsCacheKey = string.Empty;
+        private static bool _orderedSectionsCacheEnabledOnly;
+        private static List<PromptSectionSchemaItem> _orderedSectionsCache;
+
         private static readonly PromptSectionSchemaItem[] MainChainSections =
         {
             new PromptSectionSchemaItem("system_rules", "System Rules", "系统规则", "RimChat_PromptSectionLabel_SystemRules"),
@@ -51,6 +56,99 @@ namespace RimChat.Config
         internal static IReadOnlyList<PromptSectionSchemaItem> GetMainChainSections()
         {
             return MainChainSections;
+        }
+
+        /// <summary>
+        /// Returns main-chain sections ordered by the persisted section layouts.
+        /// Sections without a persisted layout entry use their canonical array index as default order.
+        /// </summary>
+        internal static IReadOnlyList<PromptSectionSchemaItem> GetOrderedMainChainSections(
+            List<PromptSectionLayoutConfig> sectionLayouts)
+        {
+            return GetOrderedMainChainSections(sectionLayouts, enabledOnly: false);
+        }
+
+        /// <summary>
+        /// Returns main-chain sections ordered by the persisted section layouts.
+        /// When enabledOnly is true, sections with Enabled=false in layout are excluded.
+        /// </summary>
+        internal static IReadOnlyList<PromptSectionSchemaItem> GetOrderedMainChainSections(
+            List<PromptSectionLayoutConfig> sectionLayouts,
+            bool enabledOnly)
+        {
+            // Build a cache key from section layout content
+            string cacheKey = BuildSectionLayoutCacheKey(sectionLayouts);
+            if (string.Equals(_orderedSectionsCacheKey, cacheKey, StringComparison.Ordinal) &&
+                _orderedSectionsCacheEnabledOnly == enabledOnly &&
+                _orderedSectionsCache != null)
+            {
+                return _orderedSectionsCache;
+            }
+
+            if (sectionLayouts == null || sectionLayouts.Count == 0)
+            {
+                _orderedSectionsCacheKey = cacheKey;
+                _orderedSectionsCacheEnabledOnly = enabledOnly;
+                _orderedSectionsCache = new List<PromptSectionSchemaItem>(MainChainSections);
+                return _orderedSectionsCache;
+            }
+
+            var orderMap = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var enabledMap = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+            foreach (PromptSectionLayoutConfig layout in sectionLayouts)
+            {
+                if (layout != null && !string.IsNullOrWhiteSpace(layout.SectionId))
+                {
+                    orderMap[layout.SectionId] = layout.Order;
+                    enabledMap[layout.SectionId] = layout.Enabled;
+                }
+            }
+
+            var result = new List<PromptSectionSchemaItem>();
+            foreach (PromptSectionSchemaItem section in MainChainSections)
+            {
+                if (enabledOnly && enabledMap.TryGetValue(section.Id, out bool enabled) && !enabled)
+                {
+                    continue;
+                }
+
+                result.Add(section);
+            }
+
+            result.Sort((a, b) =>
+            {
+                int orderA = orderMap.TryGetValue(a.Id, out int oa) ? oa : Array.IndexOf(MainChainSections, a) * 10;
+                int orderB = orderMap.TryGetValue(b.Id, out int ob) ? ob : Array.IndexOf(MainChainSections, b) * 10;
+                int cmp = orderA.CompareTo(orderB);
+                return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.OrdinalIgnoreCase);
+            });
+
+            _orderedSectionsCacheKey = cacheKey;
+            _orderedSectionsCacheEnabledOnly = enabledOnly;
+            _orderedSectionsCache = result;
+            return result;
+        }
+
+        private static string BuildSectionLayoutCacheKey(List<PromptSectionLayoutConfig> layouts)
+        {
+            if (layouts == null || layouts.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var sb = new System.Text.StringBuilder(layouts.Count * 24);
+            for (int i = 0; i < layouts.Count; i++)
+            {
+                PromptSectionLayoutConfig layout = layouts[i];
+                if (layout != null && !string.IsNullOrWhiteSpace(layout.SectionId))
+                {
+                    sb.Append(layout.SectionId).Append(':')
+                      .Append(layout.Order).Append(':')
+                      .Append(layout.Enabled ? '1' : '0').Append('|');
+                }
+            }
+
+            return sb.ToString();
         }
 
         internal static IReadOnlyList<string> GetWorkspaceChannels(RimTalkPromptChannel rootChannel)

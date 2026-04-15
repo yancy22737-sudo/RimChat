@@ -18,6 +18,12 @@ namespace RimChat.Persistence
         bool ExportConfig(string filePath);
         bool ImportConfig(string filePath);
         string BuildFullSystemPrompt(Faction faction, SystemPromptConfig config, bool isProactive, IEnumerable<string> additionalSceneTags);
+        string BuildFullSystemPrompt(
+            Faction faction,
+            SystemPromptConfig config,
+            bool isProactive,
+            IEnumerable<string> additionalSceneTags,
+            DiplomacyPromptRuntimeSnapshot runtimeSnapshot);
         string BuildDiplomacyStrategySystemPrompt(
             Faction faction,
             SystemPromptConfig config,

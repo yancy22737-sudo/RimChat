@@ -1,4 +1,113 @@
-# RimChat 模块索引（v0.9.997）
+# RimChat 模块索引（v0.9.1023）
+
+## `/models` 缺失回退 + 结构化原文直出 + 契约前置格式要求（v0.9.1023）
+- 目标：修复“模型接口实际可用但 `/v1/models` 缺失导致误判失败”，并根治结构化响应不合规时固定回退句吞回复问题。
+- 关键模块：
+  - `RimChat/Config/ApiUsabilityDiagnosticService.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/Persistence/PromptPersistenceService.Hierarchical.cs`
+  - `RimChat/Config/PromptTextConstants.cs`
+- 链路变化：
+  - 可用性诊断：`/models` 仅 `404/405/501` 触发“端点缺失回退”，改用 chat 探测 + 契约校验判定可用；其他失败继续 fail-fast。
+  - 本地探测：OpenAI 兼容本地服务在 `/v1/models` 缺失时不再直接判死，继续走 chat 最终验证。
+  - 对话主链：结构化包络重试耗尽后由固定文案回退改为原文直出（raw passthrough），并打专用日志标签。
+  - 提示词契约：RPG 与外交响应契约段最前新增 JSON 强约束前置示例，工作台预览所见即所得。
+
+## AI 赎金越界报价全链路钳制热修（v0.9.1022）
+- 目标：修复 AI 直连 pay_prisoner_ransom 越界报价未生效问题，将单目标钳制收敛到接口层统一执行。
+- 关键模块：
+  - RimChat/DiplomacySystem/GameAIInterface.PrisonerRansom.cs
+  - RimChat/DiplomacySystem/PrisonerRansomModels.cs
+  - RimChat/UI/Dialog_DiplomacyDialogue.cs
+  - 1.6/Languages/ChineseSimplified/Keyed/RimChat_Keys.xml
+  - 1.6/Languages/English/Keyed/RimChat_Keys.xml
+- 链路变化：
+  - 单目标执行归一化从 UI 快照依赖迁移到 PreparePrisonerRansom，按实时窗口做最近边界夹逼。
+  - 返回模型新增 OfferWindowMinSilver/OfferWindowMaxSilver，同步暴露窗口上下界。
+  - 成功系统消息新增“报价已归一化”提示（仅在 OfferedSilver != AcceptedSilver 时显示）。
+
+## 赎金区间落点与社交新闻兼容修复（v0.9.1019）
+- 目标：修复社交新闻原生渲染兼容失败导致整条任务中断；统一赎金单目标/批量越界处理为执行前归一化。
+- 关键模块：
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RimChat/Memory/FactionDialogueSession.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomSelection.cs`
+  - `RimChat/UI/Dialog_DiplomacyDialogue.PrisonerRansomBatchRuntime.cs`
+  - `RimChat/Config/SystemPromptConfig.cs`
+  - `RimChat/Persistence/PromptPersistenceService.cs`
+  - `RimChat/AI/AIChatServiceAsync.cs`
+  - `Prompt/Default/DiplomacyDialoguePrompt_Default.json`
+  - `RimChat/action_rules.txt`
+- 链路变化：
+  - 社交新闻 `social_circle_post`：原生渲染兼容失败改为 warning + 降级继续，不再抛异常中断入队。
+  - 单目标赎金：新增会话级 `[RansomOfferReference]` 快照块（`target/current_ask/min/max`），每轮用户消息稳定注入。
+  - 单目标执行：`pay_prisoner_ransom` 执行前按快照窗口对越界 `offer_silver` 做最近边界夹逼并写归一化日志。
+  - 批量执行：总价越界改为“边界夹逼 + 比例缩放 + 小数余量分配 + 精确求和回写”；目标覆盖校验保持严格 fail-fast。
+  - 提示词契约：移除“无上下限”冲突文案，统一为“参考系统窗口；越界执行前归一化”。
+## 主动外交/社交新闻卡顿根修（v0.9.1018）
+- 目标：将主动派系消息与社交新闻的 prompt 重计算从请求热路径下沉到预热缓存，消除主线程秒级尖峰。
+- 关键模块：
+  - `RimChat/Persistence/DiplomacyPromptRuntimeSnapshot.cs`
+  - `RimChat/Persistence/IDiplomacyPromptSnapshotCache.cs`
+  - `RimChat/Persistence/DiplomacyPromptSnapshotCache.cs`
+  - `RimChat/Persistence/PromptPersistenceService.WorkbenchComposer.cs`
+  - `RimChat/NpcDialogue/GameComponent_NpcDialoguePushManager.cs`
+  - `RimChat/DiplomacySystem/Social/SocialNewsPromptBuilder.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.SocialCircle.NewsRequests.cs`
+  - `RimChat/DiplomacySystem/GameComponent_DiplomacyManager.cs`
+- 链路变化：
+  - 新增运行时快照模型，统一承载 `memory/faction/player/world-event/settlement` 动态块。
+  - 新增快照缓存服务，支持读档后分帧预热（每 tick 预算 1 个）与按派系复用。
+  - `BuildUnifiedChannelSystemPrompt(...)` 新增可选 `runtimeSnapshot`，通过线程作用域注入已预计算动态块。
+  - 主动来信 `StartGeneration(...)` 改为“先取快照；未就绪则 fail-fast 短延迟重排队”。
+  - 社交新闻请求改为“先取快照；未就绪则进入延迟重试队列”，与主动来信复用同一缓存实例。
+  - `GameComponent_DiplomacyManager.GameComponentTick()` 新增快照 warmup tick 与社交新闻延迟队列处理。
+
+## VehiclePawn Persona 同步闪退根修（v0.9.1017）
+- 目标：根治 Vehicles Framework 等 Pawn 子类在 RimTalk Persona 同步时触发的原生崩溃，并保持 RPG 对话链路的功能边界可控。
+- 关键模块：
+  - `RimChat/Dialogue/PawnDialogueRoutingPolicy.cs`
+  - `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+  - `RimChat/DiplomacySystem/GameComponent_RPGManager.cs`
+- 链路变化：
+  - `IsRpgDialogueEligibleRace` 改为能力白名单：Humanlike/Mechanoid/Animal 允许，ToolUser 必须具备 `story+skills`。
+  - 新增 `IsRimTalkPersonaSyncEligible`：在 RPG 资格基础上再做 persona 子系统门槛，并排除 Animal 进入 RimTalk Persona 同步。
+  - Persona 同步入口 fail-fast：`TrySyncPawnPersonaFromRimTalkSafely` 与 `IsEligibleRimTalkPersonaCopyTarget` 在反射调用前统一资格校验，不合格直接跳过。
+  - 存档清理：`CleanupInvalidRpgDictionaries` 新增 persona 字典资格清理，自动移除不再满足资格的历史条目（含载具类）。
+- 兼容性说明：
+  - 不修改对外 API；不采用类型名黑名单；旧存档保留且仅清理无效 persona 缓存。
+
+## RPGManager Tick 性能根修（v0.9.1016）
+- 目标：根治 `GameComponent_RPGManager` 在 RimTalk 兼容链路中的高 Tick 固定开销，保持人格同步行为语义不变。
+- 关键模块：
+  - `RimChat/Core/ModDependencyProbe.cs`
+  - `RimChat/DiplomacySystem/GameComponent_RPGManager.PersonaBootstrap.cs`
+- 链路变化：
+  - `IsRimTalkLoadedForPersonaBlock()` 改为调用 `ModDependencyProbe.IsLoaded("rimtalk")`，去除 Tick 热路径内的模组列表遍历。
+  - `ProcessNpcPersonaRuntimeTick()` 执行顺序调整为“先 Tick 节流，再依赖检测”，降低每 Tick 固定检测成本。
+  - `ProcessNpcPersonaBootstrapTick()` 在队列初始化前增加 RimTalk 可用性 fail-fast，避免无依赖场景的无效扫描。
+  - `TrySyncPawnPersonaFromRimTalk` / `TryCopyPawnPersonaFromRimTalk` 新增可传入模板的内部重载；运行时扫描、bootstrap 队列扫描、手动全量同步改为单轮模板复用。
+- 兼容性说明：
+  - 对外 API 未变化；原有调用签名保留，旧存档行为与同步路径保持一致。
+
+## UGUI Canvas 渲染管线（v0.9.998）
+- 目标：为提示词工作台预览面板提供 UGUI Canvas → RenderTexture → GUI.DrawTexture 渲染路径，将 DrawCall 从 N 降至 1，提升 GPU 利用率。
+- 关键模块：
+  - `RimChat/UI/UGui/UGuiCanvasHost.cs` — 独立 Canvas + Camera + RenderTexture 生命周期管理
+  - `RimChat/UI/UGui/UGuiPanelBase.cs` — UGUI 面板基类（构建/刷新/脏标记/销毁）
+  - `RimChat/UI/UGui/UGuiFeatureFlags.cs` — 特性开关（UseUguiRendering/UseUguiPreviewPanel/UseUguiSidePanel/UseUguiChatMessages）
+  - `RimChat/UI/UGui/bridge/ImguiToUguiInputBridge.cs` — IMGUI Event → UGUI EventSystem 输入桥接
+  - `RimChat/UI/UGui/panels/PromptPreviewPanel.cs` — 结构化预览面板 UGUI 版本（TMP 文字 + LayoutGroup 自动布局）
+  - `RimChat/Config/RimChatSettings_PromptSectionWorkspace.cs` — DrawPromptWorkspaceStructuredPreview UGUI/IMGUI 路径切换
+  - `RimChat/Config/RimChatSettings.cs` — UGUI 特性开关序列化（Scribe_Values.Look）
+- 链路变化：
+  - `DrawPromptWorkspaceStructuredPreview` 新增 UGUI 路径：当 `UGuiFeatureFlags.UseUguiPreviewPanel=true` 时，走 Canvas 渲染 → 单次 `GUI.DrawTexture`；否则走原有 IMGUI `PromptWorkspaceStructuredPreviewRenderer`。
+  - `UGuiFeatureFlags.SyncFromSettings()` 在 `ExposeData()` 中调用，确保配置文件加载后立即生效。
+  - `DisposePromptWorkspaceRenderTextures()` 新增 UGUI 资源清理（Host/Panel/Bridge Dispose）。
+  - `InvalidatePromptWorkspacePreviewCache()` 新增 `_uguiPreviewPanel.MarkDirty()` 脏标记传播。
+- 依赖：`UnityEngine.UI.dll`、`UnityEngine.UIModule.dll`、`Unity.TextMeshPro.dll`（RimWorld 1.6 自带）
 
 ## VehiclePawn 能力白名单防护（v0.9.997）
 - 目标：根治 VehiclePawn（Vehicles Framework）等非标准 Pawn 子类继承 Pawn 但缺少 story/skills 子系统导致 RimTalk AddHediff native crash 的问题，并自动防御未来类似 Pawn 类型。

@@ -21,7 +21,7 @@ namespace RimChat.Persistence
                 PromptChannel = normalizedChannel,
                 IncludeNodes = !IsSectionOnlyChannel(normalizedChannel)
             };
-            state.Sections.AddRange(PromptSectionSchemaCatalog.GetMainChainSections());
+            state.Sections.AddRange(GetOrderedSectionsForPreview(normalizedChannel));
             if (state.IncludeNodes)
             {
                 state.NodeLayouts.AddRange(GetOrderedNodeLayoutsForPreview(normalizedChannel));
@@ -90,6 +90,7 @@ namespace RimChat.Persistence
                     "manual",
                     "{{ runtime.environment }}")
             });
+            MarkBlockDirty(state, state.Preview.Blocks.Count - 1);
             state.Preview.Stage = state.Sections.Count > 0
                 ? PromptWorkspacePreviewBuildStage.Sections
                 : state.IncludeNodes && state.NodeLayouts.Count > 0
@@ -111,8 +112,9 @@ namespace RimChat.Persistence
                 return;
             }
 
+            EnsureBuildStateComposeValues(state);
             PromptSectionSchemaItem section = state.Sections[state.SectionCursor];
-            string rendered = RenderPreviewSectionStep(state.RootChannel, state.PromptChannel, section.Id);
+            string rendered = RenderPreviewSectionStep(state.RootChannel, state.PromptChannel, section.Id, state.CachedComposeValues);
             if (!string.IsNullOrWhiteSpace(rendered))
             {
                 state.RenderedSections.Add(new PromptSectionAggregateSection
@@ -124,7 +126,11 @@ namespace RimChat.Persistence
             }
 
             state.SectionCursor++;
-            UpdateSectionAggregatePreviewBlock(state);
+            int aggregateBlockIndex = UpdateSectionAggregatePreviewBlock(state);
+            if (aggregateBlockIndex >= 0)
+            {
+                MarkBlockDirty(state, aggregateBlockIndex);
+            }
             state.Preview.Stage = state.SectionCursor >= state.Sections.Count
                 ? state.IncludeNodes && state.NodeLayouts.Count > 0
                     ? PromptWorkspacePreviewBuildStage.Nodes
@@ -144,14 +150,17 @@ namespace RimChat.Persistence
                 return;
             }
 
+            EnsureBuildStateComposeValues(state);
             PromptUnifiedNodeLayoutConfig layout = state.NodeLayouts[state.NodeCursor];
             PromptWorkspacePreviewBlock nodeBlock = RenderPreviewNodeStep(
                 state.RootChannel,
                 state.PromptChannel,
-                layout);
+                layout,
+                state.CachedComposeValues);
             if (nodeBlock != null)
             {
                 state.Preview.Blocks.Add(nodeBlock);
+                MarkBlockDirty(state, state.Preview.Blocks.Count - 1);
             }
 
             state.NodeCursor++;
@@ -166,6 +175,8 @@ namespace RimChat.Persistence
         {
             EnsureFooterBlock(state.Preview.Blocks, state.PromptChannel);
             state.Preview.Blocks = ReorderWorkspacePreviewBlocks(state.Preview.Blocks);
+            InvalidateIncrementalSignatureCache(state);
+            state.Preview.UsesSnapshotData = PromptRequestSnapshotCache.HasSnapshotForChannel(state.PromptChannel);
             state.Preview.Stage = PromptWorkspacePreviewBuildStage.Completed;
             UpdateBuildProgress(state);
             UpdateBuildSignature(state);
@@ -174,7 +185,8 @@ namespace RimChat.Persistence
         private string RenderPreviewSectionStep(
             RimTalkPromptChannel rootChannel,
             string promptChannel,
-            string sectionId)
+            string sectionId,
+            Dictionary<string, object> cachedComposeValues)
         {
             string template = RimChatMod.Settings?.ResolvePromptSectionText(promptChannel, sectionId) ?? string.Empty;
             bool rawModVariablesSection = IsRpgModVariablesRawOutputSection(rootChannel, promptChannel, sectionId);
@@ -186,7 +198,8 @@ namespace RimChat.Persistence
                     deterministicPreview: true,
                     scenarioContext: null,
                     environmentConfig: null,
-                    additionalValues: null)
+                    additionalValues: null,
+                    cachedComposeValues: cachedComposeValues)
                 : RenderUnifiedTemplate(
                     $"prompt_sections.{promptChannel}.{sectionId}",
                     promptChannel,
@@ -195,13 +208,15 @@ namespace RimChat.Persistence
                     deterministicPreview: true,
                     scenarioContext: null,
                     environmentConfig: null,
-                    additionalValues: null);
+                    additionalValues: null,
+                    cachedComposeValues: cachedComposeValues);
         }
 
         private PromptWorkspacePreviewBlock RenderPreviewNodeStep(
             RimTalkPromptChannel rootChannel,
             string promptChannel,
-            PromptUnifiedNodeLayoutConfig layout)
+            PromptUnifiedNodeLayoutConfig layout,
+            Dictionary<string, object> cachedComposeValues)
         {
             if (layout == null)
             {
@@ -218,7 +233,8 @@ namespace RimChat.Persistence
                 deterministicPreview: true,
                 scenarioContext: null,
                 environmentConfig: null,
-                additionalValues: null);
+                additionalValues: null,
+                cachedComposeValues: cachedComposeValues);
             if (!layout.Enabled || string.IsNullOrWhiteSpace(rendered))
             {
                 return null;
@@ -244,6 +260,20 @@ namespace RimChat.Persistence
             };
         }
 
+        private static void EnsureBuildStateComposeValues(PromptWorkspaceIncrementalPreviewBuildState state)
+        {
+            if (state.ComposeValuesInitialized)
+            {
+                return;
+            }
+
+            state.CachedComposeValues = BuildDeterministicComposeValues(
+                state.PromptChannel,
+                scenarioContext: null,
+                additionalValues: null);
+            state.ComposeValuesInitialized = true;
+        }
+
         private static void EnsureFooterBlock(ICollection<PromptWorkspacePreviewBlock> blocks, string promptChannel)
         {
             if (blocks == null || blocks.Any(block => block?.Kind == PromptWorkspacePreviewBlockKind.Footer))
@@ -259,13 +289,13 @@ namespace RimChat.Persistence
             });
         }
 
-        private void UpdateSectionAggregatePreviewBlock(PromptWorkspaceIncrementalPreviewBuildState state)
+        private int UpdateSectionAggregatePreviewBlock(PromptWorkspaceIncrementalPreviewBuildState state)
         {
             PromptSectionAggregate aggregate = BuildSectionAggregateSnapshot(state.PromptChannel, state.RenderedSections);
             string content = aggregate?.RenderedText?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(content))
             {
-                return;
+                return -1;
             }
 
             PromptWorkspacePreviewBlock block = BuildSectionAggregateBlock(state.PromptChannel, content, aggregate);
@@ -274,10 +304,11 @@ namespace RimChat.Persistence
             if (index >= 0)
             {
                 blocks[index] = block;
-                return;
+                return index;
             }
 
             blocks.Add(block);
+            return blocks.Count - 1;
         }
 
         private static PromptSectionAggregate BuildSectionAggregateSnapshot(
@@ -292,6 +323,13 @@ namespace RimChat.Persistence
             aggregate.RenderedText = PromptHierarchyRenderer.Render(
                 BuildMainPromptSectionNodeForAggregate(aggregate.Sections));
             return aggregate;
+        }
+
+        private IReadOnlyList<PromptSectionSchemaItem> GetOrderedSectionsForPreview(string promptChannel)
+        {
+            List<PromptSectionLayoutConfig> sectionLayouts =
+                RimChatMod.Settings?.GetPromptSectionLayouts(promptChannel) ?? new List<PromptSectionLayoutConfig>();
+            return PromptSectionSchemaCatalog.GetOrderedMainChainSections(sectionLayouts, enabledOnly: true);
         }
 
         private List<PromptUnifiedNodeLayoutConfig> GetOrderedNodeLayoutsForPreview(string promptChannel)
@@ -329,6 +367,7 @@ namespace RimChat.Persistence
             });
             EnsureFooterBlock(state.Preview.Blocks, state.PromptChannel);
             state.Preview.Blocks = ReorderWorkspacePreviewBlocks(state.Preview.Blocks);
+            InvalidateIncrementalSignatureCache(state);
             UpdateBuildProgress(state);
             UpdateBuildSignature(state);
         }
@@ -375,7 +414,7 @@ namespace RimChat.Persistence
         private static void UpdateBuildSignature(PromptWorkspaceIncrementalPreviewBuildState state)
         {
             PromptWorkspaceStructuredPreview preview = state.Preview;
-            string baseSignature = BuildPreviewSignature(state.PromptChannel, preview.Blocks);
+            string baseSignature = UpdatePreviewSignatureIncremental(state);
             string progress = "|build:" + (int)preview.Stage +
                 ":" + preview.Completed + "/" + preview.Total +
                 ":s" + preview.CompletedSections + "/" + preview.TotalSections +
@@ -388,6 +427,191 @@ namespace RimChat.Persistence
             }
 
             preview.Signature = baseSignature + progress;
+        }
+
+        private static string UpdatePreviewSignatureIncremental(PromptWorkspaceIncrementalPreviewBuildState state)
+        {
+            PromptWorkspaceStructuredPreview preview = state.Preview;
+            if (!state.SignatureCacheInitialized)
+            {
+                state.DirtyBlockIndices.Clear();
+                for (int i = 0; i < preview.Blocks.Count; i++)
+                {
+                    state.DirtyBlockIndices.Add(i);
+                }
+
+                state.SignatureCacheInitialized = true;
+            }
+
+            EnsureBlockSignatureCacheCapacity(state, preview.Blocks.Count);
+            foreach (int dirtyIndex in state.DirtyBlockIndices.ToList())
+            {
+                if (dirtyIndex < 0 || dirtyIndex >= preview.Blocks.Count)
+                {
+                    continue;
+                }
+
+                PromptWorkspacePreviewBlock block = preview.Blocks[dirtyIndex];
+                state.BlockSignatureHashes[dirtyIndex] = ComputePreviewBlockSignatureHash(state, dirtyIndex, block);
+            }
+
+            state.DirtyBlockIndices.Clear();
+            int aggregateHash = ComputePreviewAggregateHash(state.PromptChannel, state.BlockSignatureHashes, preview.Blocks.Count);
+            return "channel=" + (state.PromptChannel ?? string.Empty) +
+                "|agg=" + aggregateHash.ToString("X8") +
+                "|blocks=" + preview.Blocks.Count;
+        }
+
+        private static void EnsureBlockSignatureCacheCapacity(PromptWorkspaceIncrementalPreviewBuildState state, int count)
+        {
+            count = Math.Max(0, count);
+            while (state.BlockSignatureHashes.Count < count)
+            {
+                state.BlockSignatureHashes.Add(0);
+            }
+
+            if (state.BlockSignatureHashes.Count > count)
+            {
+                state.BlockSignatureHashes.RemoveRange(count, state.BlockSignatureHashes.Count - count);
+            }
+
+            if (state.SubsectionSignatureHashesByBlock.Count == 0)
+            {
+                return;
+            }
+
+            var staleKeys = state.SubsectionSignatureHashesByBlock.Keys
+                .Where(key => key < 0 || key >= count)
+                .ToList();
+            for (int i = 0; i < staleKeys.Count; i++)
+            {
+                state.SubsectionSignatureHashesByBlock.Remove(staleKeys[i]);
+            }
+        }
+
+        private static void InvalidateIncrementalSignatureCache(PromptWorkspaceIncrementalPreviewBuildState state)
+        {
+            state.SignatureCacheInitialized = false;
+            state.DirtyBlockIndices.Clear();
+            state.SubsectionSignatureHashesByBlock.Clear();
+        }
+
+        private static void MarkBlockDirty(PromptWorkspaceIncrementalPreviewBuildState state, int index)
+        {
+            if (state == null || index < 0)
+            {
+                return;
+            }
+
+            state.DirtyBlockIndices.Add(index);
+        }
+
+        private static int ComputePreviewBlockSignatureHash(
+            PromptWorkspaceIncrementalPreviewBuildState state,
+            int blockIndex,
+            PromptWorkspacePreviewBlock block)
+        {
+            if (block == null)
+            {
+                return 0;
+            }
+
+            int hash = BeginHash();
+            hash = MixHash(hash, (int)block.Kind);
+            hash = MixHash(hash, ComputeStableSignatureHash(block.PromptChannel));
+            hash = MixHash(hash, ComputeStableSignatureHash(block.NodeId));
+            hash = MixHash(hash, (int)block.Slot);
+            hash = MixHash(hash, block.Order);
+            hash = MixHash(hash, ComputeStableSignatureHash(block.Content));
+
+            List<PromptWorkspacePreviewSubsection> subsections = block.Subsections ?? new List<PromptWorkspacePreviewSubsection>();
+            List<int> subsectionCache;
+            if (!state.SubsectionSignatureHashesByBlock.TryGetValue(blockIndex, out subsectionCache))
+            {
+                subsectionCache = new List<int>();
+                state.SubsectionSignatureHashesByBlock[blockIndex] = subsectionCache;
+            }
+
+            while (subsectionCache.Count < subsections.Count)
+            {
+                subsectionCache.Add(0);
+            }
+
+            if (subsectionCache.Count > subsections.Count)
+            {
+                subsectionCache.RemoveRange(subsections.Count, subsectionCache.Count - subsections.Count);
+            }
+
+            hash = MixHash(hash, subsections.Count);
+            for (int i = 0; i < subsections.Count; i++)
+            {
+                PromptWorkspacePreviewSubsection subsection = subsections[i];
+                int subsectionHash = ComputePreviewSubsectionSignatureHash(subsection);
+                subsectionCache[i] = subsectionHash;
+                hash = MixHash(hash, subsectionHash);
+            }
+
+            return hash;
+        }
+
+        private static int ComputePreviewSubsectionSignatureHash(PromptWorkspacePreviewSubsection subsection)
+        {
+            if (subsection == null)
+            {
+                return 0;
+            }
+
+            int hash = BeginHash();
+            hash = MixHash(hash, ComputeStableSignatureHash(subsection.SectionId));
+            hash = MixHash(hash, ComputeStableSignatureHash(subsection.Content));
+            return hash;
+        }
+
+        private static int ComputePreviewAggregateHash(string channel, List<int> blockHashes, int count)
+        {
+            int hash = BeginHash();
+            hash = MixHash(hash, ComputeStableSignatureHash(channel));
+            hash = MixHash(hash, count);
+            for (int i = 0; i < count; i++)
+            {
+                hash = MixHash(hash, i);
+                hash = MixHash(hash, blockHashes[i]);
+            }
+
+            return hash;
+        }
+
+        private static int BeginHash()
+        {
+            unchecked
+            {
+                return (int)2166136261;
+            }
+        }
+
+        private static int MixHash(int hash, int value)
+        {
+            unchecked
+            {
+                hash ^= value;
+                hash *= 16777619;
+                return hash;
+            }
+        }
+
+        private static int ComputeStableSignatureHash(string text)
+        {
+            unchecked
+            {
+                int hash = BeginHash();
+                string source = text ?? string.Empty;
+                for (int i = 0; i < source.Length; i++)
+                {
+                    hash = MixHash(hash, source[i]);
+                }
+
+                return hash;
+            }
         }
     }
 }

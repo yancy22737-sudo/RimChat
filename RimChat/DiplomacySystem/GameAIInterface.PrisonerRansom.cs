@@ -120,12 +120,34 @@ namespace RimChat.DiplomacySystem
                     $"quote unavailable: {negotiationError}");
             }
 
-            if (!prisonerRansomService.TryValidateOfferWindow(state, offeredSilver, out string offerWindowError))
+            if (!prisonerRansomService.TryGetOfferWindow(
+                state,
+                out int minOfferSilver,
+                out int maxOfferSilver,
+                out string offerWindowResolveError))
+            {
+                return FailFastRansom(
+                    "offer_window_unavailable",
+                    "RimChat_RansomQuoteUnavailableSystem".Translate().ToString(),
+                    $"offer window unavailable: detail={offerWindowResolveError}");
+            }
+
+            int acceptedSilver = Mathf.Clamp(offeredSilver, minOfferSilver, maxOfferSilver);
+            if (acceptedSilver != offeredSilver)
+            {
+                Log.Message(
+                    "[RimChat] pay_prisoner_ransom normalized in prepare. " +
+                    $"target={pawnLoadId}, original={offeredSilver}, " +
+                    $"window={minOfferSilver}-{maxOfferSilver}, normalized={acceptedSilver}, " +
+                    $"current_ask={state.CurrentAskSilver}");
+            }
+
+            if (!prisonerRansomService.TryValidateOfferWindow(state, acceptedSilver, out string offerWindowError))
             {
                 return FailFastRansom(
                     "offer_invalid",
                     "RimChat_RansomInvalidOfferSystem".Translate().ToString(),
-                    $"offer validation failed: offered={offeredSilver}, detail={offerWindowError}");
+                    $"offer validation failed: accepted={acceptedSilver}, detail={offerWindowError}");
             }
 
             bool hasBatchTargetCount = TryReadIntParameter(parameters, "batch_target_count", out int batchTargetCount);
@@ -135,7 +157,9 @@ namespace RimChat.DiplomacySystem
                 Faction = faction,
                 TargetPawn = targetPawn,
                 OfferedSilver = offeredSilver,
-                AcceptedSilver = offeredSilver,
+                AcceptedSilver = acceptedSilver,
+                OfferWindowMinSilver = minOfferSilver,
+                OfferWindowMaxSilver = maxOfferSilver,
                 State = state,
                 IsBatchRansom = isBatchRansom,
                 BatchGroupId = ReadString(parameters, "batch_group_id"),
@@ -199,6 +223,8 @@ namespace RimChat.DiplomacySystem
                 OfferedSilver = preparedData.OfferedSilver,
                 AcceptedSilver = preparedData.AcceptedSilver,
                 CurrentAskSilver = preparedData.State.CurrentAskSilver,
+                OfferWindowMinSilver = preparedData.OfferWindowMinSilver,
+                OfferWindowMaxSilver = preparedData.OfferWindowMaxSilver,
                 FloorSilver = preparedData.State.Snapshot.FloorSilver,
                 RoundIndex = 1,
                 MaxRounds = 1,
@@ -233,11 +259,19 @@ namespace RimChat.DiplomacySystem
                 StatusCode = "quote_ready",
                 TargetPawnLoadId = targetPawn.thingIDNumber,
                 CurrentAskSilver = state.CurrentAskSilver,
+                OfferWindowMinSilver = 0,
+                OfferWindowMaxSilver = 0,
                 FloorSilver = state.Snapshot.FloorSilver,
                 RoundIndex = state.CurrentRound,
                 MaxRounds = state.MaxRounds,
                 NegotiationBaseSnapshot = state.Snapshot.NegotiationBase
             };
+            if (prisonerRansomService.TryGetOfferWindow(state, out int minOfferSilver, out int maxOfferSilver, out _))
+            {
+                result.OfferWindowMinSilver = minOfferSilver;
+                result.OfferWindowMaxSilver = maxOfferSilver;
+            }
+
             return APIResult.SuccessResult("quote_ready", result);
         }
 

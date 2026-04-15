@@ -7,12 +7,13 @@ using Verse;
 
 namespace RimChat.WorldState
 {
-    /// <summary>/// Dependencies: Verse.GameComponent, map pawn state, and world object lifecycle.
+    /// <summary>/// Dependencies: Verse.GameComponent, RaidThreatSnapshotProvider, and world object lifecycle.
  /// Responsibility: persist faction settlement destruction history and raid damage intel for fixed prompt injection.
  ///</summary>
     public class FactionIntelLedgerComponent : GameComponent
     {
         private const int RaidScanInterval = 250;
+        private const int RaidScanOffsetTicks = 80;
         private const int BuildingDedupeLimit = 4096;
 
         public class OngoingRaidIntelState : IExposable
@@ -56,6 +57,7 @@ namespace RimChat.WorldState
         private List<FactionRaidDamageRecord> raidDamageRecords = new List<FactionRaidDamageRecord>();
         private List<FactionSettlementDestructionRecord> settlementDestructionRecords = new List<FactionSettlementDestructionRecord>();
         private readonly HashSet<int> processedDestroyedBuildingThingIds = new HashSet<int>();
+        private readonly IRaidSnapshotProvider raidSnapshotProvider = RaidThreatSnapshotProvider.Instance;
         private int lastRaidScanTick = -RaidScanInterval;
 
         public FactionIntelLedgerComponent(Game game) : base()
@@ -80,6 +82,7 @@ namespace RimChat.WorldState
             CleanupLoadedData();
             processedDestroyedBuildingThingIds.Clear();
             RimChatTrackedEntityRegistry.PrimeFromCurrentGame();
+            raidSnapshotProvider.Reset();
         }
 
         public override void GameComponentTick()
@@ -90,7 +93,7 @@ namespace RimChat.WorldState
             }
 
             int tick = Find.TickManager.TicksGame;
-            if (tick - lastRaidScanTick < RaidScanInterval)
+            if (!ShouldRunScheduledTask(tick, lastRaidScanTick, RaidScanInterval, RaidScanOffsetTicks))
             {
                 return;
             }
@@ -206,22 +209,29 @@ namespace RimChat.WorldState
 
         private void UpdateRaidStates(int tick)
         {
-            List<Map> homeMaps = Find.Maps?.Where(map => map != null && map.IsPlayerHome).ToList();
-            if (homeMaps == null || homeMaps.Count == 0)
+            if (!raidSnapshotProvider.TryGetSnapshot(tick, out RaidThreatSnapshot snapshot) ||
+                snapshot?.Maps == null ||
+                snapshot.Maps.Count == 0)
             {
                 return;
             }
 
             var activeKeys = new HashSet<string>(StringComparer.Ordinal);
-            for (int i = 0; i < homeMaps.Count; i++)
+            for (int i = 0; i < snapshot.Maps.Count; i++)
             {
-                Map map = homeMaps[i];
-                List<Faction> hostileFactions = GetActiveHostileFactions(map);
+                RaidThreatMapSnapshot mapSnapshot = snapshot.Maps[i];
+                Map map = mapSnapshot?.Map;
+                IReadOnlyList<Faction> hostileFactions = mapSnapshot?.HostileFactions;
+                if (map == null || hostileFactions == null || hostileFactions.Count == 0)
+                {
+                    continue;
+                }
+
                 for (int j = 0; j < hostileFactions.Count; j++)
                 {
                     Faction attacker = hostileFactions[j];
                     OngoingRaidIntelState state = GetOrCreateState(map, attacker, tick);
-                    state.PlayerDownedPeak = Math.Max(state.PlayerDownedPeak, CountPlayerDowned(map));
+                    state.PlayerDownedPeak = Math.Max(state.PlayerDownedPeak, mapSnapshot.PlayerDownedCount);
                     state.LastUpdatedTick = tick;
                     activeKeys.Add(GetStateKey(map.uniqueID, state.AttackerFactionId));
                 }
@@ -360,43 +370,12 @@ namespace RimChat.WorldState
                 AttackerFactionName = attackerFaction?.Name ?? "UnknownFaction",
                 AttackerDeaths = 0,
                 PlayerDeaths = 0,
-                PlayerDownedPeak = CountPlayerDowned(map),
+                PlayerDownedPeak = raidSnapshotProvider.ResolvePlayerDownedCount(map, tick),
                 PlayerBuildingsDestroyed = 0
             };
 
             ongoingRaidStates.Add(state);
             return state;
-        }
-
-        private static List<Faction> GetActiveHostileFactions(Map map)
-        {
-            IEnumerable<Pawn> pawns = map?.mapPawns?.AllPawnsSpawned;
-            if (pawns == null)
-            {
-                return new List<Faction>();
-            }
-
-            return pawns
-                .Where(pawn => pawn != null && !pawn.Dead && pawn.Faction != null && pawn.Faction != Faction.OfPlayer)
-                .Where(pawn => pawn.Faction.HostileTo(Faction.OfPlayer))
-                .Select(pawn => pawn.Faction)
-                .Distinct()
-                .ToList();
-        }
-
-        private static int CountPlayerDowned(Map map)
-        {
-            IEnumerable<Pawn> pawns = map?.mapPawns?.AllPawnsSpawned;
-            if (pawns == null)
-            {
-                return 0;
-            }
-
-            return pawns.Count(pawn =>
-                pawn != null &&
-                pawn.Faction == Faction.OfPlayer &&
-                pawn.Downed &&
-                !pawn.Dead);
         }
 
         private static bool IsPlayerBuildingLoss(Thing building)
@@ -487,6 +466,32 @@ namespace RimChat.WorldState
         private static string GetStateKey(int mapId, string attackerFactionId)
         {
             return $"{mapId}|{attackerFactionId ?? string.Empty}";
+        }
+
+        private static bool ShouldRunScheduledTask(int tick, int lastRunTick, int interval, int offset)
+        {
+            if (tick <= 0 || interval <= 0)
+            {
+                return false;
+            }
+
+            if (!IsOnScheduleSlot(tick, interval, offset))
+            {
+                return false;
+            }
+
+            return lastRunTick <= 0 || tick - lastRunTick >= interval;
+        }
+
+        private static bool IsOnScheduleSlot(int tick, int interval, int offset)
+        {
+            int normalized = (tick - offset) % interval;
+            if (normalized < 0)
+            {
+                normalized += interval;
+            }
+
+            return normalized == 0;
         }
 
         private void CleanupLoadedData()

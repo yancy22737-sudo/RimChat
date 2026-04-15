@@ -154,6 +154,11 @@ namespace RimChat.UI
                 action.Parameters["payment_mode"] = "silver";
             }
 
+            if (!HasPendingRansomBatchSelection(currentSession))
+            {
+                NormalizeSingleRansomOfferForExecution(action, currentSession, resolvedTarget);
+            }
+
             return false;
         }
 
@@ -311,6 +316,7 @@ namespace RimChat.UI
                     "RimChat_RansomSelectedPrisonerInvalidSystem".Translate().ToString(),
                     false,
                     DialogueMessageType.System);
+                ClearPendingRansomOfferReference(currentSession);
                 ClearRansomTargetBinding(currentSession);
                 ClearPendingRansomBatchSelection(currentSession);
                 MarkRansomInfoRequestIncomplete(currentSession);
@@ -318,6 +324,7 @@ namespace RimChat.UI
             }
 
             ClearPendingRansomBatchSelection(currentSession);
+            ClearPendingRansomOfferReference(currentSession);
             BindRansomTarget(currentSession, currentFaction, selectedPawn.thingIDNumber);
             MarkRansomInfoRequestCompleted(currentSession, currentFaction, selectedPawn.thingIDNumber);
             Log.Message($"[RimChat] request_info(prisoner) completed. selected_target={selectedPawn.thingIDNumber}.");
@@ -334,6 +341,7 @@ namespace RimChat.UI
             currentSession.isWaitingForRansomTargetSelection = false;
             ClearRansomTargetBinding(currentSession);
             ClearPendingRansomBatchSelection(currentSession);
+            ClearPendingRansomOfferReference(currentSession);
             MarkRansomInfoRequestIncomplete(currentSession);
             Log.Message("[RimChat] request_info(prisoner) canceled by player.");
             currentSession.AddMessage(
@@ -353,6 +361,7 @@ namespace RimChat.UI
                 return;
             }
 
+            ClearPendingRansomOfferReference(currentSession);
             if (!TryBuildRansomBatchQuoteEntries(currentFaction, selectedPawns, out List<RansomBatchQuoteEntry> entries, out string failureMessage))
             {
                 currentSession.AddMessage("System", failureMessage, false, DialogueMessageType.System);
@@ -538,6 +547,11 @@ namespace RimChat.UI
 
                 if (TryGetRansomOfferWindow(quoteData, out int minOffer, out int maxOffer))
                 {
+                    currentSession.SetPendingRansomOfferReference(
+                        selectedPawn.thingIDNumber,
+                        quoteData.CurrentAskSilver,
+                        minOffer,
+                        maxOffer);
                     currentSession.AddMessage(
                         "System",
                         "RimChat_RansomOfferWindowSystem".Translate(
@@ -557,6 +571,7 @@ namespace RimChat.UI
                 return;
             }
 
+            currentSession.ClearPendingRansomOfferReference();
             currentSession.AddMessage(
                 "System",
                 "RimChat_RansomReferenceAskUnavailableSystem".Translate(selectedPawn.LabelShortCap).ToString(),
@@ -567,6 +582,41 @@ namespace RimChat.UI
             {
                 TryQueueReplyForPlayerPrisonerInfoCard(caption, currentSession, currentFaction);
             }
+        }
+
+        private static void NormalizeSingleRansomOfferForExecution(
+            AIAction action,
+            FactionDialogueSession currentSession,
+            Pawn resolvedTarget)
+        {
+            if (action?.Parameters == null || currentSession == null || resolvedTarget == null)
+            {
+                return;
+            }
+
+            if (!TryReadPositiveInt(action.Parameters, "offer_silver", out int originalOffer) ||
+                !currentSession.TryGetPendingRansomOfferReference(
+                    out int targetPawnLoadId,
+                    out int currentAskSilver,
+                    out int minOfferSilver,
+                    out int maxOfferSilver) ||
+                targetPawnLoadId != resolvedTarget.thingIDNumber)
+            {
+                return;
+            }
+
+            int normalizedOffer = Mathf.Clamp(originalOffer, minOfferSilver, maxOfferSilver);
+            if (normalizedOffer == originalOffer)
+            {
+                return;
+            }
+
+            action.Parameters["offer_silver"] = normalizedOffer;
+            Log.Message(
+                "[RimChat] pay_prisoner_ransom single offer normalized. " +
+                $"target={targetPawnLoadId}, original={originalOffer}, " +
+                $"window={minOfferSilver}-{maxOfferSilver}, normalized={normalizedOffer}, " +
+                $"current_ask={currentAskSilver}");
         }
 
         private void TryQueueReplyForPlayerPrisonerInfoCard(

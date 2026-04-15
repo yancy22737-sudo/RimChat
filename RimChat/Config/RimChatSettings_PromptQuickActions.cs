@@ -16,6 +16,14 @@ namespace RimChat.Config
     /// </summary>
     public partial class RimChatSettings : ModSettings
     {
+        // Quick actions cache to eliminate per-frame LINQ operations on world entities
+        private static List<Faction> _cachedQuickFactions;
+        private static int _lastQuickFactionCacheTick = -1;
+        private const int QuickFactionCacheTicks = 60; // Refresh every 60 ticks (~1 second)
+
+        private static List<Pawn> _cachedQuickPawns;
+        private static int _lastQuickPawnCacheTick = -1;
+        private const int QuickPawnCacheTicks = 60; // Refresh every 60 ticks (~1 second)
         private void DrawPromptWorkspaceQuickActions(Rect rect)
         {
             float labelWidth = Mathf.Min(120f, Mathf.Max(78f, rect.width * 0.32f));
@@ -76,6 +84,8 @@ namespace RimChat.Config
 
         private void OpenPromptWorkspaceFactionTemplateMenu()
         {
+            // Force refresh cache when opening menu for up-to-date data
+            _cachedQuickFactions = null;
             List<Faction> factions = GetPromptWorkspaceQuickFactions();
             if (factions.Count == 0)
             {
@@ -126,6 +136,8 @@ namespace RimChat.Config
 
         private void OpenPromptWorkspaceQuickPawnMenu()
         {
+            // Force refresh cache when opening menu for up-to-date data
+            _cachedQuickPawns = null;
             List<Pawn> pawns = GetPromptWorkspaceQuickPawns();
             if (pawns.Count == 0)
             {
@@ -179,7 +191,22 @@ namespace RimChat.Config
             Find.WindowStack.Add(new FloatMenu(options));
         }
 
+        /// <summary>
+        /// Gets cached quick factions list. Refreshes every QuickFactionCacheTicks to eliminate per-frame LINQ.
+        /// </summary>
         private static List<Faction> GetPromptWorkspaceQuickFactions()
+        {
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (_cachedQuickFactions == null ||
+                currentTick - _lastQuickFactionCacheTick > QuickFactionCacheTicks)
+            {
+                _cachedQuickFactions = GetPromptWorkspaceQuickFactionsUncached();
+                _lastQuickFactionCacheTick = currentTick;
+            }
+            return _cachedQuickFactions;
+        }
+
+        private static List<Faction> GetPromptWorkspaceQuickFactionsUncached()
         {
             return Find.FactionManager?.AllFactionsListForReading?
                 .Where(IsPromptWorkspaceQuickFactionCandidate)
@@ -198,7 +225,22 @@ namespace RimChat.Config
                    !string.IsNullOrWhiteSpace(faction.def.defName);
         }
 
+        /// <summary>
+        /// Gets cached quick pawns list. Refreshes every QuickPawnCacheTicks to eliminate per-frame LINQ.
+        /// </summary>
         private static List<Pawn> GetPromptWorkspaceQuickPawns()
+        {
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (_cachedQuickPawns == null ||
+                currentTick - _lastQuickPawnCacheTick > QuickPawnCacheTicks)
+            {
+                _cachedQuickPawns = GetPromptWorkspaceQuickPawnsUncached();
+                _lastQuickPawnCacheTick = currentTick;
+            }
+            return _cachedQuickPawns;
+        }
+
+        private static List<Pawn> GetPromptWorkspaceQuickPawnsUncached()
         {
             return PawnsFinder.AllMapsWorldAndTemporary_Alive
                 .Where(IsPromptWorkspaceQuickPawnCandidate)

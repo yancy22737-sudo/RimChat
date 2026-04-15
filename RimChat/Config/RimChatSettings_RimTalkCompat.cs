@@ -1119,6 +1119,37 @@ You may reference RimTalk variables/plugins directly in this section.";
                 .ToList();
         }
 
+        internal List<PromptSectionLayoutConfig> GetPromptSectionLayouts(string promptChannel)
+        {
+            EnsurePromptSectionCatalogReady();
+            return UnifiedPromptCatalog
+                .GetOrderedSectionLayouts(promptChannel)
+                .Select(item => item.Clone())
+                .ToList();
+        }
+
+        internal void SavePromptSectionLayouts(string promptChannel, IEnumerable<PromptSectionLayoutConfig> layouts, bool persistToFiles = true)
+        {
+            EnsurePromptSectionCatalogReady();
+            string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
+            List<PromptSectionLayoutConfig> ordered = (layouts ?? Enumerable.Empty<PromptSectionLayoutConfig>())
+                .Where(item => item != null && !string.IsNullOrWhiteSpace(item.SectionId))
+                .Select(item => item.Clone())
+                .OrderBy(item => item.Order)
+                .ThenBy(item => item.SectionId, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            int nextOrder = 0;
+            foreach (PromptSectionLayoutConfig item in ordered)
+            {
+                UnifiedPromptCatalog.SetSectionLayout(channel, item.SectionId, nextOrder);
+                nextOrder++;
+            }
+
+            ApplyUnifiedCatalogPersistence(persistToFiles);
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
         internal PromptUnifiedNodeLayoutConfig ResolvePromptNodeLayout(string promptChannel, string nodeId)
         {
             EnsurePromptSectionCatalogReady();

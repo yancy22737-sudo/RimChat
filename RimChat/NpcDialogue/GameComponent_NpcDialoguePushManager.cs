@@ -42,6 +42,7 @@ namespace RimChat.NpcDialogue
         private const int CandidateCacheMaintenanceIntervalTicks = 15000;
         private const int CandidateSessionSyncIntervalTicks = 30000;
         private const int MaxCandidateFactions = 20;
+        private const int SnapshotRetryDelayTicks = 250;
 
         public static GameComponent_NpcDialoguePushManager Instance;
 
@@ -525,7 +526,12 @@ namespace RimChat.NpcDialogue
                 return;
             }
 
-            List<ChatMessageData> messages = BuildGenerationMessages(context);
+            if (!TryGetPromptRuntimeSnapshotOrDefer(context, out DiplomacyPromptRuntimeSnapshot runtimeSnapshot))
+            {
+                return;
+            }
+
+            List<ChatMessageData> messages = BuildGenerationMessages(context, runtimeSnapshot);
             string requestId = string.Empty;
             requestId = AIChatServiceAsync.Instance.SendChatRequestAsync(
                 messages,
@@ -615,6 +621,32 @@ namespace RimChat.NpcDialogue
             };
         }
 
+        private bool TryGetPromptRuntimeSnapshotOrDefer(
+            NpcDialogueTriggerContext context,
+            out DiplomacyPromptRuntimeSnapshot snapshot)
+        {
+            snapshot = null;
+            Faction faction = context?.Faction;
+            if (!IsValidTargetFaction(faction))
+            {
+                return false;
+            }
+
+            IDiplomacyPromptSnapshotCache cache = DiplomacyPromptSnapshotCache.Instance;
+            cache.RequestWarmup(faction, "npc_push_generation");
+            if (cache.TryGetSnapshot(faction, out snapshot))
+            {
+                return true;
+            }
+
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (currentTick > 0)
+            {
+                QueueTrigger(context, currentTick + SnapshotRetryDelayTicks, currentTick);
+            }
+            return false;
+        }
+
         private void DeliverMessage(NpcDialogueTriggerContext context, string text)
         {
             if (context == null || !IsValidTargetFaction(context.Faction))
@@ -694,7 +726,9 @@ namespace RimChat.NpcDialogue
                 : LetterDefOf.NeutralEvent;
         }
 
-        private List<ChatMessageData> BuildGenerationMessages(NpcDialogueTriggerContext context)
+        private List<ChatMessageData> BuildGenerationMessages(
+            NpcDialogueTriggerContext context,
+            DiplomacyPromptRuntimeSnapshot runtimeSnapshot)
         {
             var messages = new List<ChatMessageData>();
             PromptPersistenceService.Instance.Initialize();
@@ -703,7 +737,8 @@ namespace RimChat.NpcDialogue
                 context.Faction,
                 PromptPersistenceService.Instance.LoadConfig(),
                 true,
-                sceneTags);
+                sceneTags,
+                runtimeSnapshot);
             messages.Add(new ChatMessageData { role = "system", content = basePrompt });
             AppendRecentSessionContext(messages, context.Faction);
 

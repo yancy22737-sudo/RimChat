@@ -5,7 +5,10 @@ namespace RimChat.UI
 {
     /// <summary>
     /// Dependencies: RimChat prompt section workspace renderer and RimWorld window stack lifecycle.
-    /// Responsibility: host prompt workspace in a dedicated large-size window for stable editing space.
+    /// Responsibility: host prompt workspace in a dedicated large-size window for stable editing space,
+    /// and manage RenderTexture lifecycle (creation/disposal) for offscreen cached rendering.
+    /// UGUI rendering infrastructure is managed by RimChatSettings_PromptSectionWorkspace
+    /// and disposed via DisposePromptWorkspaceRenderTextures().
     /// </summary>
     public sealed class Dialog_PromptWorkbenchLarge : Window
     {
@@ -40,6 +43,8 @@ namespace RimChat.UI
             // Persist workspace edits when closing the large workbench window
             // so users do not lose pending changes by closing without clicking Save.
             _settings?.FlushPromptWorkspaceEdits(persistToDisk: true);
+            // Release RenderTexture and UGUI resources to prevent GPU memory leaks
+            _settings?.DisposePromptWorkspaceRenderTextures();
             base.PreClose();
         }
 

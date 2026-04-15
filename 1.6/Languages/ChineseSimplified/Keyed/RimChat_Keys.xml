@@ -910,6 +910,7 @@
     <RimChat_RansomCounterOfferSystem>{0} 拒绝了报价 {1} 银，并提出还价：{2} 银（第 {3}/{4} 轮）。</RimChat_RansomCounterOfferSystem>
     <RimChat_RansomRejectedFloorSystem>{2} 的赎金谈判已结束：报价 {0} 银低于底价 {1} 银。请提高报价后重新发起。</RimChat_RansomRejectedFloorSystem>
     <RimChat_RansomPaymentSubmittedSystem>赎金支付已提交：目标 {0}，到账 {1} 银。请由玩家手动放人以履行合约。</RimChat_RansomPaymentSubmittedSystem>
+    <RimChat_RansomOfferNormalizedSystem>报价 {0} 超出当前可报价区间 {1}-{2} 银，已按最近边界归一化为 {3} 银并执行。</RimChat_RansomOfferNormalizedSystem>
     <RimChat_RansomInvalidOfferSystem>赎金报价无效，请提交大于 0 的银币数额。</RimChat_RansomInvalidOfferSystem>
     <RimChat_RansomQuoteUnavailableSystem>当前无法计算赎金区间，请稍后重试。</RimChat_RansomQuoteUnavailableSystem>
     <RimChat_RansomTargetUnavailableSystem>目标囚犯当前不可用，请重新选择后重试。</RimChat_RansomTargetUnavailableSystem>
@@ -2267,11 +2268,15 @@ ID：{5}
     <RimChat_PromptWorkbench_RpgSubEntries>通用条目</RimChat_PromptWorkbench_RpgSubEntries>
     <RimChat_PromptWorkbench_RpgSubPersona>Pawn Persona</RimChat_PromptWorkbench_RpgSubPersona>
     <RimChat_PromptWorkbench_PreviewEmpty>当前通道没有可预览的提示词内容。</RimChat_PromptWorkbench_PreviewEmpty>
+    <RimChat_PreviewSnapshotIndicator_Live>运行时预览（实时数据）</RimChat_PreviewSnapshotIndicator_Live>
+    <RimChat_PreviewSnapshotIndicator_Placeholder>占位符预览（发起一次对话可查看实时数据）</RimChat_PreviewSnapshotIndicator_Placeholder>
     <RimChat_PromptWorkbench_PersonaPreviewHint>Persona 模式用于按 Pawn 编辑独立人格提示词，请在中间区域选择目标 Pawn 查看详情。</RimChat_PromptWorkbench_PersonaPreviewHint>
     <RimChat_PromptPreset_Create>新建</RimChat_PromptPreset_Create>
     <RimChat_PromptPreset_Duplicate>复制</RimChat_PromptPreset_Duplicate>
     <RimChat_PromptPreset_Activate>激活</RimChat_PromptPreset_Activate>
     <RimChat_PromptPreset_Delete>删除</RimChat_PromptPreset_Delete>
+    <RimChat_RaceNotEligible_NullRace>种族数据缺失</RimChat_RaceNotEligible_NullRace>
+    <RimChat_RaceNotEligible_Incompatible>{0} 不符合对话条件</RimChat_RaceNotEligible_Incompatible>
     <RimChat_PromptPreset_Rename>重命名</RimChat_PromptPreset_Rename>
     <RimChat_PromptPreset_NoSelection>未选择预设。</RimChat_PromptPreset_NoSelection>
     <RimChat_PromptPreset_CreateSuccess>已创建预设：{0}</RimChat_PromptPreset_CreateSuccess>
@@ -2324,6 +2329,7 @@ ID：{5}
     <RimChat_PromptWorkbench_QuickPawnTypeAnimal>驯化动物</RimChat_PromptWorkbench_QuickPawnTypeAnimal>
     <RimChat_PromptWorkbench_QuickPawnTypeMech>机械体</RimChat_PromptWorkbench_QuickPawnTypeMech>
     <RimChat_PromptRenderFailed>提示词页面渲染失败，请查看 Player.log。</RimChat_PromptRenderFailed>
+    <RimChat_PromptRenderCompatibilityMode>已切换到提示词页面兼容渲染模式（IMGUI）。可继续编辑；详细诊断请查看 Player.log。</RimChat_PromptRenderCompatibilityMode>
     <RimChat_PromptRenderBlocked>提示词渲染已阻断。模板={0}，通道={1}，行={2}，列={3}。</RimChat_PromptRenderBlocked>
     <RimChat_RimTalkTabMigratedTitle>RimTalk 桥接</RimChat_RimTalkTabMigratedTitle>
     <RimChat_RimTalkTabMigratedHint>原生提示词结构现在统一归入“提示词工作台”。本页只保留桥接可用性、共享变量与摘要/人格桥接设置。</RimChat_RimTalkTabMigratedHint>
@@ -2351,6 +2357,9 @@ ID：{5}
     <RimChat_PromptVariableTooltip_TypicalValues>典型值：\n{0}</RimChat_PromptVariableTooltip_TypicalValues>
     <RimChat_PromptVariableTooltip_NoTypicalValues>暂无典型值</RimChat_PromptVariableTooltip_NoTypicalValues>
     <RimChat_PromptWorkspaceNodeLayoutHeader>节点编排</RimChat_PromptWorkspaceNodeLayoutHeader>
+    <RimChat_PromptWorkspaceModuleHeader>模块</RimChat_PromptWorkspaceModuleHeader>
+    <RimChat_PromptWorkspaceKind_Section>分段</RimChat_PromptWorkspaceKind_Section>
+    <RimChat_PromptWorkspaceKind_Node>节点</RimChat_PromptWorkspaceKind_Node>
     <RimChat_PromptWorkspaceMode_Sections>分段</RimChat_PromptWorkspaceMode_Sections>
     <RimChat_PromptWorkspaceMode_Nodes>节点</RimChat_PromptWorkspaceMode_Nodes>
     <RimChat_PromptWorkspace_NodePlacementTitle>节点生效顺序</RimChat_PromptWorkspace_NodePlacementTitle>
@@ -2427,4 +2436,7 @@ ID：{5}
     <RimChat_SpecialItemScarceTag>（+100%）</RimChat_SpecialItemScarceTag>
     <RimChat_SpecialItemRefreshTime>{0}天{1}小时后刷新</RimChat_SpecialItemRefreshTime>
     <RimChat_SpecialItemIntelInsufficient>???（情报不足，{0}）</RimChat_SpecialItemIntelInsufficient>
+    <RimChat_PromptWorkbench_FullPreviewTab>完整预览</RimChat_PromptWorkbench_FullPreviewTab>
+    <RimChat_PromptNodeSlot>槽位</RimChat_PromptNodeSlot>
+    <RimChat_PromptNodeOrder>排序</RimChat_PromptNodeOrder>
 </LanguageData>
