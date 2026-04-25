@@ -15,6 +15,11 @@ namespace RimChat.DiplomacySystem
     {
         private const int MaxSocialPosts = 200;
         private SocialCircleState socialCircleState = new SocialCircleState();
+        private List<PublicSocialPost> cachedSortedPosts = new List<PublicSocialPost>();
+        private bool socialPostsCacheDirty = true;
+        private List<Faction> cachedEligibleFactions;
+        private int eligibleFactionsCacheTick = -1;
+        private const int EligibleFactionsCacheIntervalTicks = 60000;
 
         private void InitializeSocialCircleOnNewGame()
         {
@@ -26,6 +31,7 @@ namespace RimChat.DiplomacySystem
             socialCircleState.ScheduledEvents.Clear();
             socialCircleState.LastReadPostId = string.Empty;
             ClearSocialTransientState();
+            socialPostsCacheDirty = true;
             ScheduleNextSocialPost(Find.TickManager?.TicksGame ?? 0);
         }
 
@@ -35,6 +41,7 @@ namespace RimChat.DiplomacySystem
             socialCircleState.CleanupInvalidEntries();
             socialCircleState.ClearPendingOrigins();
             ClearSocialTransientState();
+            socialPostsCacheDirty = true;
             EnsureNextSocialPostTick(Find.TickManager?.TicksGame ?? 0);
         }
 
@@ -295,10 +302,21 @@ namespace RimChat.DiplomacySystem
         {
             EnsureSocialCircleState();
             int count = Math.Max(1, maxCount);
-            return socialCircleState.Posts
-                .OrderByDescending(post => post.CreatedTick)
-                .Take(count)
-                .ToList();
+            if (socialPostsCacheDirty)
+            {
+                cachedSortedPosts.Clear();
+                for (int i = 0; i < socialCircleState.Posts.Count; i++)
+                {
+                    var post = socialCircleState.Posts[i];
+                    if (post != null)
+                        cachedSortedPosts.Add(post);
+                }
+                cachedSortedPosts.Sort((a, b) => (b?.CreatedTick ?? 0).CompareTo(a?.CreatedTick ?? 0));
+                socialPostsCacheDirty = false;
+            }
+            if (cachedSortedPosts.Count <= count)
+                return new List<PublicSocialPost>(cachedSortedPosts);
+            return cachedSortedPosts.GetRange(0, count);
         }
 
         public int GetUnreadSocialPostCount()
@@ -379,13 +397,20 @@ namespace RimChat.DiplomacySystem
 
             int removeCount = socialCircleState.Posts.Count - MaxSocialPosts;
             socialCircleState.Posts.RemoveRange(0, removeCount);
+            socialPostsCacheDirty = true;
         }
 
         private List<Faction> GetEligibleSocialFactions()
         {
-            return Find.FactionManager.AllFactions
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (cachedEligibleFactions != null && currentTick - eligibleFactionsCacheTick < EligibleFactionsCacheIntervalTicks)
+                return cachedEligibleFactions;
+
+            cachedEligibleFactions = Find.FactionManager.AllFactions
                 .Where(faction => faction != null && !faction.defeated && !faction.def.hidden)
                 .ToList();
+            eligibleFactionsCacheTick = currentTick;
+            return cachedEligibleFactions;
         }
 
         private Faction ResolveMentionedFaction(string text, Faction sourceFaction)

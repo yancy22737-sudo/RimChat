@@ -275,7 +275,7 @@ namespace RimChat.DiplomacySystem
             }
 
             result.HasExplicitCount = true;
-            result.RequestedCount = Mathf.Clamp(parsed, 1, 5000);
+            result.RequestedCount = Math.Max(1, parsed);
             return result;
         }
 
@@ -376,7 +376,7 @@ namespace RimChat.DiplomacySystem
             if (hasExplicitNeedCount && explicitNeedCount > 0)
             {
                 requestedCount.HasExplicitCount = true;
-                requestedCount.RequestedCount = Mathf.Clamp(explicitNeedCount, 1, 5000);
+                requestedCount.RequestedCount = Math.Max(1, explicitNeedCount);
             }
 
             int parameterCount = 0;
@@ -392,7 +392,7 @@ namespace RimChat.DiplomacySystem
             }
 
             requestedCount.HasParameterCount = true;
-            requestedCount.ParameterCount = Mathf.Clamp(parameterCount, 1, 5000);
+            requestedCount.ParameterCount = Math.Max(1, parameterCount);
             return requestedCount;
         }
 
@@ -410,6 +410,17 @@ namespace RimChat.DiplomacySystem
             if (stacks.Count == 0)
             {
                 return FailFastAirdrop("stack_build_failed", "Could not create item stacks for airdrop.", faction, parameters);
+            }
+
+            int deliveredCount = stacks.Sum(t => t.stackCount);
+            if (deliveredCount != validatedCount)
+            {
+                return FailFastAirdrop(
+                    "delivery_quantity_mismatch",
+                    $"Prepared airdrop quantity {validatedCount} exceeds stack delivery capacity {deliveredCount}.",
+                    faction,
+                    parameters,
+                    $"def={selectedRecord.DefName},validated={validatedCount},delivered={deliveredCount},maxStacks={RimChatMod.Instance.InstanceSettings.ItemAirdropMaxStacksPerDrop},stackLimit={selectedRecord.Def.stackLimit}");
             }
 
             if (!TryFindAirdropCell(map, out IntVec3 dropCell))
@@ -430,7 +441,6 @@ namespace RimChat.DiplomacySystem
                 leaveSlag: false,
                 canRoofPunch: false);
 
-            int deliveredCount = stacks.Sum(t => t.stackCount);
             string stage3 = $"def={selectedRecord.DefName},count={deliveredCount},budget={budget},reason={selectionReason},drop={dropCell}";
             RecordStageAudit("execute", faction, parameters, stage3);
             RecordAPICall("RequestItemAirdrop", true, stage3);
@@ -612,14 +622,12 @@ namespace RimChat.DiplomacySystem
             float safePrice = candidatePack?.ResolveUnitPrice(record) ?? Math.Max(0.01f, record.MarketValue);
             maxByBudget = Mathf.FloorToInt(Math.Max(0, budget) / safePrice);
             maxBySystem = ComputeMaxDeliverableByStacks(record.Def, settings);
-            hardMax = Math.Max(0, maxByBudget);
+            hardMax = Math.Max(0, Math.Min(maxByBudget, maxBySystem));
         }
 
         private static int ComputeMaxDeliverableByStacks(ThingDef def, RimChatSettings settings)
         {
-            int maxStacks = Math.Max(1, settings?.ItemAirdropMaxStacksPerDrop ?? 1);
-            int stackLimit = Math.Max(1, def?.stackLimit ?? 1);
-            return maxStacks * stackLimit;
+            return int.MaxValue / 2;
         }
 
         private static int ResolveFamilyDefaultCount(ItemAirdropNeedFamily family)
@@ -766,7 +774,10 @@ namespace RimChat.DiplomacySystem
                 stuff = def.defaultStuff;
             }
 
-            while (remaining > 0 && result.Count < maxStacks)
+            int neededStacks = Math.Max(1, (int)System.Math.Ceiling((double)totalCount / stackLimit));
+            int effectiveMaxStacks = Math.Max(maxStacks, neededStacks);
+
+            while (remaining > 0 && result.Count < effectiveMaxStacks)
             {
                 Thing thing = ThingMaker.MakeThing(def, stuff);
                 int stack = Math.Min(stackLimit, remaining);
@@ -919,3 +930,6 @@ namespace RimChat.DiplomacySystem
         public int ParameterCount { get; set; }
     }
 }
+
+
+

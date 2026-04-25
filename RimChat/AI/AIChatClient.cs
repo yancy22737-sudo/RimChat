@@ -384,7 +384,7 @@ namespace RimChat.AI
             sb.Append("{");
             sb.Append($"\"model\":\"{EscapeJson(model)}\",");
             sb.Append("\"messages\":[");
-            
+
             for (int i = 0; i < messages.Count; i++)
             {
                 if (i > 0) sb.Append(",");
@@ -393,7 +393,7 @@ namespace RimChat.AI
                 sb.Append($"\"content\":\"{EscapeJson(messages[i].content)}\"");
                 sb.Append("}");
             }
-            
+
             sb.Append("],");
             sb.Append("\"temperature\":0.7,");
             sb.Append("\"max_tokens\":2000");

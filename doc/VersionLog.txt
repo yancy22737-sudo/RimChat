@@ -1,3 +1,46 @@
+0.9.1031
+- [新功能] API 设置新增思考模式开关与思考强度控制（low/medium/high/xhigh），默认开启、中等强度。
+- [新功能] API 设置页新增"高级参数"按钮，点击弹出 Dialog_AdvancedApiParameters 窗口进行全局配置，设置应用于当前启用的模型。
+- [优化] 测试可用性、高级参数、技术细节三个按钮改为单行并排布局，减少垂直空间占用。
+- [API] 聊天请求 JSON 构建新增 `thinking` 与 `reasoning_effort` 参数注入，从全局设置读取。
+- [配置] ApiConfig 保持干净，思考参数作为全局设置存储在 RimChatSettings 中。
+- [国际化] 同步更新中英文语言文件。
+- [版本] About/About.xml modVersion 提升到 0.9.1031。
+
+0.9.1030
+- [修复] 空投报价中 Tradeability.None（不可交易）物品售价上调 ×6，防止玩家以常规价格获取原版不可买卖的稀有物品；卖价不变。
+- [修复] 候选包 ResolveUnitPrice 补齐不可交易溢价逻辑，覆盖 ComputeLegalCountWindow 数量窗口。
+- [修复] Barter 路径始终使用定价函数重算 BudgetSilver。
+- [修复] UI 需求卡片 Dialog_ItemAirdropTradeCard 与 FactionDialogueSession 补齐不可交易溢价。
+- [重构] 统一定价接口：将 6 处重复的 Tradeability.None 溢价逻辑收敛到 ItemAirdropTradePolicy.ApplyUntradeablePremium() 单一入口，新增 ResolveNeedPriceSemantic() 统一标签输出。
+- [配置] 新增用户设置 ItemAirdropUntradeablePriceMultiplier，可运行时调整黑市溢价倍率，默认 6.0。
+- [文档] 同步更新 doc/config.md。
+- [版本] About/About.xml modVersion 提升到 0.9.1030。
+
+0.9.1029
+- [修复] 空投数量被硬限制裁剪时，支付金额等比缩减：当 validatedCount < requestedOriginalCount 时，按实际所需费用缩放 DeductionPlan，消除"溢付不退款"导致的多扣少发。
+- [修复] 去除堆叠物理上限对候选窗口的钳制：ComputeMaxDeliverableByStacks 不再参与 hardMax 裁剪；BuildStacks 自动扩展堆数以容纳完整数量。
+- [修复] 去除空投报价数量 5000 硬编码上限，改为仅做正数合法性检查。
+- [修复] 空投到货通知总价改用成交快照中的结算运费，不再在发货阶段重算。
+- [阻断] 发货前增加数量守恒断言，防止先扣全款再少发货。
+- [文档] 同步更新 `doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- [版本] About/About.xml modVersion 提升到 0.9.1029。
+
+0.9.1028
+- [修复] 去除空投报价数量 5000 硬编码上限，改为仅做正数合法性检查。
+- [修复] 空投候选窗口 hardMax 加入系统堆叠容量约束（maxStacks × stackLimit），避免确认成交后发货量被静默截断。
+- [阻断] 发货前增加数量守恒断言（deliveredCount != confirmedQuantity 时 FailFast 中止并发出错误通知），防止先扣全款再少发货。
+- [修复] 空投到货通知总价改用成交快照中的结算运费，不再在发货阶段重算。
+- [版本] About/About.xml modVersion 提升到 0.9.1028。
+
+0.9.1026
+- [新功能] 新增"请求访客"外交动作；玩家现在可以通过外交对话菜单向派系请求访客队伍。
+- [文档] 同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- [版本] About/About.xml modVersion 提升到 0.9.1026。
+0.9.1025
+- [收紧] `ApiUsabilityDiagnosticService.RunCloudDiagnosticCoroutine` 在 `/models` 接口缺失时，现在会从 chat 响应中验证模型名；若返回的模型与配置的模型不匹配，则测试失败并返回 `MODEL_NOT_FOUND`。
+- [文档] 同步更新 `About/About.xml`、`doc/Index.md`、`doc/Api.md`、`doc/config.md`、`doc/VersionLog.txt`、`doc/VersionLog_en.txt`。
+- [版本] About/About.xml modVersion 提升到 0.9.1025。
 0.9.1024
 - 请求任务授勋禁用 + 冷却文案游戏时间统一（Fail-Fast 根修）：
   1. [根修] `ApiActionEligibilityService.SupportedQuestDefs` 移除 `BestowingCeremony`，请求任务可选模板与可用任务注入链路不再暴露授勋模板。

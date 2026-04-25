@@ -148,6 +148,28 @@ namespace RimChat.Config
             }
 
             steps.Add(BuildStepSuccess(ApiUsabilityStep.ChatProbe, runtime.ChatEndpoint, startedAtUtc));
+            if (modelsEndpointMissing)
+            {
+                string responseModel = ExtractModelFromChatResponse(chatProbe.ResponseBody);
+                if (!string.IsNullOrWhiteSpace(responseModel) && !ContainsModel(new List<string> { responseModel }, modelName))
+                {
+                    string detail = $"Model name mismatch: configured='{modelName}' but API returned='{responseModel}'. The /models endpoint is missing, and the chat response model name does not match.";
+                    onCompleted?.Invoke(BuildFailure(
+                        ApiUsabilityStep.ChatProbe,
+                        ApiUsabilityErrorCode.MODEL_NOT_FOUND,
+                        detail,
+                        chatProbe.HttpCode,
+                        runtime.ChatEndpoint,
+                        startedAtUtc,
+                        steps,
+                        modelName,
+                        true,
+                        chatPayload,
+                        chatProbe.ResponseBody));
+                    yield break;
+                }
+            }
+
             NotifyProgress(onProgress, ApiUsabilityStep.ResponseContractValidation, 6, totalSteps);
             ContractValidationOutcome cloudContract = ValidateOpenAiChatContract(chatProbe.ResponseBody);
             ApiUsabilityProbeResponse cloudFinalProbe = chatProbe;
@@ -1018,6 +1040,17 @@ namespace RimChat.Config
             }
 
             return ContractValidationOutcome.RetryableFail("Missing assistant content without finish_reason/usage signal.");
+        }
+
+        private static string ExtractModelFromChatResponse(string responseBody)
+        {
+            if (string.IsNullOrWhiteSpace(responseBody))
+            {
+                return null;
+            }
+
+            List<string> models = ExtractQuotedValues(responseBody, "\"model\"");
+            return models.FirstOrDefault(model => !string.IsNullOrWhiteSpace(model));
         }
 
         private static ContractValidationOutcome ValidateLocalChatContract(ApiUsabilityLocalServiceType serviceType, string responseBody)

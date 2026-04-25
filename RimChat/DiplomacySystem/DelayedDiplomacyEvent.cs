@@ -17,7 +17,8 @@ namespace RimChat.DiplomacySystem
         RaidWave,
         RaidCallEveryoneAnnounce,    // 宣布即将来袭的主动消息
         RaidDepartureMessage,        // 袭击离开后的主动消息
-        RaidWaveEndMessage           // 最终波次结束的主动消息
+        RaidWaveEndMessage,          // 最终波次结束的主动消息
+        Visitor                      // 访客到达事件（追加，保持旧存档枚举序号兼容）
     }
 
     public enum CallEveryoneActionKind
@@ -185,6 +186,9 @@ namespace RimChat.DiplomacySystem
                         break;
                     case DelayedEventType.Aid:
                         success = DiplomacyEventManager.TriggerAidEvent(Faction, AidType);
+                        break;
+                    case DelayedEventType.Visitor:
+                        success = DiplomacyEventManager.TriggerVisitorEvent(Faction);
                         break;
                     case DelayedEventType.Raid:
                     case DelayedEventType.RaidWave:

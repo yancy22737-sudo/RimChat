@@ -568,7 +568,7 @@ namespace RimChat.AI
                     string jsonBody;
                     try
                     {
-                        jsonBody = BuildChatCompletionJson(model, attemptMessages, config.Provider);
+                        jsonBody = BuildChatCompletionJson(model, attemptMessages, config);
                     }
                     catch (Exception)
                     {
@@ -2257,13 +2257,13 @@ namespace RimChat.AI
             return null;
         }
 
-        private string BuildChatCompletionJson(string model, List<ChatMessageData> messages, AIProvider provider)
+        private string BuildChatCompletionJson(string model, List<ChatMessageData> messages, ApiConfig config)
         {
             var sb = new StringBuilder();
             sb.Append("{");
 
             // Player2 does not accept a model field; it selects the model server-side
-            if (provider != AIProvider.Player2)
+            if (config.Provider != AIProvider.Player2)
             {
                 sb.Append($"\"model\":\"{EscapeJson(model)}\",");
             }
@@ -2281,7 +2281,17 @@ namespace RimChat.AI
 
             sb.Append("],");
             sb.Append("\"temperature\":0.7,");
-            sb.Append("\"max_tokens\":2000");
+            sb.Append("\"max_tokens\":2000,");
+
+            // Thinking parameters from global settings
+            RimChatSettings globalSettings = RimChatMod.Settings;
+            bool thinkingEnabled = globalSettings?.ThinkingEnabled ?? true;
+            string reasoningEffort = globalSettings?.ReasoningEffort ?? "medium";
+            sb.Append($"\"thinking\":{{\"type\":\"{(thinkingEnabled ? "enabled" : "disabled")}\"}}");
+            if (thinkingEnabled && !string.IsNullOrEmpty(reasoningEffort))
+            {
+                sb.Append($",\"reasoning_effort\":\"{EscapeJson(reasoningEffort)}\"");
+            }
             sb.Append("}");
 
             return sb.ToString();

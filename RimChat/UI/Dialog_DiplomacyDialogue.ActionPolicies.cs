@@ -25,6 +25,7 @@ namespace RimChat.UI
         {
             AIActionNames.RequestItemAirdrop,
             AIActionNames.RequestCaravan,
+            AIActionNames.RequestVisitor,
             AIActionNames.RequestAid,
             AIActionNames.RequestRaid,
             AIActionNames.TriggerIncident,
@@ -151,7 +152,8 @@ namespace RimChat.UI
             return string.Equals(actionType, AIActionNames.RequestRaid, StringComparison.Ordinal) ||
                    string.Equals(actionType, AIActionNames.RequestRaidWaves, StringComparison.Ordinal) ||
                    string.Equals(actionType, AIActionNames.RequestRaidCallEveryone, StringComparison.Ordinal) ||
-                   string.Equals(actionType, AIActionNames.RequestCaravan, StringComparison.Ordinal);
+                   string.Equals(actionType, AIActionNames.RequestCaravan, StringComparison.Ordinal) ||
+                   string.Equals(actionType, AIActionNames.RequestVisitor, StringComparison.Ordinal);
         }
 
         private static bool TryParseSendInfoForcedActionDirective(

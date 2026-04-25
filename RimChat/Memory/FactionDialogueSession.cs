@@ -419,11 +419,8 @@ namespace RimChat.Memory
                     else if (ItemAirdropTradePolicy.TryResolveNeedUnitPrice(def, out float resolvedNeedUnit, out _))
                     {
                         needUnitValue = resolvedNeedUnit;
-                        needValueSemantic = ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(def)
-                            ? "market_value"
-                            : (def.tradeTags != null && def.tradeTags.Contains("ExoticMisc")
-                                ? "market_value_x3.0"
-                                : "market_value_x1.8");
+                        ItemAirdropTradePolicy.ApplyUntradeablePremium(def, ref needUnitValue);
+                        needValueSemantic = ItemAirdropTradePolicy.ResolveNeedPriceSemantic(def, faction);
                     }
                     else
                     {

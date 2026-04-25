@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimChat.AI;
@@ -515,6 +515,34 @@ namespace RimChat.DiplomacySystem
                 : "none";
             string paymentSummary = $"budget={quotedNeedTotalSilver},payment={context.PaymentTotalSilver},shipping={shippingCostSilver},pods={shippingPodCount},overpay={overpay},budgetMismatch={budgetMismatchSummary},paymentLines={context.PaymentLines.Count},deductionRows={context.DeductionPlan.Count}";
             RecordStageAudit("prepare_trade", context.Faction, context.Parameters, paymentSummary);
+            if (validatedCount < requestedOriginalCount && overpay > 0)
+            {
+                int actualNeeded = quotedNeedTotalSilver + shippingCostSilver;
+                if (actualNeeded < context.PaymentTotalSilver)
+                {
+                    double scale = (double)actualNeeded / Math.Max(1, context.PaymentTotalSilver);
+                    List<ItemAirdropDeductionPlanLine> adjustedPlan = new List<ItemAirdropDeductionPlanLine>();
+                    int adjustedTotal = 0;
+                    foreach (ItemAirdropDeductionPlanLine line in context.DeductionPlan)
+                    {
+                        int scaledCount = Math.Max(1, (int)Math.Round(line.Count * scale));
+                        adjustedPlan.Add(new ItemAirdropDeductionPlanLine
+                        {
+                            ThingId = line.ThingId,
+                            DefName = line.DefName,
+                            Count = scaledCount
+                        });
+                        adjustedTotal += scaledCount;
+                    }
+                    context.DeductionPlan = adjustedPlan;
+                    int originalPayment = context.PaymentTotalSilver;
+                    context.PaymentTotalSilver = actualNeeded;
+                    overpay = 0;
+                    Log.Message($"[RimChat][PaymentAdjust] Quantity clamped ({requestedOriginalCount}->{validatedCount}), payment scaled from {originalPayment} to {actualNeeded} (scale={scale:F4}, deductionLines={adjustedPlan.Count}, totalDeductionCount={adjustedTotal})");
+                    RecordStageAudit("prepare_trade", context.Faction, context.Parameters, $"budget={quotedNeedTotalSilver},payment={actualNeeded},shipping={shippingCostSilver},pods={shippingPodCount},overpay=0,clampedPaymentAdjusted=True,paymentLines={context.PaymentLines.Count},deductionRows={adjustedPlan.Count}");
+                }
+            }
+
 
             var prepared = new ItemAirdropPreparedTradeData
             {
@@ -710,3 +738,4 @@ namespace RimChat.DiplomacySystem
         public string NeedRawPreview { get; set; } = "none";
     }
 }
+

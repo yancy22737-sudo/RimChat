@@ -650,6 +650,7 @@
     <RimChat_SendInfoEntry>快速行动</RimChat_SendInfoEntry>
     <RimChat_SendInfoMenuTaunt>挑衅</RimChat_SendInfoMenuTaunt>
     <RimChat_SendInfoMenuRequestCaravan>请求商队</RimChat_SendInfoMenuRequestCaravan>
+    <RimChat_SendInfoMenuRequestVisitor>请求访客</RimChat_SendInfoMenuRequestVisitor>
     <RimChat_SendInfoMenuRequestSupport>请求支援</RimChat_SendInfoMenuRequestSupport>
     <RimChat_SendInfoMenuRequestQuest>请求任务</RimChat_SendInfoMenuRequestQuest>
     <RimChat_SendInfoMenuPrisoner>发送囚犯信息</RimChat_SendInfoMenuPrisoner>
@@ -673,6 +674,7 @@
     <RimChat_SendInfoTauntConfirmCancel>取消</RimChat_SendInfoTauntConfirmCancel>
     <RimChat_SendInfoTauntSystemMessage>玩家挑衅了对方，将引发“{0}”。</RimChat_SendInfoTauntSystemMessage>
     <RimChat_SendInfoCaravanSystemMessage>玩家向对方请求派遣商队交易。</RimChat_SendInfoCaravanSystemMessage>
+    <RimChat_SendInfoVisitorSystemMessage>玩家向对方请求安排一支访客队伍来访。</RimChat_SendInfoVisitorSystemMessage>
     <RimChat_SendInfoSupportSystemMessage>玩家向对方请求派遣军事援助支援。</RimChat_SendInfoSupportSystemMessage>
     <RimChat_SendInfoQuestSystemMessage>玩家向对方请求“{0}”任务。</RimChat_SendInfoQuestSystemMessage>
     <RimChat_SendInfoQuestUnavailableHint>该派系当前没有可请求的任务。</RimChat_SendInfoQuestUnavailableHint>
@@ -801,6 +803,7 @@
     <RimChat_ActionsHint_Reason_AirdropPaymentRequired>未填报价</RimChat_ActionsHint_Reason_AirdropPaymentRequired>
     <RimChat_ActionsHint_Reason_AirdropScenarioInvalid>空投场景参数无效</RimChat_ActionsHint_Reason_AirdropScenarioInvalid>
     <RimChat_ActionsHint_Reason_CaravanHostile>敌对状态不可请求商队</RimChat_ActionsHint_Reason_CaravanHostile>
+    <RimChat_ActionsHint_Reason_VisitorHostile>敌对状态不可请求访客</RimChat_ActionsHint_Reason_VisitorHostile>
     <RimChat_ActionsHint_Reason_RaidNotHostile>仅敌对关系可请求袭击</RimChat_ActionsHint_Reason_RaidNotHostile>
     <RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>仅在袭击后继续挑衅，或玩家明确要求“call everyone / 联合袭击”这类挑战时可用</RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>
     <RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>仅在联合袭击不可用或玩家主动挑战时可用</RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>
@@ -828,6 +831,7 @@
     <RimChat_DiplomacyActionLabel_declare_war>宣战</RimChat_DiplomacyActionLabel_declare_war>
     <RimChat_DiplomacyActionLabel_make_peace>议和</RimChat_DiplomacyActionLabel_make_peace>
     <RimChat_DiplomacyActionLabel_request_caravan>请求商队</RimChat_DiplomacyActionLabel_request_caravan>
+    <RimChat_DiplomacyActionLabel_request_visitor>请求访客</RimChat_DiplomacyActionLabel_request_visitor>
     <RimChat_DiplomacyActionLabel_request_raid>发起袭击</RimChat_DiplomacyActionLabel_request_raid>
     <RimChat_DiplomacyActionLabel_request_raid_call_everyone>联合袭击（call everyone）</RimChat_DiplomacyActionLabel_request_raid_call_everyone>
     <RimChat_DiplomacyActionLabel_request_raid_waves>持续袭击（多波次）</RimChat_DiplomacyActionLabel_request_raid_waves>
@@ -1188,6 +1192,18 @@ ID：{5}
     <RimChat_EnableAirdropSameFamilyRelaxedRetry>候选为空时启用一次同品类放宽重试</RimChat_EnableAirdropSameFamilyRelaxedRetry>
     <RimChat_ItemAirdropBlockedCategories>类别黑名单（CSV）</RimChat_ItemAirdropBlockedCategories>
     <RimChat_ItemAirdropBlacklist>Def 黑名单（CSV）</RimChat_ItemAirdropBlacklist>
+    <RimChat_AirdropPriceSettingsTitle>空投报价定价倍率</RimChat_AirdropPriceSettingsTitle>
+    <RimChat_AirdropNeedPriceMultiplier>我方物品基础买入倍率: {0}</RimChat_AirdropNeedPriceMultiplier>
+    <RimChat_AirdropExoticMiscNeedPriceMultiplier>我方珍奇物品买入倍率: {0}</RimChat_AirdropExoticMiscNeedPriceMultiplier>
+    <RimChat_AirdropOfferPriceMultiplier>我方物品卖出/支付倍率: {0}</RimChat_AirdropOfferPriceMultiplier>
+    <RimChat_AirdropExoticMiscOfferPriceMultiplier>我方稀有物品卖出/支付倍率: {0}</RimChat_AirdropExoticMiscOfferPriceMultiplier>
+    <RimChat_AirdropUntradeableOfferPriceMultiplier>我方不可交易物品卖出/支付倍率: {0}</RimChat_AirdropUntradeableOfferPriceMultiplier>
+    <RimChat_AirdropSpecialItemDiscountMultiplier>对方打折物品倍率: {0}</RimChat_AirdropSpecialItemDiscountMultiplier>
+    <RimChat_AirdropSpecialItemScarceMultiplier>对方稀有物品倍率: {0}</RimChat_AirdropSpecialItemScarceMultiplier>
+    <RimChat_AirdropUntradeableTieredTitle>不可交易物品黑市买入倍率（按市值阶梯）</RimChat_AirdropUntradeableTieredTitle>
+    <RimChat_AirdropUntradeableLowValueMultiplier>市值&lt;500白银: {0}</RimChat_AirdropUntradeableLowValueMultiplier>
+    <RimChat_AirdropUntradeableMidValueMultiplier>市值500~1000白银: {0}</RimChat_AirdropUntradeableMidValueMultiplier>
+    <RimChat_AirdropUntradeableHighValueMultiplier>市值&gt;1000白银: {0}</RimChat_AirdropUntradeableHighValueMultiplier>
     <RimChat_PrisonerRansomSettingsTitle>俘虏赎金设置</RimChat_PrisonerRansomSettingsTitle>
     <RimChat_RansomReleaseTimeoutTicks>放人超时（ticks）: {0}</RimChat_RansomReleaseTimeoutTicks>
     <RimChat_RansomValueDropMajorThreshold>大幅缩水阈值: {0}%</RimChat_RansomValueDropMajorThreshold>
@@ -1633,9 +1649,12 @@ ID：{5}
 
     <!-- 延迟事件安排通知 -->
     <RimChat_DelayedCaravanScheduledTitle>商队已安排</RimChat_DelayedCaravanScheduledTitle>
-    <RimChat_DelayedCaravanScheduledDesc>{0} 的 {1} 商队将在 {2} 天后到达。</RimChat_DelayedCaravanScheduledDesc>
+    <RimChat_DelayedCaravanScheduledDesc>{0} 已答应派出 {1} 商队，预计 {2} 天后抵达。</RimChat_DelayedCaravanScheduledDesc>
     <RimChat_DelayedAidScheduledTitle>援助已安排</RimChat_DelayedAidScheduledTitle>
     <RimChat_DelayedAidScheduledDesc>{0} 的 {1} 援助将在 {2} 天后到达。</RimChat_DelayedAidScheduledDesc>
+    <RimChat_DelayedVisitorScheduledTitle>访客已安排</RimChat_DelayedVisitorScheduledTitle>
+    <RimChat_DelayedVisitorScheduledDesc>{0} 已答应派出 {1}，预计 {2} 天后抵达。</RimChat_DelayedVisitorScheduledDesc>
+    <RimChat_VisitorGroupLabel>访客队伍</RimChat_VisitorGroupLabel>
     <RimChat_DelayedRaidScheduledTitle>袭击已安排</RimChat_DelayedRaidScheduledTitle>
     <RimChat_DelayedRaidScheduledDesc>{0} 的 {1} 袭击将在 {2} 小时后到达。</RimChat_DelayedRaidScheduledDesc>
     <RimChat_DelayedRaidCallEveryoneScheduledTitle>联合袭击预警</RimChat_DelayedRaidCallEveryoneScheduledTitle>
@@ -2439,4 +2458,17 @@ ID：{5}
     <RimChat_PromptWorkbench_FullPreviewTab>完整预览</RimChat_PromptWorkbench_FullPreviewTab>
     <RimChat_PromptNodeSlot>槽位</RimChat_PromptNodeSlot>
     <RimChat_PromptNodeOrder>排序</RimChat_PromptNodeOrder>
+
+    <!-- 高级参数 - 思考模式 -->
+    <RimChat_SettingsUnavailable>设置不可用。</RimChat_SettingsUnavailable>
+    <RimChat_AdvancedApiParameters>高级参数</RimChat_AdvancedApiParameters>
+    <RimChat_AdvancedApiParametersTooltip>配置扩展思考模式与思考强度。设置将应用于当前启用的 API 提供商和模型。</RimChat_AdvancedApiParametersTooltip>
+    <RimChat_ThinkingMode>思考模式</RimChat_ThinkingMode>
+    <RimChat_ThinkingModeTooltip>为支持的模型（Anthropic、DeepSeek 等）启用扩展思考。开启后，模型在生成最终答案前会额外使用 token 进行推理。</RimChat_ThinkingModeTooltip>
+    <RimChat_ReasoningEffort>思考强度</RimChat_ReasoningEffort>
+    <RimChat_ReasoningEffortTooltip>控制模型用于内部推理的 token 数量。更高的强度可能产生更好的结果，但会增加延迟和费用。</RimChat_ReasoningEffortTooltip>
+    <RimChat_ReasoningEffortLow>低</RimChat_ReasoningEffortLow>
+    <RimChat_ReasoningEffortMedium>中</RimChat_ReasoningEffortMedium>
+    <RimChat_ReasoningEffortHigh>高</RimChat_ReasoningEffortHigh>
+    <RimChat_ReasoningEffortXHigh>超高</RimChat_ReasoningEffortXHigh>
 </LanguageData>

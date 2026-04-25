@@ -1,3 +1,46 @@
+0.9.1031
+- [New] Added thinking mode toggle and reasoning effort control (low/medium/high/xhigh) in API settings, defaults to enabled + medium.
+- [New] Added "Advanced Parameters" button in API settings tab; opens Dialog_AdvancedApiParameters window for global configuration, applied to the active model.
+- [UX] Test Usability, Advanced Parameters, and Technical Details buttons now share a single compact row instead of three full-width rows.
+- [API] Chat request JSON builder now injects `thinking` and `reasoning_effort` parameters from global settings.
+- [Config] ApiConfig stays clean; thinking parameters stored as global settings in RimChatSettings.
+- [i18n] Synced Chinese and English language files.
+- [Version] Bumped About/About.xml modVersion to 0.9.1031.
+
+0.9.1030
+- [Fix] Airdrop quote price for Tradeability.None (untradeable) items now ×6 premium to prevent players from obtaining rare vanilla-unbuyable items at normal prices; sell price unchanged.
+- [Fix] Candidate pack ResolveUnitPrice now also applies untradeable premium, covering ComputeLegalCountWindow quantity window.
+- [Fix] Barter path now always recalculates BudgetSilver using the pricing function.
+- [Fix] UI need card (Dialog_ItemAirdropTradeCard) and FactionDialogueSession now apply untradeable premium.
+- [Refactor] Unified pricing interface: consolidated 6 duplicated Tradeability.None premium sites into ItemAirdropTradePolicy.ApplyUntradeablePremium() single entry point; added ResolveNeedPriceSemantic() for unified label output.
+- [Config] Added user setting ItemAirdropUntradeablePriceMultiplier for runtime black-market premium adjustment, default 6.0.
+- [Docs] Updated doc/config.md.
+- [Version] Bumped About/About.xml modVersion to 0.9.1030.
+
+0.9.1029
+- [Fix] When airdrop quantity is clamped by system limits, payment is now proportionally scaled: when validatedCount < requestedOriginalCount, DeductionPlan is scaled down to actual needed cost (item + shipping), eliminating the "overpay with no refund" cause of full deduction with partial delivery.
+- [Fix] Removed artificial stack cap from candidate window: ComputeMaxDeliverableByStacks no longer participates in hardMax clamping; BuildStacks auto-expands stack count to accommodate full quantity.
+- [Fix] Removed the 5000 hardcoded quantity cap in airdrop offers; now only validates positive numbers.
+- [Fix] Airdrop arrival notification total price now uses the settled shipping cost from the confirmed trade snapshot instead of recalculating at delivery time.
+- [Guard] Added delivery quantity invariance guard, preventing full deduction with partial delivery.
+- [Docs] Synced `doc/VersionLog.txt` and `doc/VersionLog_en.txt`.
+- [Version] Bumped About/About.xml modVersion to 0.9.1029.
+
+0.9.1028
+- [Fix] Removed the 5000 hardcoded quantity cap in airdrop offers; now only validates positive numbers.
+- [Fix] hardMax in airdrop candidate window now accounts for system stack capacity (maxStacks × stackLimit), preventing silent delivery truncation after trade confirmation.
+- [Guard] Added delivery quantity invariance guard (FailFast with error notification when deliveredCount != confirmedQuantity), preventing full deduction with partial delivery.
+- [Fix] Airdrop arrival notification total price now uses the settled shipping cost from the confirmed trade snapshot instead of recalculating at delivery time.
+- [Version] Bumped About/About.xml modVersion to 0.9.1028.
+
+0.9.1026
+- [New feature] Added "Request Visitor" diplomacy action; players can now request visitor groups from factions through the diplomacy dialogue menu.
+- [Docs] Synced `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- [Version] Bumped About/About.xml modVersion to 0.9.1026.
+0.9.1025
+- [Tightening] `ApiUsabilityDiagnosticService.RunCloudDiagnosticCoroutine` now validates model name from chat response when `/models` endpoint is missing; if the returned model does not match the configured model, test fails with `MODEL_NOT_FOUND`.
+- [Docs] Synced `About/About.xml`, `doc/Index.md`, `doc/Api.md`, `doc/config.md`, `doc/VersionLog.txt`, and `doc/VersionLog_en.txt`.
+- [Version] Bumped About/About.xml modVersion to 0.9.1025.
 0.9.1024
 - Quest-request bestowing disable + in-game cooldown wording unification (fail-fast root fix):
   1. [Root fix] Removed `BestowingCeremony` from `ApiActionEligibilityService.SupportedQuestDefs`, so it is no longer exposed in manual quest-request options or allowed-quest injection flows.

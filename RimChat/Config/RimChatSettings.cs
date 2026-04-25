@@ -141,6 +141,16 @@ namespace RimChat.Config
         public int ItemAirdropAliasExpansionTimeoutSeconds = 4;
         public bool EnableAirdropSameFamilyRelaxedRetry = true;
         public int ItemAirdropCooldownTicks = 180000;
+        public float ItemAirdropUntradeablePriceMultiplier = 6.0f;
+        public float ItemAirdropUntradeableLowValuePriceMultiplier = 15.0f;
+        public float ItemAirdropUntradeableMidValuePriceMultiplier = 8.0f;
+        public float ItemAirdropNeedPriceMultiplier = 1.8f;
+        public float ItemAirdropExoticMiscNeedPriceMultiplier = 3.0f;
+        public float ItemAirdropOfferPriceMultiplier = 0.6f;
+        public float ItemAirdropExoticMiscOfferPriceMultiplier = 0.9f;
+        public float ItemAirdropUntradeableOfferPriceMultiplier = 1.0f;
+        public float ItemAirdropSpecialItemDiscountMultiplier = 0.4f;
+        public float ItemAirdropSpecialItemScarceMultiplier = 2.0f;
 
         // Quest Settings
         public int MinQuestCooldownDays = 7;
@@ -180,6 +190,10 @@ namespace RimChat.Config
         public ExpectedActionDenyLogLevel ExpectedActionDenyLogLevel = ExpectedActionDenyLogLevel.Info;
         public int ProactiveMessageHardLimit = 0;
         public bool EnableDiplomacyStrategyToggle = true;
+
+        // Advanced API Parameters
+        public bool ThinkingEnabled = true;
+        public string ReasoningEffort = "medium";
 
         // Comms Console Settings
         public bool ReplaceCommsConsole = false;
@@ -418,6 +432,8 @@ namespace RimChat.Config
             Scribe_Values.Look(ref ExpectedActionDenyLogLevel, "ExpectedActionDenyLogLevel", ExpectedActionDenyLogLevel.Info);
             Scribe_Values.Look(ref ProactiveMessageHardLimit, "ProactiveMessageHardLimit", 0);
             Scribe_Values.Look(ref EnableDiplomacyStrategyToggle, "EnableDiplomacyStrategyToggle", true);
+            Scribe_Values.Look(ref ThinkingEnabled, "ThinkingEnabled", true);
+            Scribe_Values.Look(ref ReasoningEffort, "ReasoningEffort", "medium");
 
             // Comms Console Settings
             Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", false);
@@ -1433,7 +1449,8 @@ namespace RimChat.Config
             }
 
             listing.Gap();
-            DrawConnectionTestButton(listing);
+            DrawActionButtonRow(listing);
+            DrawUsabilityTestResult(listing);
 
             listing.Gap();
             DrawDebugSettingsSection(listing);
@@ -1454,17 +1471,46 @@ namespace RimChat.Config
             return ResolveSystemPromptLanguage();
         }
 
-        private void DrawDebugSettingsSection(Listing_Standard listing)
+        private void DrawActionButtonRow(Listing_Standard listing)
         {
-            Rect headerRect = listing.GetRect(28f);
-            Rect titleRect = new Rect(headerRect.x, headerRect.y, Mathf.Max(120f, headerRect.width - 170f), headerRect.height);
-            Rect buttonRect = new Rect(headerRect.xMax - 160f, headerRect.y, 160f, headerRect.height);
-            Widgets.Label(titleRect, "RimChat_DebugSettings".Translate());
-            if (Widgets.ButtonText(buttonRect, "RimChat_OpenApiDebugWindowButton".Translate()))
+            Rect rowRect = listing.GetRect(30f);
+            float gap = 6f;
+            float btnWidth = (rowRect.width - gap * 2f) / 3f;
+
+            // Test Usability
+            bool disableTest = IsAnyApiTestRunning();
+            Rect testRect = new Rect(rowRect.x, rowRect.y, btnWidth, rowRect.height);
+            string testLabel = _isTestingUsability
+                ? "RimChat_UsabilityTesting".Translate()
+                : "RimChat_TestUsabilityButton".Translate();
+            GUI.color = disableTest ? Color.gray : Color.white;
+            if (Widgets.ButtonText(testRect, testLabel, active: !disableTest))
+            {
+                StartUsabilityTest();
+            }
+            GUI.color = Color.white;
+
+            // Advanced Parameters
+            Rect advRect = new Rect(rowRect.x + btnWidth + gap, rowRect.y, btnWidth, rowRect.height);
+            if (Widgets.ButtonText(advRect, "RimChat_AdvancedApiParameters".Translate()))
+            {
+                Find.WindowStack.Add(new Dialog_AdvancedApiParameters());
+            }
+            RegisterTooltip(advRect, "RimChat_AdvancedApiParametersTooltip");
+
+            // Debug Window
+            Rect debugRect = new Rect(rowRect.x + (btnWidth + gap) * 2f, rowRect.y, btnWidth, rowRect.height);
+            if (Widgets.ButtonText(debugRect, "RimChat_OpenApiDebugWindowButton".Translate()))
             {
                 Find.WindowStack.Add(new Dialog_ApiDebugObservability());
             }
-            RegisterTooltip(buttonRect, "RimChat_OpenApiDebugWindowButtonTooltip");
+            RegisterTooltip(debugRect, "RimChat_OpenApiDebugWindowButtonTooltip");
+        }
+
+        private void DrawDebugSettingsSection(Listing_Standard listing)
+        {
+            Rect headerRect = listing.GetRect(28f);
+            Widgets.Label(headerRect, "RimChat_DebugSettings".Translate());
             listing.GapLine();
 
             listing.CheckboxLabeled("RimChat_EnableDebugLogging".Translate(), ref EnableDebugLogging);
@@ -1796,6 +1842,18 @@ namespace RimChat.Config
 
             Text.Font = GameFont.Tiny;
             return deleteClicked;
+        }
+
+        internal static string GetReasoningEffortLabel(string value)
+        {
+            switch (value)
+            {
+                case "low": return "RimChat_ReasoningEffortLow".Translate();
+                case "medium": return "RimChat_ReasoningEffortMedium".Translate();
+                case "high": return "RimChat_ReasoningEffortHigh".Translate();
+                case "xhigh": return "RimChat_ReasoningEffortXHigh".Translate();
+                default: return "RimChat_ReasoningEffortMedium".Translate();
+            }
         }
 
         private void DrawProviderDropdown(float x, float y, float height, float width, ApiConfig config)

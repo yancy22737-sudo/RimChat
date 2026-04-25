@@ -31,7 +31,8 @@ namespace RimChat.DiplomacySystem
 
         private void ProcessDeferredSocialNewsSeeds(int currentTick)
         {
-            if (!IsSocialCircleEnabled() || currentTick <= 0 || deferredSocialNewsSeeds.Count == 0)
+            if (deferredSocialNewsSeeds.Count == 0) return;
+            if (!IsSocialCircleEnabled() || currentTick <= 0)
             {
                 return;
             }
@@ -41,20 +42,23 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            List<DeferredSocialNewsSeed> dueItems = deferredSocialNewsSeeds
-                .Where(item => item != null && item.DueTick <= currentTick)
-                .OrderBy(item => item.DueTick)
-                .Take(3)
-                .ToList();
-            foreach (DeferredSocialNewsSeed item in dueItems)
+            int processed = 0;
+            for (int i = deferredSocialNewsSeeds.Count - 1; i >= 0 && processed < 3; i--)
             {
-                deferredSocialNewsSeeds.Remove(item);
-                if (item?.Seed == null || !item.Seed.IsValid())
+                DeferredSocialNewsSeed item = deferredSocialNewsSeeds[i];
+                if (item == null || item.DueTick > currentTick)
+                {
+                    continue;
+                }
+
+                deferredSocialNewsSeeds.RemoveAt(i);
+                if (item.Seed == null || !item.Seed.IsValid())
                 {
                     continue;
                 }
 
                 TryQueueNewsSeed(item.Seed, currentTick, item.AllowFailedRetry);
+                processed++;
                 if (pendingSocialNewsRequests.Count >= MaxPendingSocialNewsRequests)
                 {
                     break;
@@ -176,6 +180,19 @@ namespace RimChat.DiplomacySystem
                     + $"source_faction={seed.SourceFaction?.Name ?? "None"}, target_faction={seed.TargetFaction?.Name ?? "None"}, "
                     + $"facts={BuildResponsePreview(string.Join(" | ", (seed.Facts ?? new List<string>()).Where(item => !string.IsNullOrWhiteSpace(item))), 800)}, "
                     + $"prompt_input={BuildResponsePreview(SocialNewsPromptBuilder.BuildPromptInputPayloadForDebug(seed), 1000)}");
+            }
+            catch (PromptRenderException ex)
+            {
+                Log.Warning(
+                    "[RimChat] Social news prompt render failed. " +
+                    $"requestId=not_dispatched, debugSource={AIRequestDebugSource.SocialNews}, stage=scriban_render_error, " +
+                    $"origin_type={seed.OriginType}, origin_key={seed.OriginKey ?? string.Empty}, " +
+                    $"template_id={ex.TemplateId}, error_code={ex.ErrorCode}, line={ex.ErrorLine}, column={ex.ErrorColumn}, " +
+                    $"error={ex.Message}");
+                socialCircleState.MarkOriginState(seed.OriginType, seed.OriginKey, SocialNewsGenerationState.Failed, currentTick);
+                AddSocialGenerationMessage(seed, false, SocialPostGenerationFailureReason.PromptRenderIncompatible);
+                failureReason = SocialPostEnqueueFailureReason.PromptRenderIncompatible;
+                return false;
             }
             catch (RimTalkPromptRenderCompatibilityException ex)
             {
@@ -449,6 +466,7 @@ namespace RimChat.DiplomacySystem
         private void AddCompletedSocialPost(PublicSocialPost post, SocialNewsSeed seed, int currentTick)
         {
             socialCircleState.Posts.Add(post);
+            socialPostsCacheDirty = true;
             TrimSocialPosts();
             if (seed.ApplyDiplomaticImpact)
             {
@@ -499,10 +517,11 @@ namespace RimChat.DiplomacySystem
                 && post.OriginType != SocialNewsOriginType.DiplomacySummary;
         }
 
-        private static IEnumerable<Faction> GetSummaryMirrorTargetFactions()
+        private List<Faction> GetSummaryMirrorTargetFactions()
         {
-            return Find.FactionManager.AllFactions
-                .Where(faction => faction != null && !faction.IsPlayer && !faction.defeated && !faction.def.hidden);
+            return GetEligibleSocialFactions()
+                .Where(faction => !faction.IsPlayer)
+                .ToList();
         }
 
         private static string BuildSocialPostSummaryText(PublicSocialPost post)

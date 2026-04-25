@@ -5922,7 +5922,7 @@ namespace RimChat.Persistence
                 PromptTextConstants.OutputSpecificationAuthorityBoundaryRule,
                 PromptTextConstants.OutputSpecificationAuthorityHistoryStyleRule,
                 "- 除非同条回复包含匹配 actions 动作，否则禁止把 gameplay 效果叙述为“已执行”。",
-                "- request_caravan/request_aid/request_raid/request_item_airdrop/request_info/pay_prisoner_ransom/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
+                "- request_caravan/request_visitor/request_aid/request_raid/request_item_airdrop/request_info/pay_prisoner_ransom/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
                 "- 物资交换/发送常识：能且只能通过 request_item_airdrop 实现即时物资交换；request_caravan 属于延时交易。",
                 "- 空投交易硬约束：单次 request_item_airdrop 只能一种换一种（一个 need 对应一组 payment_items）；空投可以围绕该物资做定价与选品。",
                 "- 若玩家准确命中你掌握的交易事实（库存、价格区间、需求），可在不违背成本底线时考虑让步并打折。",
@@ -6017,6 +6017,8 @@ namespace RimChat.Persistence
                     return "cost?";
                 case "request_caravan":
                     return "goods?";
+                case "request_visitor":
+                    return string.Empty;
                 case "request_raid":
                     return "strategy?(ImmediateAttack/ImmediateAttackSmart/StageThenAttack/ImmediateAttackSappers/Siege), arrival?(EdgeWalkIn/EdgeDrop/EdgeWalkInGroups/RandomDrop/CenterDrop)";
                 case "request_raid_waves":

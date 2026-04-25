@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-$modRoot = "E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat"
+$modRoot = "D:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat"
 $rimWorldRoot = Split-Path (Split-Path $modRoot -Parent) -Parent
 $rimWorldExePath = Join-Path $rimWorldRoot "RimWorldWin64.exe"
 $rimWorldLaunchArgs = "-force-d3d11 -force-feature-level-10-0 -screen-fullscreen 0"

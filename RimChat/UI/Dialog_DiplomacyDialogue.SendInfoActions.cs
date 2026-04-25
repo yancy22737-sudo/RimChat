@@ -142,6 +142,18 @@ namespace RimChat.UI
                 BuildSendInfoHiddenDirective(AIActionNames.RequestCaravan));
         }
 
+        private void TryStartManualVisitorRequestSend()
+        {
+            if (!CanSendMessageNow() || session == null || faction == null)
+            {
+                return;
+            }
+
+            SendSystemInfoRequest(
+                "RimChat_SendInfoVisitorSystemMessage".Translate().ToString(),
+                BuildSendInfoHiddenDirective(AIActionNames.RequestVisitor));
+        }
+
         private void TryStartManualSupportRequestSend()
         {
             if (!CanSendMessageNow() || session == null || faction == null)

@@ -20,7 +20,9 @@ namespace RimChat.DiplomacySystem
     {
         private HashSet<Faction> aiControlledFactions = new HashSet<Faction>();
         private List<FactionDialogueSession> dialogueSessions = new List<FactionDialogueSession>();
+        private Dictionary<Faction, FactionDialogueSession> dialogueSessionsByFaction = new Dictionary<Faction, FactionDialogueSession>();
         private List<FactionPresenceState> presenceStates = new List<FactionPresenceState>();
+        private Dictionary<Faction, FactionPresenceState> presenceStatesByFaction = new Dictionary<Faction, FactionPresenceState>();
         private List<DelayedDiplomacyEvent> delayedEvents = new List<DelayedDiplomacyEvent>();
         private const int ForcedOfflineDurationHours = 2;
         private const int ForcedDoNotDisturbDurationHours = 4;
@@ -43,8 +45,9 @@ namespace RimChat.DiplomacySystem
             InitializeAIControlledFactions();
             InitializeDialogueSessions();
             InitializePresenceStates();
+            RebuildDialogueSessionIndex();
+            RebuildPresenceStateIndex();
             InitializeSocialCircleOnNewGame();
-            // Initializeleadermemorysystem
             LeaderMemoryManager.Instance.OnNewGame();
             DiplomacyPromptSnapshotCache.Instance.WarmupOnLoad();
         }
@@ -69,11 +72,11 @@ namespace RimChat.DiplomacySystem
                 presenceStates = new List<FactionPresenceState>();
             }
             InitializePresenceStates();
+            RebuildDialogueSessionIndex();
+            RebuildPresenceStateIndex();
             InitializeSocialCircleOnLoadedGame();
-            // 清理无效的session
             CleanupInvalidSessions();
             CleanupInvalidPresenceStates();
-            // Loadleadermemorysystem
             LeaderMemoryManager.Instance.OnLoadedGame();
             DiplomacyPromptSnapshotCache.Instance.WarmupOnLoad();
         }
@@ -117,11 +120,37 @@ namespace RimChat.DiplomacySystem
         private void CleanupInvalidSessions()
         {
             dialogueSessions.RemoveAll(s => s.faction == null || s.faction.defeated);
+            RebuildDialogueSessionIndex();
         }
 
         private void CleanupInvalidPresenceStates()
         {
             presenceStates.RemoveAll(s => s.faction == null || s.faction.defeated);
+            RebuildPresenceStateIndex();
+        }
+
+        private void RebuildDialogueSessionIndex()
+        {
+            dialogueSessionsByFaction.Clear();
+            if (dialogueSessions == null) return;
+            for (int i = 0; i < dialogueSessions.Count; i++)
+            {
+                var session = dialogueSessions[i];
+                if (session?.faction != null)
+                    dialogueSessionsByFaction[session.faction] = session;
+            }
+        }
+
+        private void RebuildPresenceStateIndex()
+        {
+            presenceStatesByFaction.Clear();
+            if (presenceStates == null) return;
+            for (int i = 0; i < presenceStates.Count; i++)
+            {
+                var state = presenceStates[i];
+                if (state?.faction != null)
+                    presenceStatesByFaction[state.faction] = state;
+            }
         }
 
         /// <summary>/// get或创建指定faction的dialoguesession
@@ -130,22 +159,21 @@ namespace RimChat.DiplomacySystem
         {
             if (faction == null) return null;
 
-            var session = dialogueSessions.FirstOrDefault(s => s.faction == faction);
-            if (session == null)
-            {
-                session = new FactionDialogueSession(faction);
-                dialogueSessions.Add(session);
-                Log.Message($"[RimChat] Created dialogue session for {faction.Name}");
-            }
+            if (dialogueSessionsByFaction.TryGetValue(faction, out var session))
+                return session;
+
+            session = new FactionDialogueSession(faction);
+            dialogueSessions.Add(session);
+            dialogueSessionsByFaction[faction] = session;
+            Log.Message($"[RimChat] Created dialogue session for {faction.Name}");
             return session;
         }
 
-        /// <summary>/// get指定faction的dialoguesession (如果不presence则返回null)
- ///</summary>
         public FactionDialogueSession GetSession(Faction faction)
         {
             if (faction == null) return null;
-            return dialogueSessions.FirstOrDefault(s => s.faction == faction);
+            dialogueSessionsByFaction.TryGetValue(faction, out var session);
+            return session;
         }
 
         public List<FactionDialogueSession> GetAllDialogueSessions()
@@ -217,19 +245,20 @@ namespace RimChat.DiplomacySystem
         {
             if (faction == null) return null;
 
-            var state = presenceStates.FirstOrDefault(s => s.faction == faction);
-            if (state == null)
-            {
-                state = new FactionPresenceState(faction);
-                presenceStates.Add(state);
-            }
+            if (presenceStatesByFaction.TryGetValue(faction, out var state))
+                return state;
+
+            state = new FactionPresenceState(faction);
+            presenceStates.Add(state);
+            presenceStatesByFaction[faction] = state;
             return state;
         }
 
         public FactionPresenceState GetPresenceState(Faction faction)
         {
             if (faction == null) return null;
-            return presenceStates.FirstOrDefault(s => s.faction == faction);
+            presenceStatesByFaction.TryGetValue(faction, out var state);
+            return state;
         }
 
         public FactionPresenceStatus GetPresenceStatus(Faction faction)
@@ -485,37 +514,35 @@ namespace RimChat.DiplomacySystem
         {
             int currentTick = Find.TickManager.TicksGame;
             DiplomacyPromptSnapshotCache.Instance.Tick(currentTick, maxBuildsPerTick: 1);
-            ProcessDeferredSocialNewsSeeds(currentTick);
 
-            // 每 60 ticks (约 1 秒) 检查一次
             if (currentTick % 60 == 0)
             {
+                ProcessDeferredSocialNewsSeeds(currentTick);
                 ProcessDelayedEvents();
             }
 
-            // 每 2000 ticks (约 33 秒) 检查一次 AI 决策
             if (currentTick % 2000 == 0)
             {
                 ProcessAIDecisions();
                 ProcessSocialCircleTick();
             }
 
-            // 每 ~30 秒对所有有活动的外交 session 做增量快照，防止切换派系时丢失对话记忆
             if (currentTick - lastPeriodicSnapshotTick >= PeriodicSnapshotIntervalTicks)
             {
                 ProcessPeriodicDiplomacySnapshots();
                 lastPeriodicSnapshotTick = currentTick;
             }
 
-            // 每日重置 (60000 ticks = 1 天)
             if (currentTick - lastDailyResetTick >= 60000)
             {
                 DailyReset();
                 lastDailyResetTick = currentTick;
             }
 
-            // Tick faction special items (discount/scarce) refresh check
-            FactionSpecialItemsManager.Instance.Tick();
+            if (currentTick % 60000 == 0)
+            {
+                FactionSpecialItemsManager.Instance.Tick();
+            }
         }
 
         private void ProcessPeriodicDiplomacySnapshots()
@@ -574,11 +601,11 @@ namespace RimChat.DiplomacySystem
             isProcessingDelayedEvents = true;
             lastProcessedDelayedEventsTick = currentTick;
             var eventsToRemove = new HashSet<DelayedDiplomacyEvent>();
-            var snapshot = delayedEvents.ToList();
             try
             {
-                foreach (DelayedDiplomacyEvent evt in snapshot)
+                for (int i = 0; i < delayedEvents.Count; i++)
                 {
+                    DelayedDiplomacyEvent evt = delayedEvents[i];
                     if (evt == null)
                     {
                         eventsToRemove.Add(evt);
@@ -709,7 +736,9 @@ namespace RimChat.DiplomacySystem
                 // Ensure collections are non-null to prevent NullReferenceException later
                 aiControlledFactions ??= new HashSet<Faction>();
                 dialogueSessions ??= new List<FactionDialogueSession>();
+                dialogueSessionsByFaction ??= new Dictionary<Faction, FactionDialogueSession>();
                 presenceStates ??= new List<FactionPresenceState>();
+                presenceStatesByFaction ??= new Dictionary<Faction, FactionPresenceState>();
                 delayedEvents ??= new List<DelayedDiplomacyEvent>();
                 manuallyVisibleHiddenFactions ??= new HashSet<Faction>();
                 albumEntries ??= new List<AlbumImageEntry>();
@@ -722,8 +751,10 @@ namespace RimChat.DiplomacySystem
                     aiControlledFactions = new HashSet<Faction>();
                 if (dialogueSessions == null)
                     dialogueSessions = new List<FactionDialogueSession>();
+                dialogueSessionsByFaction ??= new Dictionary<Faction, FactionDialogueSession>();
                 if (presenceStates == null)
                     presenceStates = new List<FactionPresenceState>();
+                presenceStatesByFaction ??= new Dictionary<Faction, FactionPresenceState>();
                 if (delayedEvents == null)
                     delayedEvents = new List<DelayedDiplomacyEvent>();
                 if (manuallyVisibleHiddenFactions == null)
@@ -736,6 +767,8 @@ namespace RimChat.DiplomacySystem
                 isProcessingDelayedEvents = false;
                 lastProcessedDelayedEventsTick = -1;
                 EnsureHiddenFactionVisibilityState();
+                RebuildDialogueSessionIndex();
+                RebuildPresenceStateIndex();
 
                 // 修复延迟event的 ExecuteTick: 防止存档load后出现不合理的长延迟
                 if (delayedEvents != null && Find.TickManager != null)

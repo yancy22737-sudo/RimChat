@@ -145,6 +145,13 @@ namespace RimChat.DiplomacySystem
                         LetterDefOf.PositiveEvent, 
                         faction.Name, detail, delayDays.ToString("F1"));
                     break;
+                case DelayedEventType.Visitor:
+                    SendNotification(faction,
+                        "RimChat_DelayedVisitorScheduledTitle",
+                        "RimChat_DelayedVisitorScheduledDesc",
+                        LetterDefOf.PositiveEvent,
+                        faction.Name, detail, delayDays.ToString("F1"));
+                    break;
                 case DelayedEventType.Aid:
                     SendNotification(faction, 
                         "RimChat_DelayedAidScheduledTitle", 

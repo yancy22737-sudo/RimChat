@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using RimWorld;
 using Verse;
 using Verse.AI.Group;
@@ -9,16 +8,41 @@ namespace RimChat.DiplomacySystem
 {
     public partial class GameComponent_DiplomacyManager
     {
+        private Dictionary<Faction, bool> cachedCaravanPresence = new Dictionary<Faction, bool>();
+        private Dictionary<Faction, bool> cachedRaidPresence = new Dictionary<Faction, bool>();
+        private int eventQueryCacheTick = -1;
+        private const int EventQueryCacheIntervalTicks = 2000;
+
         public bool HasCaravanDispatchedNow(Faction faction)
         {
-            return faction != null &&
-                   (HasPendingDelayedEvent(faction, IsCaravanEvent) || HasArrivedTradeCaravanOnPlayerMap(faction));
+            if (faction == null) return false;
+            RefreshEventQueryCacheIfNeeded();
+            if (cachedCaravanPresence.TryGetValue(faction, out bool cached))
+                return cached;
+            bool result = HasPendingDelayedEvent(faction, IsCaravanEvent) || HasArrivedTradeCaravanOnPlayerMap(faction);
+            cachedCaravanPresence[faction] = result;
+            return result;
         }
 
         public bool HasRaidScheduledNow(Faction faction)
         {
-            return faction != null &&
-                   (HasPendingDelayedEvent(faction, IsRaidSchedulingEvent) || HasOngoingRaidOnPlayerMap(faction));
+            if (faction == null) return false;
+            RefreshEventQueryCacheIfNeeded();
+            if (cachedRaidPresence.TryGetValue(faction, out bool cached))
+                return cached;
+            bool result = HasPendingDelayedEvent(faction, IsRaidSchedulingEvent) || HasOngoingRaidOnPlayerMap(faction);
+            cachedRaidPresence[faction] = result;
+            return result;
+        }
+
+        private void RefreshEventQueryCacheIfNeeded()
+        {
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (currentTick - eventQueryCacheTick < EventQueryCacheIntervalTicks && eventQueryCacheTick >= 0)
+                return;
+            eventQueryCacheTick = currentTick;
+            cachedCaravanPresence.Clear();
+            cachedRaidPresence.Clear();
         }
 
         private bool HasPendingDelayedEvent(Faction faction, Func<DelayedDiplomacyEvent, bool> predicate)
@@ -28,32 +52,27 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            return EnumerateDelayedEventsSnapshot().Any(evt =>
-                evt != null &&
-                evt.Faction == faction &&
-                !evt.Faction.defeated &&
-                predicate(evt));
-        }
-
-        private IEnumerable<DelayedDiplomacyEvent> EnumerateDelayedEventsSnapshot()
-        {
             if (delayedEvents != null)
             {
-                foreach (DelayedDiplomacyEvent evt in delayedEvents)
+                for (int i = 0; i < delayedEvents.Count; i++)
                 {
-                    yield return evt;
+                    DelayedDiplomacyEvent evt = delayedEvents[i];
+                    if (evt != null && evt.Faction == faction && !evt.Faction.defeated && predicate(evt))
+                        return true;
                 }
             }
 
-            if (delayedEventsPendingAdd == null)
+            if (delayedEventsPendingAdd != null)
             {
-                yield break;
+                for (int i = 0; i < delayedEventsPendingAdd.Count; i++)
+                {
+                    DelayedDiplomacyEvent evt = delayedEventsPendingAdd[i];
+                    if (evt != null && evt.Faction == faction && !evt.Faction.defeated && predicate(evt))
+                        return true;
+                }
             }
 
-            foreach (DelayedDiplomacyEvent evt in delayedEventsPendingAdd)
-            {
-                yield return evt;
-            }
+            return false;
         }
 
         private static bool IsCaravanEvent(DelayedDiplomacyEvent evt)
@@ -72,31 +91,22 @@ namespace RimChat.DiplomacySystem
 
         private static bool HasArrivedTradeCaravanOnPlayerMap(Faction faction)
         {
-            IEnumerable<Map> maps = Find.Maps?.Where(map => map != null && map.IsPlayerHome);
-            if (maps == null)
-            {
-                return false;
-            }
+            List<Map> maps = Find.Maps;
+            if (maps == null) return false;
 
-            foreach (Map map in maps)
+            for (int m = 0; m < maps.Count; m++)
             {
+                Map map = maps[m];
+                if (map == null || !map.IsPlayerHome) continue;
                 IEnumerable<Pawn> pawns = map.mapPawns?.AllPawnsSpawned;
-                if (pawns == null)
-                {
-                    continue;
-                }
+                if (pawns == null) continue;
 
                 foreach (Pawn pawn in pawns)
                 {
                     if (pawn == null || pawn.Dead || pawn.Faction != faction || pawn.Faction == Faction.OfPlayer)
-                    {
                         continue;
-                    }
-
                     if (IsTradeCaravanPawn(pawn))
-                    {
                         return true;
-                    }
                 }
             }
 
@@ -119,27 +129,20 @@ namespace RimChat.DiplomacySystem
 
         private static bool HasOngoingRaidOnPlayerMap(Faction faction)
         {
-            IEnumerable<Map> maps = Find.Maps?.Where(map => map != null && map.IsPlayerHome);
-            if (maps == null)
-            {
-                return false;
-            }
+            List<Map> maps = Find.Maps;
+            if (maps == null) return false;
 
-            foreach (Map map in maps)
+            for (int m = 0; m < maps.Count; m++)
             {
+                Map map = maps[m];
+                if (map == null || !map.IsPlayerHome) continue;
                 IEnumerable<Pawn> pawns = map.mapPawns?.AllPawnsSpawned;
-                if (pawns == null)
-                {
-                    continue;
-                }
+                if (pawns == null) continue;
 
-                if (pawns.Any(pawn =>
-                        pawn != null &&
-                        !pawn.Dead &&
-                        pawn.Faction == faction &&
-                        faction.HostileTo(Faction.OfPlayer)))
+                foreach (Pawn pawn in pawns)
                 {
-                    return true;
+                    if (pawn != null && !pawn.Dead && pawn.Faction == faction && faction.HostileTo(Faction.OfPlayer))
+                        return true;
                 }
             }
 

@@ -211,19 +211,22 @@ namespace RimChat.UI
                 FactionSpecialItemsManager.Instance.TryMatchSpecialItem(faction, def.defName, out SpecialItemType specialItemType))
             {
                 return specialItemType == SpecialItemType.Discount 
-                    ? "special_item_discount" 
-                    : "special_item_scarce";
+                    ? $"special_item_discount_x{ItemAirdropTradePolicy.SpecialItemDiscountMultiplier:F1}" 
+                    : $"special_item_scarce_x{ItemAirdropTradePolicy.SpecialItemScarceMultiplier:F1}";
             }
 
-            // Standard pricing semantic
-            if (ItemAirdropTradePolicy.TryResolveOfferUnitPrice(def, out _, out _))
-            {
-                return ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(def)
-                    ? "market_value"
-                    : "market_value_x0.6";
-            }
+            // Use correct offer multiplier based on item type
+            float multiplier;
+            if (def.tradeability == Tradeability.None)
+                multiplier = ItemAirdropTradePolicy.UntradeableOfferPriceMultiplier;
+            else if (def.tradeTags != null && def.tradeTags.Contains("ExoticMisc"))
+                multiplier = ItemAirdropTradePolicy.ExoticMiscOfferPriceMultiplier;
+            else
+                multiplier = ItemAirdropTradePolicy.OfferPriceMultiplier;
 
-            return "market_value";
+            return ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(def)
+                ? "market_value"
+                : $"market_value_x{multiplier:F1}";
         }
 
         private void ApplyInventoryFilter()
@@ -464,24 +467,7 @@ namespace RimChat.UI
         private string ResolveNeedPriceSemantic()
         {
             if (boundNeedRecord?.Def == null) return "market_value";
-
-            // Check if this is a special item
-            if (faction != null && 
-                FactionSpecialItemsManager.Instance.TryMatchSpecialItem(faction, boundNeedRecord.DefName, out SpecialItemType specialItemType))
-            {
-                return specialItemType == SpecialItemType.Discount 
-                    ? "special_item_discount" 
-                    : "special_item_scarce";
-            }
-
-            // Standard pricing semantic
-            if (ItemAirdropTradePolicy.IsPreciousMetalFixedPrice(boundNeedRecord.Def))
-                return "market_value";
-            
-            if (boundNeedRecord.Def.tradeTags != null && boundNeedRecord.Def.tradeTags.Contains("ExoticMisc"))
-                return "market_value_x3.0";
-            
-            return "market_value_x1.8";
+            return ItemAirdropTradePolicy.ResolveNeedPriceSemantic(boundNeedRecord.Def, faction);
         }
 
         private void DrawOfferItemCard(Rect rect)
@@ -525,35 +511,33 @@ namespace RimChat.UI
 
         private static string BuildPriceSemanticTag(string semantic)
         {
-            // Special item pricing semantics
-            if (string.Equals(semantic, "special_item_discount", StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(semantic))
+            {
+                return "RimChat_ItemAirdropPriceSemanticMarket".Translate().ToString();
+            }
+
+            // Special item pricing semantics (now dynamic with multiplier suffix)
+            if (semantic.StartsWith("special_item_discount", StringComparison.OrdinalIgnoreCase))
             {
                 return "RimChat_ItemAirdropPriceSemanticDiscount".Translate().ToString();
             }
 
-            if (string.Equals(semantic, "special_item_scarce", StringComparison.OrdinalIgnoreCase))
+            if (semantic.StartsWith("special_item_scarce", StringComparison.OrdinalIgnoreCase))
             {
                 return "RimChat_ItemAirdropPriceSemanticScarce".Translate().ToString();
             }
 
-            if (string.Equals(semantic, "market_value_x3.0", StringComparison.OrdinalIgnoreCase))
+            if (semantic.StartsWith("market_value_x", StringComparison.OrdinalIgnoreCase))
             {
-                return "Market x3.0";
+                // Extract the multiplier from the tag
+                string suffix = semantic.Substring("market_value_x".Length);
+                return "Market x" + suffix;
             }
 
-            if (string.Equals(semantic, "market_value_x1.8", StringComparison.OrdinalIgnoreCase))
+            if (semantic.StartsWith("untradeable_x", StringComparison.OrdinalIgnoreCase))
             {
-                return "Market x1.8";
-            }
-
-            if (string.Equals(semantic, "market_value_x1.4", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Market x1.4";
-            }
-
-            if (string.Equals(semantic, "market_value_x0.6", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Market x0.6";
+                string suffix = semantic.Substring("untradeable_x".Length);
+                return "Black Market x" + suffix;
             }
 
             if (string.Equals(semantic, "player_buy", StringComparison.OrdinalIgnoreCase))
@@ -1050,17 +1034,32 @@ namespace RimChat.UI
                 return 0.01f;
             }
 
-            // Check if this is a special item (discount/scarce) and apply special pricing
+            float unitPrice;
+
             if (faction != null && 
                 FactionSpecialItemsManager.Instance.TryMatchSpecialItem(faction, boundNeedRecord.DefName, out SpecialItemType specialItemType))
             {
                 if (ItemAirdropTradePolicy.TryResolveSpecialItemPrice(boundNeedRecord.Def, specialItemType, out float specialPrice, out _))
                 {
-                    return Math.Max(0.01f, specialPrice);
+                    unitPrice = Math.Max(0.01f, specialPrice);
+                }
+                else
+                {
+                    unitPrice = ResolveStandardNeedFallback();
                 }
             }
+            else
+            {
+                unitPrice = ResolveStandardNeedFallback();
+            }
 
-            // Fallback to standard need pricing
+            ItemAirdropTradePolicy.ApplyUntradeablePremium(boundNeedRecord.Def, ref unitPrice);
+
+            return unitPrice;
+        }
+
+        private float ResolveStandardNeedFallback()
+        {
             if (ItemAirdropTradePolicy.TryResolveNeedUnitPrice(boundNeedRecord.Def, out float resolved, out _))
             {
                 return Math.Max(0.01f, resolved);

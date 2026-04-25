@@ -76,6 +76,16 @@ namespace RimChat.Config
             Scribe_Values.Look(ref ItemAirdropAliasExpansionTimeoutSeconds, "ItemAirdropAliasExpansionTimeoutSeconds", 4);
             Scribe_Values.Look(ref EnableAirdropSameFamilyRelaxedRetry, "EnableAirdropSameFamilyRelaxedRetry", true);
             Scribe_Values.Look(ref ItemAirdropCooldownTicks, "ItemAirdropCooldownTicks", 180000);
+            Scribe_Values.Look(ref ItemAirdropUntradeablePriceMultiplier, "ItemAirdropUntradeablePriceMultiplier", 6.0f);
+            Scribe_Values.Look(ref ItemAirdropUntradeableLowValuePriceMultiplier, "ItemAirdropUntradeableLowValuePriceMultiplier", 15.0f);
+            Scribe_Values.Look(ref ItemAirdropUntradeableMidValuePriceMultiplier, "ItemAirdropUntradeableMidValuePriceMultiplier", 8.0f);
+            Scribe_Values.Look(ref ItemAirdropNeedPriceMultiplier, "ItemAirdropNeedPriceMultiplier", 1.8f);
+            Scribe_Values.Look(ref ItemAirdropExoticMiscNeedPriceMultiplier, "ItemAirdropExoticMiscNeedPriceMultiplier", 3.0f);
+            Scribe_Values.Look(ref ItemAirdropOfferPriceMultiplier, "ItemAirdropOfferPriceMultiplier", 0.6f);
+            Scribe_Values.Look(ref ItemAirdropExoticMiscOfferPriceMultiplier, "ItemAirdropExoticMiscOfferPriceMultiplier", 0.9f);
+            Scribe_Values.Look(ref ItemAirdropUntradeableOfferPriceMultiplier, "ItemAirdropUntradeableOfferPriceMultiplier", 1.0f);
+            Scribe_Values.Look(ref ItemAirdropSpecialItemDiscountMultiplier, "ItemAirdropSpecialItemDiscountMultiplier", 0.4f);
+            Scribe_Values.Look(ref ItemAirdropSpecialItemScarceMultiplier, "ItemAirdropSpecialItemScarceMultiplier", 2.0f);
 
             // Raid Granular Settings
             Scribe_Values.Look(ref EnableRaidStrategy_ImmediateAttack, "EnableRaidStrategy_ImmediateAttack", true);
@@ -304,7 +314,7 @@ namespace RimChat.Config
                 AIControlSection.RaidSettings => 760f,
                 AIControlSection.GoodwillSettings => 220f,
                 AIControlSection.GiftSettings => 0f,
-                AIControlSection.AidSettings => 220f,
+                AIControlSection.AidSettings => 2150f,
                 AIControlSection.WarPeaceSettings => 300f,
                 AIControlSection.CaravanSettings => 180f,
                 AIControlSection.QuestSettings => 160f,
@@ -897,6 +907,42 @@ namespace RimChat.Config
             ItemAirdropBlacklistDefNamesCsv = listing.TextEntry(ItemAirdropBlacklistDefNamesCsv ?? string.Empty);
 
             listing.Gap(8f);
+            listing.Label("RimChat_AirdropPriceSettingsTitle".Translate());
+
+            listing.Label("RimChat_AirdropNeedPriceMultiplier".Translate(ItemAirdropNeedPriceMultiplier.ToString("F2")));
+            ItemAirdropNeedPriceMultiplier = listing.Slider(ItemAirdropNeedPriceMultiplier, 0.10f, 10.0f);
+
+            listing.Label("RimChat_AirdropExoticMiscNeedPriceMultiplier".Translate(ItemAirdropExoticMiscNeedPriceMultiplier.ToString("F2")));
+            ItemAirdropExoticMiscNeedPriceMultiplier = listing.Slider(ItemAirdropExoticMiscNeedPriceMultiplier, 0.10f, 10.0f);
+
+            listing.Label("RimChat_AirdropOfferPriceMultiplier".Translate(ItemAirdropOfferPriceMultiplier.ToString("F2")));
+            ItemAirdropOfferPriceMultiplier = listing.Slider(ItemAirdropOfferPriceMultiplier, 0.10f, 5.0f);
+
+            listing.Label("RimChat_AirdropExoticMiscOfferPriceMultiplier".Translate(ItemAirdropExoticMiscOfferPriceMultiplier.ToString("F2")));
+            ItemAirdropExoticMiscOfferPriceMultiplier = listing.Slider(ItemAirdropExoticMiscOfferPriceMultiplier, 0.10f, 5.0f);
+
+            listing.Label("RimChat_AirdropUntradeableOfferPriceMultiplier".Translate(ItemAirdropUntradeableOfferPriceMultiplier.ToString("F2")));
+            ItemAirdropUntradeableOfferPriceMultiplier = listing.Slider(ItemAirdropUntradeableOfferPriceMultiplier, 0.10f, 5.0f);
+
+            listing.Label("RimChat_AirdropSpecialItemDiscountMultiplier".Translate(ItemAirdropSpecialItemDiscountMultiplier.ToString("F2")));
+            ItemAirdropSpecialItemDiscountMultiplier = listing.Slider(ItemAirdropSpecialItemDiscountMultiplier, 0.01f, 2.0f);
+
+            listing.Label("RimChat_AirdropSpecialItemScarceMultiplier".Translate(ItemAirdropSpecialItemScarceMultiplier.ToString("F2")));
+            ItemAirdropSpecialItemScarceMultiplier = listing.Slider(ItemAirdropSpecialItemScarceMultiplier, 0.10f, 10.0f);
+
+            listing.Gap(4f);
+            listing.Label("RimChat_AirdropUntradeableTieredTitle".Translate());
+
+            listing.Label("RimChat_AirdropUntradeableLowValueMultiplier".Translate(ItemAirdropUntradeableLowValuePriceMultiplier.ToString("F2")));
+            ItemAirdropUntradeableLowValuePriceMultiplier = listing.Slider(ItemAirdropUntradeableLowValuePriceMultiplier, 0.10f, 50.0f);
+
+            listing.Label("RimChat_AirdropUntradeableMidValueMultiplier".Translate(ItemAirdropUntradeableMidValuePriceMultiplier.ToString("F2")));
+            ItemAirdropUntradeableMidValuePriceMultiplier = listing.Slider(ItemAirdropUntradeableMidValuePriceMultiplier, 0.10f, 50.0f);
+
+            listing.Label("RimChat_AirdropUntradeableHighValueMultiplier".Translate(ItemAirdropUntradeablePriceMultiplier.ToString("F2")));
+            ItemAirdropUntradeablePriceMultiplier = listing.Slider(ItemAirdropUntradeablePriceMultiplier, 0.10f, 50.0f);
+
+            listing.Gap(8f);
             listing.Label("RimChat_PrisonerRansomSettingsTitle".Translate());
             listing.Label("RimChat_RansomReleaseTimeoutTicks".Translate(RansomReleaseTimeoutTicks));
             RansomReleaseTimeoutTicks = (int)listing.Slider(RansomReleaseTimeoutTicks, 2500, 600000);
@@ -1148,6 +1194,16 @@ namespace RimChat.Config
             ItemAirdropAliasExpansionTimeoutSeconds = 4;
             EnableAirdropSameFamilyRelaxedRetry = true;
             ItemAirdropCooldownTicks = 180000;
+            ItemAirdropUntradeablePriceMultiplier = 6.0f;
+            ItemAirdropUntradeableLowValuePriceMultiplier = 15.0f;
+            ItemAirdropUntradeableMidValuePriceMultiplier = 8.0f;
+            ItemAirdropNeedPriceMultiplier = 1.8f;
+            ItemAirdropExoticMiscNeedPriceMultiplier = 3.0f;
+            ItemAirdropOfferPriceMultiplier = 0.6f;
+            ItemAirdropExoticMiscOfferPriceMultiplier = 0.9f;
+            ItemAirdropUntradeableOfferPriceMultiplier = 1.0f;
+            ItemAirdropSpecialItemDiscountMultiplier = 0.4f;
+            ItemAirdropSpecialItemScarceMultiplier = 2.0f;
             RansomPaymentModeDefault = "silver";
             RansomReleaseTimeoutTicks = 30000;
             RansomValueDropMajorThreshold = 0.30f;

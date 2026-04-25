@@ -437,9 +437,12 @@
 
     <!-- Delayed Event Scheduled -->
     <RimChat_DelayedCaravanScheduledTitle>Caravan Scheduled</RimChat_DelayedCaravanScheduledTitle>
-    <RimChat_DelayedCaravanScheduledDesc>{0}'s {1} caravan will arrive in {2} days.</RimChat_DelayedCaravanScheduledDesc>
+    <RimChat_DelayedCaravanScheduledDesc>{0} has agreed to dispatch a {1} caravan. Expected arrival: {2} day(s).</RimChat_DelayedCaravanScheduledDesc>
     <RimChat_DelayedAidScheduledTitle>Aid Scheduled</RimChat_DelayedAidScheduledTitle>
     <RimChat_DelayedAidScheduledDesc>{0}'s {1} aid will arrive in {2} days.</RimChat_DelayedAidScheduledDesc>
+    <RimChat_DelayedVisitorScheduledTitle>Visitors Scheduled</RimChat_DelayedVisitorScheduledTitle>
+    <RimChat_DelayedVisitorScheduledDesc>{0} has agreed to dispatch {1}. Expected arrival: {2} day(s).</RimChat_DelayedVisitorScheduledDesc>
+    <RimChat_VisitorGroupLabel>a visitor group</RimChat_VisitorGroupLabel>
     <RimChat_DelayedRaidScheduledTitle>Raid Scheduled</RimChat_DelayedRaidScheduledTitle>
     <RimChat_DelayedRaidScheduledDesc>{0}'s {1} raid will arrive in {2} hours.</RimChat_DelayedRaidScheduledDesc>
     <RimChat_DelayedRaidCallEveryoneScheduledTitle>Joint Raid Warning</RimChat_DelayedRaidCallEveryoneScheduledTitle>
@@ -809,6 +812,18 @@
     <RimChat_EnableAirdropSameFamilyRelaxedRetry>Enable one same-family relaxed retry on empty candidates</RimChat_EnableAirdropSameFamilyRelaxedRetry>
     <RimChat_ItemAirdropBlockedCategories>Blocked categories (CSV)</RimChat_ItemAirdropBlockedCategories>
     <RimChat_ItemAirdropBlacklist>Def blacklist (CSV)</RimChat_ItemAirdropBlacklist>
+    <RimChat_AirdropPriceSettingsTitle>Airdrop Pricing Multipliers</RimChat_AirdropPriceSettingsTitle>
+    <RimChat_AirdropNeedPriceMultiplier>Need price (buy from faction): {0}</RimChat_AirdropNeedPriceMultiplier>
+    <RimChat_AirdropExoticMiscNeedPriceMultiplier>ExoticMisc need price (buy rare): {0}</RimChat_AirdropExoticMiscNeedPriceMultiplier>
+    <RimChat_AirdropOfferPriceMultiplier>Offer price (sell/pay to faction): {0}</RimChat_AirdropOfferPriceMultiplier>
+    <RimChat_AirdropExoticMiscOfferPriceMultiplier>Offer ExoticMisc price (sell rare): {0}</RimChat_AirdropExoticMiscOfferPriceMultiplier>
+    <RimChat_AirdropUntradeableOfferPriceMultiplier>Offer untradeable price (sell black market): {0}</RimChat_AirdropUntradeableOfferPriceMultiplier>
+    <RimChat_AirdropSpecialItemDiscountMultiplier>Special item discount multiplier: {0}</RimChat_AirdropSpecialItemDiscountMultiplier>
+    <RimChat_AirdropSpecialItemScarceMultiplier>Special item scarce multiplier: {0}</RimChat_AirdropSpecialItemScarceMultiplier>
+    <RimChat_AirdropUntradeableTieredTitle>Untradeable Black Market Buy Price (tiered by market value)</RimChat_AirdropUntradeableTieredTitle>
+    <RimChat_AirdropUntradeableLowValueMultiplier>Market value &lt;500: {0}</RimChat_AirdropUntradeableLowValueMultiplier>
+    <RimChat_AirdropUntradeableMidValueMultiplier>Market value 500~1000: {0}</RimChat_AirdropUntradeableMidValueMultiplier>
+    <RimChat_AirdropUntradeableHighValueMultiplier>Market value &gt;1000: {0}</RimChat_AirdropUntradeableHighValueMultiplier>
     <RimChat_PrisonerRansomSettingsTitle>Prisoner Ransom Settings</RimChat_PrisonerRansomSettingsTitle>
     <RimChat_RansomReleaseTimeoutTicks>Release timeout (ticks): {0}</RimChat_RansomReleaseTimeoutTicks>
     <RimChat_RansomValueDropMajorThreshold>Major value-loss threshold: {0}%</RimChat_RansomValueDropMajorThreshold>
@@ -991,6 +1006,7 @@
     <RimChat_SendInfoEntry>Actions</RimChat_SendInfoEntry>
     <RimChat_SendInfoMenuTaunt>Taunt</RimChat_SendInfoMenuTaunt>
     <RimChat_SendInfoMenuRequestCaravan>Request Caravan</RimChat_SendInfoMenuRequestCaravan>
+    <RimChat_SendInfoMenuRequestVisitor>Request Visitors</RimChat_SendInfoMenuRequestVisitor>
     <RimChat_SendInfoMenuRequestSupport>Request Support</RimChat_SendInfoMenuRequestSupport>
     <RimChat_SendInfoMenuRequestQuest>Request Quest</RimChat_SendInfoMenuRequestQuest>
     <RimChat_SendInfoMenuPrisoner>Send Prisoner Info</RimChat_SendInfoMenuPrisoner>
@@ -1014,6 +1030,7 @@
     <RimChat_SendInfoTauntConfirmCancel>Cancel</RimChat_SendInfoTauntConfirmCancel>
     <RimChat_SendInfoTauntSystemMessage>The player taunted the other side and will trigger a \"{0}.\"</RimChat_SendInfoTauntSystemMessage>
     <RimChat_SendInfoCaravanSystemMessage>The player requested that the other side dispatch a trade caravan.</RimChat_SendInfoCaravanSystemMessage>
+    <RimChat_SendInfoVisitorSystemMessage>The player requested that the other side arrange a visitor group to come by.</RimChat_SendInfoVisitorSystemMessage>
     <RimChat_SendInfoSupportSystemMessage>The player requested that the other side dispatch military aid support.</RimChat_SendInfoSupportSystemMessage>
     <RimChat_SendInfoQuestSystemMessage>The player requested a "{0}" quest from the other side.</RimChat_SendInfoQuestSystemMessage>
     <RimChat_SendInfoQuestUnavailableHint>No quests can currently be requested from this faction.</RimChat_SendInfoQuestUnavailableHint>
@@ -1142,6 +1159,7 @@
     <RimChat_ActionsHint_Reason_AirdropPaymentRequired>No payment</RimChat_ActionsHint_Reason_AirdropPaymentRequired>
     <RimChat_ActionsHint_Reason_AirdropScenarioInvalid>Invalid airdrop scenario</RimChat_ActionsHint_Reason_AirdropScenarioInvalid>
     <RimChat_ActionsHint_Reason_CaravanHostile>Hostile factions cannot send caravans</RimChat_ActionsHint_Reason_CaravanHostile>
+    <RimChat_ActionsHint_Reason_VisitorHostile>Hostile factions cannot send visitors</RimChat_ActionsHint_Reason_VisitorHostile>
     <RimChat_ActionsHint_Reason_RaidNotHostile>Raid requires hostile relation</RimChat_ActionsHint_Reason_RaidNotHostile>
     <RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>Only available after continued provocation following a raid, or when the player explicitly challenges with wording like 'call everyone' or 'joint raid'</RimChat_ActionsHint_Reason_CallEveryonePostRaidOnly>
     <RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>Only available when call-everyone is unavailable or player explicitly challenges</RimChat_ActionsHint_Reason_RaidWavesRequiresCallEveryoneUnavailable>
@@ -1169,6 +1187,7 @@
     <RimChat_DiplomacyActionLabel_declare_war>Declare war</RimChat_DiplomacyActionLabel_declare_war>
     <RimChat_DiplomacyActionLabel_make_peace>Make peace</RimChat_DiplomacyActionLabel_make_peace>
     <RimChat_DiplomacyActionLabel_request_caravan>Request caravan</RimChat_DiplomacyActionLabel_request_caravan>
+    <RimChat_DiplomacyActionLabel_request_visitor>Request visitors</RimChat_DiplomacyActionLabel_request_visitor>
     <RimChat_DiplomacyActionLabel_request_raid>Request raid</RimChat_DiplomacyActionLabel_request_raid>
     <RimChat_DiplomacyActionLabel_request_raid_call_everyone>Joint raid (call everyone)</RimChat_DiplomacyActionLabel_request_raid_call_everyone>
     <RimChat_DiplomacyActionLabel_request_raid_waves>Wave raid (multi-wave)</RimChat_DiplomacyActionLabel_request_raid_waves>
@@ -2347,4 +2366,17 @@ Selected prisoners: {1}
     <RimChat_PromptWorkbench_FullPreviewTab>Full Preview</RimChat_PromptWorkbench_FullPreviewTab>
     <RimChat_PromptNodeSlot>Slot</RimChat_PromptNodeSlot>
     <RimChat_PromptNodeOrder>Order</RimChat_PromptNodeOrder>
+
+    <!-- Advanced Parameters - Thinking -->
+    <RimChat_SettingsUnavailable>Settings unavailable.</RimChat_SettingsUnavailable>
+    <RimChat_AdvancedApiParameters>Advanced Parameters</RimChat_AdvancedApiParameters>
+    <RimChat_AdvancedApiParametersTooltip>Configure extended thinking mode and reasoning effort. These settings apply to the currently active API provider and model.</RimChat_AdvancedApiParametersTooltip>
+    <RimChat_ThinkingMode>Thinking Mode</RimChat_ThinkingMode>
+    <RimChat_ThinkingModeTooltip>Enable extended thinking for supported models (Anthropic, DeepSeek, etc.). When enabled, the model spends extra tokens reasoning before producing the final answer.</RimChat_ThinkingModeTooltip>
+    <RimChat_ReasoningEffort>Reasoning Effort</RimChat_ReasoningEffort>
+    <RimChat_ReasoningEffortTooltip>Controls how many tokens the model spends on internal reasoning. Higher effort may produce better results but increases latency and cost.</RimChat_ReasoningEffortTooltip>
+    <RimChat_ReasoningEffortLow>Low</RimChat_ReasoningEffortLow>
+    <RimChat_ReasoningEffortMedium>Medium</RimChat_ReasoningEffortMedium>
+    <RimChat_ReasoningEffortHigh>High</RimChat_ReasoningEffortHigh>
+    <RimChat_ReasoningEffortXHigh>X-High</RimChat_ReasoningEffortXHigh>
 </LanguageData>

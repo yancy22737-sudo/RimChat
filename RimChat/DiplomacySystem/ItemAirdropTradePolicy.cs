@@ -1,4 +1,5 @@
 using System;
+using RimChat.Core;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -6,15 +7,122 @@ using Verse;
 namespace RimChat.DiplomacySystem
 {
     /// <summary>
-    /// Dependencies: faction relation state and ThingDef market values.
-    /// Responsibility: centralize airdrop trade rules and unified market-value pricing.
+    /// CENTRAL AUTHORITY for all airdrop item pricing.
+    ///
+    /// Architecture — three-tier pricing model:
+    ///   Tier 1: Base price formula
+    ///     Need side (player buys): BaseMarketValue × needMultiplier
+    ///       Normal: ItemAirdropNeedPriceMultiplier (default 1.8)
+    ///       ExoticMisc: ItemAirdropExoticMiscNeedPriceMultiplier (default 3.0)
+    ///       Precious metal: 1.0 fixed
+    ///     Offer side (player sells): BaseMarketValue × offerMultiplier
+    ///       Normal: ItemAirdropOfferPriceMultiplier (default 0.6)
+    ///       ExoticMisc: ItemAirdropExoticMiscOfferPriceMultiplier (default 0.9)
+    ///       Untradeable: ItemAirdropUntradeableOfferPriceMultiplier (default 1.0)
+    ///       Precious metal: 1.0 fixed
+    ///
+    ///   Tier 2: Special item overlay
+    ///     Discount ×ItemAirdropSpecialItemDiscountMultiplier (default 0.4)
+    ///     Scarce  ×ItemAirdropSpecialItemScarceMultiplier (default 2.0)
+    ///
+    ///   Tier 3: Untradeable black-market premium (tiered by BaseMarketValue)
+    ///     &lt;500: ItemAirdropUntradeableLowValuePriceMultiplier (default 15.0)
+    ///     500~1000: ItemAirdropUntradeableMidValuePriceMultiplier (default 8.0)
+    ///     &gt;1000: ItemAirdropUntradeablePriceMultiplier (default 6.0)
+    ///
+    /// All multipliers are user-configurable in Settings → Mod Options → Aid Settings.
     /// </summary>
     internal static class ItemAirdropTradePolicy
     {
         private const string TradersGuildDefName = "TradersGuild";
-        private const float DefaultNeedPriceMultiplier = 1.15f;
-        private const float ExoticMiscNeedPriceMultiplier = 1.35f;
-        private const float OfferPriceMultiplier = 1.00f;
+        private const float OfferPriceMultiplierFallback = 0.6f;
+        private const float ExoticMiscOfferPriceMultiplierFallback = 0.9f;
+        private const float UntradeableOfferPriceMultiplierFallback = 1.0f;
+        private const float UntradeableHighValuePriceMultiplierDefault = 6.0f;
+        private const float UntradeableLowValueThreshold = 500f;
+        private const float UntradeableHighValueThreshold = 1000f;
+
+        /// <summary>
+        /// Active untradeable premium multiplier (high-value tier: >1000 market value), read from user settings.
+        /// </summary>
+        internal static float UntradeableHighValuePriceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropUntradeablePriceMultiplier
+            ?? UntradeableHighValuePriceMultiplierDefault;
+
+        /// <summary>
+        /// Active untradeable premium multiplier (low-value tier: &lt;500 market value), read from user settings.
+        /// </summary>
+        internal static float UntradeableLowValuePriceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropUntradeableLowValuePriceMultiplier
+            ?? 15.0f;
+
+        /// <summary>
+        /// Active untradeable premium multiplier (mid-value tier: 500~1000 market value), read from user settings.
+        /// </summary>
+        internal static float UntradeableMidValuePriceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropUntradeableMidValuePriceMultiplier
+            ?? 8.0f;
+
+        /// <summary>
+        /// Resolve the tiered untradeable multiplier based on the item's BaseMarketValue.
+        /// </summary>
+        private static float ResolveUntradeableTierMultiplier(float baseMarketValue)
+        {
+            if (baseMarketValue >= UntradeableHighValueThreshold)
+                return UntradeableHighValuePriceMultiplier;
+            if (baseMarketValue >= UntradeableLowValueThreshold)
+                return UntradeableMidValuePriceMultiplier;
+            return UntradeableLowValuePriceMultiplier;
+        }
+
+        /// <summary>
+        /// Active need price multiplier (base buy price), read from user settings.
+        /// </summary>
+        internal static float NeedPriceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropNeedPriceMultiplier
+            ?? 1.8f;
+
+        /// <summary>
+        /// Active ExoticMisc need price multiplier, read from user settings.
+        /// </summary>
+        internal static float ExoticMiscNeedPriceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropExoticMiscNeedPriceMultiplier
+            ?? 3.0f;
+
+        /// <summary>
+        /// Active offer (sell/payment) price multiplier for standard items, read from user settings.
+        /// </summary>
+        internal static float OfferPriceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropOfferPriceMultiplier
+            ?? OfferPriceMultiplierFallback;
+
+        /// <summary>
+        /// Active offer price multiplier for ExoticMisc items, read from user settings.
+        /// </summary>
+        internal static float ExoticMiscOfferPriceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropExoticMiscOfferPriceMultiplier
+            ?? ExoticMiscOfferPriceMultiplierFallback;
+
+        /// <summary>
+        /// Active offer price multiplier for untradeable items, read from user settings.
+        /// </summary>
+        internal static float UntradeableOfferPriceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropUntradeableOfferPriceMultiplier
+            ?? UntradeableOfferPriceMultiplierFallback;
+
+        /// <summary>
+        /// Active special item discount multiplier, read from user settings.
+        /// </summary>
+        internal static float SpecialItemDiscountMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropSpecialItemDiscountMultiplier
+            ?? 0.4f;
+
+        /// <summary>
+        /// Active special item scarce multiplier, read from user settings.
+        /// </summary>
+        internal static float SpecialItemScarceMultiplier =>
+            RimChatMod.Instance?.InstanceSettings?.ItemAirdropSpecialItemScarceMultiplier
+            ?? 2.0f;
         private const float BaseFloor = 500f;
         private const float GoodwillCore = 2600f;
         private const float WealthCore = 650f;
@@ -97,7 +205,27 @@ namespace RimChat.DiplomacySystem
             out float unitPrice,
             out string failureCode)
         {
-            return TryResolveUnifiedPrice(def, OfferPriceMultiplier, out unitPrice, out failureCode);
+            float multiplier = ResolveOfferPriceMultiplier(def);
+            return TryResolveUnifiedPrice(def, multiplier, out unitPrice, out failureCode);
+        }
+
+        /// <summary>
+        /// Resolve the offer (sell/payment) multiplier for a given item.
+        /// Normal items use OfferPriceMultiplier, ExoticMisc uses ExoticMiscOfferPriceMultiplier,
+        /// untradeable items use UntradeableOfferPriceMultiplier.
+        /// </summary>
+        private static float ResolveOfferPriceMultiplier(ThingDef def)
+        {
+            if (def == null)
+                return OfferPriceMultiplier;
+
+            if (def.tradeability == Tradeability.None)
+                return UntradeableOfferPriceMultiplier;
+
+            if (def.tradeTags != null && def.tradeTags.Contains("ExoticMisc"))
+                return ExoticMiscOfferPriceMultiplier;
+
+            return OfferPriceMultiplier;
         }
 
         internal static int ResolveTradeGrowthDisplayDelta(int goodwill, float wealthItems, float factionTradeTotalSilver)
@@ -186,14 +314,14 @@ namespace RimChat.DiplomacySystem
             return $"阶段规则：前期更看好感，中期更看财富与累计交易额，后期保持稳定增长。当前好感 {goodwill}、财富系数 {wealthFactor:F2}、交易激活 {activation:F2}，累计交易额 {Mathf.RoundToInt(factionTradeTotalSilver)} 对额度提供增量奖励。{merchantText}{allyText}当前上限 {Mathf.RoundToInt(resolvedLimit)}。";
         }
 
-        private static float ResolveNeedPriceMultiplier(ThingDef def)
+        internal static float ResolveNeedPriceMultiplier(ThingDef def)
         {
             if (def?.tradeTags != null && def.tradeTags.Contains("ExoticMisc"))
             {
                 return ExoticMiscNeedPriceMultiplier;
             }
 
-            return DefaultNeedPriceMultiplier;
+            return NeedPriceMultiplier;
         }
 
         private static bool TryResolveUnifiedPrice(
@@ -216,6 +344,57 @@ namespace RimChat.DiplomacySystem
             return true;
         }
 
+        /// <summary>
+        /// Tier-3 global modifier: if the item is Tradeability.None, apply black-market premium.
+        /// Uses tiered multipliers based on BaseMarketValue:
+        ///   &lt;500 → UntradeableLowValuePriceMultiplier (default 15.0)
+        ///   500~1000 → UntradeableMidValuePriceMultiplier (default 8.0)
+        ///   &gt;1000 → UntradeableHighValuePriceMultiplier (default 6.0)
+        /// Call this method from ALL need-unit-price entry points — see class-level conventions.
+        /// </summary>
+        internal static void ApplyUntradeablePremium(ThingDef def, ref float unitPrice)
+        {
+            if (def == null || def.tradeability != Tradeability.None) return;
+
+            float basePrice = Math.Max(0.01f, def.BaseMarketValue);
+            float needMultiplier = IsPreciousMetalFixedPrice(def)
+                ? 1.0f
+                : ResolveNeedPriceMultiplier(def);
+            float tierMultiplier = ResolveUntradeableTierMultiplier(basePrice);
+            float untradeablePrice = basePrice * needMultiplier * tierMultiplier;
+            unitPrice = Math.Max(unitPrice, untradeablePrice);
+        }
+
+        /// <summary>
+        /// Resolve the semantic tag for a need item's price display label.
+        /// </summary>
+        internal static string ResolveNeedPriceSemantic(ThingDef def, Faction faction)
+        {
+            if (def == null) return "market_value";
+
+            if (def.tradeability == Tradeability.None)
+            {
+                float tierMult = ResolveUntradeableTierMultiplier(Math.Max(0.01f, def.BaseMarketValue));
+                return $"untradeable_x{tierMult:F1}";
+            }
+
+            if (faction != null &&
+                FactionSpecialItemsManager.Instance.TryMatchSpecialItem(faction, def.defName, out SpecialItemType specialItemType))
+            {
+                return specialItemType == SpecialItemType.Discount
+                    ? $"special_item_discount_x{SpecialItemDiscountMultiplier:F1}"
+                    : $"special_item_scarce_x{SpecialItemScarceMultiplier:F1}";
+            }
+
+            if (IsPreciousMetalFixedPrice(def))
+                return "market_value";
+
+            if (def.tradeTags != null && def.tradeTags.Contains("ExoticMisc"))
+                return $"market_value_x{ExoticMiscNeedPriceMultiplier:F1}";
+
+            return $"market_value_x{NeedPriceMultiplier:F1}";
+        }
+
         internal static bool IsPreciousMetalFixedPrice(ThingDef def)
         {
             string defName = def?.defName ?? string.Empty;
@@ -225,7 +404,7 @@ namespace RimChat.DiplomacySystem
 
         /// <summary>
         /// Resolve price for special items (discount/scarce).
-        /// Discount: 0.4x multiplier, Scarce: 2.0x multiplier.
+        /// Discount multiplier and Scarce multiplier are read from user settings.
         /// Both are applied on top of the base need price multiplier.
         /// </summary>
         internal static bool TryResolveSpecialItemPrice(
@@ -242,7 +421,9 @@ namespace RimChat.DiplomacySystem
             }
 
             float needMultiplier = ResolveNeedPriceMultiplier(def);
-            float specialMultiplier = itemType == SpecialItemType.Discount ? 0.4f : 2.0f;
+            float specialMultiplier = itemType == SpecialItemType.Discount
+                ? SpecialItemDiscountMultiplier
+                : SpecialItemScarceMultiplier;
             float basePrice = Math.Max(0.01f, def.BaseMarketValue);
             
             // Precious metals use fixed 1.0x base, but still apply special multiplier

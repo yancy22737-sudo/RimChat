@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimWorld;
+using Verse;
 
 namespace RimChat.DiplomacySystem
 {
@@ -149,7 +151,11 @@ namespace RimChat.DiplomacySystem
                 return Math.Max(0.01f, overrideValue);
             }
 
-            return Math.Max(0.01f, record?.MarketValue ?? 0.01f);
+            float price = Math.Max(0.01f, record?.MarketValue ?? 0.01f);
+
+            ItemAirdropTradePolicy.ApplyUntradeablePremium(record?.Def, ref price);
+
+            return price;
         }
     }
 

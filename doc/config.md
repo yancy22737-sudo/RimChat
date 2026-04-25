@@ -693,6 +693,9 @@
 - `ItemAirdropBlacklistDefNamesCsv`
   - 含义：禁止空投 Def 的 CSV 黑名单（大小写不敏感）。
   - 默认：`VanometricPowerCell,PersonaCore,ArchotechArm,ArchotechLeg`
+- `ItemAirdropUntradeablePriceMultiplier`
+  - 含义：不可交易物品（Tradeability.None）的空投黑市溢价倍率。所有不可交易物品的最低售价强制 ≥ `BaseMarketValue × NeedMultiplier × 此值`。
+  - 默认：`6.0`
 
 ## 外交过期回包与本地队列观测（v0.7.84）
 

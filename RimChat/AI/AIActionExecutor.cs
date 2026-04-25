@@ -73,6 +73,7 @@ namespace RimChat.AI
                     AIActionNames.DeclareWar => ExecuteDeclareWar(action),
                     AIActionNames.MakePeace => ExecuteMakePeace(action),
                     AIActionNames.RequestCaravan => ExecuteRequestCaravan(action),
+                    AIActionNames.RequestVisitor => ExecuteRequestVisitor(action),
                     AIActionNames.RequestRaid => ExecuteRequestRaid(action),
                     AIActionNames.RequestItemAirdrop => ExecuteRequestItemAirdrop(action),
                     AIActionNames.RequestInfo => ActionResult.Failure("request_info must be handled by diplomacy dialogue pipeline."),
@@ -299,6 +300,7 @@ namespace RimChat.AI
                 AIActionNames.DeclareWar => settings.EnableAIWarDeclaration,
                 AIActionNames.MakePeace => settings.EnableAIPeaceMaking,
                 AIActionNames.RequestCaravan => settings.EnableAITradeCaravan,
+                AIActionNames.RequestVisitor => settings.EnableAITradeCaravan,
                 AIActionNames.RequestRaid => settings.EnableAIRaidRequest,
                 AIActionNames.RequestRaidCallEveryone => settings.EnableAIRaidRequest,
                 AIActionNames.RequestRaidWaves => settings.EnableAIRaidRequest,
@@ -603,6 +605,36 @@ namespace RimChat.AI
 
             // 执行 (使用延迟mode)
             var result = gameInterface.RequestTradeCaravan(faction, caravanType, delayed: true);
+
+            if (result.Success)
+            {
+                return ActionResult.Success(result.Message, result.Data);
+            }
+            else
+            {
+                return ActionResult.Failure(result.Message);
+            }
+        }
+
+        /// <summary>/// 执行request访客
+ ///</summary>
+        private ActionResult ExecuteRequestVisitor(AIAction action)
+        {
+            // 检查relation
+            if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+            {
+                return ActionResult.Failure("Cannot request visitor from hostile faction");
+            }
+
+            // 检查faction独立冷却
+            int cooldownSeconds = gameInterface.GetRemainingCooldownSeconds(faction, "RequestVisitor");
+            if (cooldownSeconds > 0)
+            {
+                return ActionResult.Failure($"RequestVisitor is on cooldown for {faction.Name}. Remaining: {cooldownSeconds} seconds");
+            }
+
+            // 执行 (使用延迟mode)
+            var result = gameInterface.RequestVisitor(faction, delayed: true);
 
             if (result.Success)
             {

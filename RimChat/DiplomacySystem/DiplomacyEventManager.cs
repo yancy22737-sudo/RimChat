@@ -75,6 +75,47 @@ namespace RimChat.DiplomacySystem
             }
         }
 
+        public static bool TriggerVisitorEvent(Faction faction)
+        {
+            try
+            {
+                Map map = Find.AnyPlayerHomeMap;
+                if (map == null)
+                {
+                    Log.Warning("[RimChat] No player home map found for visitor event");
+                    return false;
+                }
+
+                IncidentDef incidentDef = DefDatabase<IncidentDef>.GetNamedSilentFail("VisitorGroup");
+                if (incidentDef == null)
+                {
+                    Log.Error("[RimChat] VisitorGroup incident def not found");
+                    return false;
+                }
+
+                IncidentParms parms = StorytellerUtility.DefaultParmsNow(incidentDef.category, map);
+                parms.target = map;
+                parms.faction = faction;
+                bool success = incidentDef.Worker.TryExecute(parms);
+
+                if (success)
+                {
+                    Log.Message($"[RimChat] Triggered visitor group from {faction.Name}");
+                }
+                else
+                {
+                    Log.Warning($"[RimChat] Failed to trigger visitor group from {faction.Name}");
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error triggering visitor event: {ex}");
+                return false;
+            }
+        }
+
         private static TraderKindDef GetTraderKindForType(Faction faction, CaravanType caravanType)
         {
             List<TraderKindDef> factionTraders = GetFactionGroundTraderKinds(faction);
@@ -535,6 +576,30 @@ namespace RimChat.DiplomacySystem
             catch (Exception ex)
             {
                 Log.Error($"[RimChat] Error scheduling delayed aid: {ex}");
+                return false;
+            }
+        }
+
+        public static bool ScheduleDelayedVisitor(Faction faction)
+        {
+            try
+            {
+                int delayTicks = CalculateDelayTicks(faction, false);
+                int executeTick = Find.TickManager.TicksGame + delayTicks;
+
+                var evt = new DelayedDiplomacyEvent(DelayedEventType.Visitor, faction, executeTick);
+                GameComponent_DiplomacyManager.Instance?.AddDelayedEvent(evt);
+
+                float delayDays = delayTicks / 60000f;
+                string detail = "RimChat_VisitorGroupLabel".Translate();
+                DiplomacyNotificationManager.SendDelayedEventScheduledNotification(faction, DelayedEventType.Visitor, detail, delayDays);
+
+                Log.Message($"[RimChat] Scheduled delayed visitor group from {faction.Name}, delay={delayDays:F1} days");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"[RimChat] Error scheduling delayed visitor event: {ex}");
                 return false;
             }
         }

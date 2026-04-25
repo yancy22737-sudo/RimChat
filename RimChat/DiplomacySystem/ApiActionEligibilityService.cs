@@ -26,6 +26,7 @@ namespace RimChat.DiplomacySystem
             "declare_war",
             "make_peace",
             "request_caravan",
+            "request_visitor",
             "request_raid",
             "request_raid_call_everyone",
             "request_raid_waves",
@@ -160,6 +161,13 @@ namespace RimChat.DiplomacySystem
                         return ActionValidationResult.Denied("caravan_hostile", "Cannot request caravan from hostile faction");
                     }
                     return ValidateCooldown(faction, "RequestTradeCaravan", "caravan_cooldown");
+
+                case "request_visitor":
+                    if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+                    {
+                        return ActionValidationResult.Denied("visitor_hostile", "Cannot request visitor from hostile faction");
+                    }
+                    return ValidateCooldown(faction, "RequestVisitor", "visitor_cooldown");
 
                 case "request_raid":
                     if (faction.RelationKindWith(Faction.OfPlayer) != FactionRelationKind.Hostile)
@@ -1034,6 +1042,8 @@ namespace RimChat.DiplomacySystem
                 case "make_peace":
                     return settings.EnableAIPeaceMaking;
                 case "request_caravan":
+                    return settings.EnableAITradeCaravan;
+                case "request_visitor":
                     return settings.EnableAITradeCaravan;
                 case "request_raid":
                     return settings.EnableAIRaidRequest;

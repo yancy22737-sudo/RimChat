@@ -48,6 +48,9 @@ namespace RimChat.UI
         private DialogueCloseIntent closeIntent = DialogueCloseIntent.Normal;
         private readonly DiplomacyConversationController conversationController = new DiplomacyConversationController();
         private string inputText = "";
+        private readonly List<string> inputHistory = new List<string>();
+        private int inputHistoryIndex = -1;
+        private string inputHistoryDraft = string.Empty;
         private Vector2 messageScrollPosition = Vector2.zero;
         private Vector2 factionScrollPosition = Vector2.zero;
         private string blockedReasonScrollText = string.Empty;
@@ -1797,9 +1800,11 @@ namespace RimChat.UI
 
         private void OpenSendInfoMenu()
         {
+            ActionValidationResult visitorValidation = ValidateManualVisitorEntry();
             ActionValidationResult airdropValidation = ValidateManualAirdropTradeEntry();
             ActionValidationResult prisonerValidation = ValidateManualPrisonerInfoEntry();
             List<ManualQuestRequestOption> questOptions = BuildManualQuestRequestOptions();
+            string visitorLabel = "RimChat_SendInfoMenuRequestVisitor".Translate().ToString();
             string airdropLabel = "RimChat_SendInfoMenuAirdropTrade".Translate().ToString();
             string prisonerLabel = "RimChat_SendInfoMenuPrisoner".Translate().ToString();
             bool hasQuestOptions = questOptions.Count > 0;
@@ -1811,6 +1816,9 @@ namespace RimChat.UI
                 new FloatMenuOption(
                     "RimChat_SendInfoMenuRequestCaravan".Translate(),
                     TryStartManualCaravanRequestSend),
+                new FloatMenuOption(
+                    BuildManualAirdropTradeMenuLabel(visitorLabel, visitorValidation),
+                    visitorValidation != null && !visitorValidation.Allowed ? null : (Action)TryStartManualVisitorRequestSend),
                 new FloatMenuOption(
                     "RimChat_SendInfoMenuRequestSupport".Translate(),
                     TryStartManualSupportRequestSend),
@@ -1872,6 +1880,12 @@ namespace RimChat.UI
                 session,
                 faction,
                 OnAirdropTradeCardSubmitted));
+        }
+
+        private ActionValidationResult ValidateManualVisitorEntry()
+        {
+            return ApiActionEligibilityService.Instance?.ValidateActionExecution(faction, AIActionNames.RequestVisitor, null)
+                ?? ActionValidationResult.AllowedResult();
         }
 
         private ActionValidationResult ValidateManualAirdropTradeEntry()
@@ -2233,7 +2247,17 @@ namespace RimChat.UI
         private void HandleInputEvents(SendGateState sendGate)
         {
             Event current = Event.current;
-            if (!IsSubmitKeyPressed(current) || !IsDialogueInputFocused() || IsImeComposing())
+            if (current == null || !IsDialogueInputFocused() || IsImeComposing())
+            {
+                return;
+            }
+
+            if (TryHandleInputHistoryNavigation(current))
+            {
+                return;
+            }
+
+            if (!IsSubmitKeyPressed(current))
             {
                 return;
             }
@@ -2254,6 +2278,73 @@ namespace RimChat.UI
 
             current.Use();
             SendMessage();
+        }
+
+        private bool TryHandleInputHistoryNavigation(Event current)
+        {
+            if (current.type != EventType.KeyDown)
+            {
+                return false;
+            }
+
+            if (current.keyCode == KeyCode.UpArrow)
+            {
+                NavigateInputHistory(-1);
+                current.Use();
+                return true;
+            }
+
+            if (current.keyCode == KeyCode.DownArrow)
+            {
+                NavigateInputHistory(1);
+                current.Use();
+                return true;
+            }
+
+            return false;
+        }
+
+        private void NavigateInputHistory(int direction)
+        {
+            if (inputHistory.Count == 0)
+            {
+                return;
+            }
+
+            if (direction < 0)
+            {
+                if (inputHistoryIndex < 0)
+                {
+                    inputHistoryDraft = inputText;
+                    inputHistoryIndex = inputHistory.Count - 1;
+                }
+                else if (inputHistoryIndex > 0)
+                {
+                    inputHistoryIndex--;
+                }
+
+                inputText = inputHistory[inputHistoryIndex];
+                return;
+            }
+
+            if (direction > 0)
+            {
+                if (inputHistoryIndex < 0)
+                {
+                    return;
+                }
+
+                if (inputHistoryIndex < inputHistory.Count - 1)
+                {
+                    inputHistoryIndex++;
+                    inputText = inputHistory[inputHistoryIndex];
+                    return;
+                }
+
+                inputHistoryIndex = -1;
+                inputText = inputHistoryDraft ?? string.Empty;
+                inputHistoryDraft = string.Empty;
+            }
         }
 
         private static bool IsSubmitKeyPressed(Event current)
@@ -2439,10 +2530,28 @@ namespace RimChat.UI
             if (string.IsNullOrEmpty(playerMessage))
                 return;
 
+            ResetInputHistoryNavigation();
             inputText = "";
             InvalidateLayoutCache();
             _typewriterDirty = true;
             SendPreparedMessage(playerMessage, true);
+        }
+
+        private void ResetInputHistoryNavigation()
+        {
+            inputHistoryIndex = -1;
+            inputHistoryDraft = string.Empty;
+        }
+
+        private void RecordInputHistory(string playerMessage)
+        {
+            if (string.IsNullOrWhiteSpace(playerMessage))
+            {
+                return;
+            }
+
+            inputHistory.Add(playerMessage);
+            ResetInputHistoryNavigation();
         }
 
         private void SendPreparedMessage(
@@ -2462,6 +2571,7 @@ namespace RimChat.UI
 
             var currentSession = session;
             var currentFaction = faction;
+            RecordInputHistory(playerMessage);
             if (airdropTradeCardPayload != null)
             {
                 currentSession?.SetPendingAirdropTradeCardReference(

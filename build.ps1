@@ -7,7 +7,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # Configuration
 $sourceRoot = $PSScriptRoot
-$destRoot = "E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat"
+$destRoot = "D:\SteamLibrary\steamapps\common\RimWorld\Mods\RimChat"
 
 function Write-Status {
     param([string]$Message)

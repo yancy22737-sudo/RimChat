@@ -11,6 +11,7 @@ namespace RimChat.AI
         public const string DeclareWar = "declare_war";
         public const string MakePeace = "make_peace";
         public const string RequestCaravan = "request_caravan";
+        public const string RequestVisitor = "request_visitor";
         public const string RequestRaid = "request_raid";
         public const string RequestItemAirdrop = "request_item_airdrop";
         public const string RequestInfo = "request_info";

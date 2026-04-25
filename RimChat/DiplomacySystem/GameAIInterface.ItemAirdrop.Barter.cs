@@ -93,6 +93,17 @@ namespace RimChat.DiplomacySystem
                     preparedData.ParametersSnapshot);
             }
 
+            int deliveredCount = stacks.Sum(t => t.stackCount);
+            if (deliveredCount != preparedData.Quantity)
+            {
+                return FailFastAirdrop(
+                    "delivery_quantity_mismatch",
+                    $"Confirmed airdrop quantity {preparedData.Quantity} exceeds stack delivery capacity {deliveredCount}.",
+                    faction,
+                    preparedData.ParametersSnapshot,
+                    $"def={selectedRecord.DefName},confirmed={preparedData.Quantity},delivered={deliveredCount},maxStacks={maxStacks},stackLimit={selectedRecord.Def.stackLimit}");
+            }
+
             APIResult validation = ValidateDeductionPlan(map, preparedData.DeductionPlan, out List<ThingDeductionReservation> reservations);
             if (!validation.Success)
             {
@@ -114,12 +125,7 @@ namespace RimChat.DiplomacySystem
                 leaveSlag: false,
                 canRoofPunch: false);
 
-            int deliveredCount = stacks.Sum(t => t.stackCount);
-            
-            // Calculate final quote including shipping cost for arrival message
-            int shippingCostForMessage = ResolveAirdropShippingPodCount(selectedRecord.Def, deliveredCount) * 
-                ItemAirdropTradePolicy.ResolveRuleSnapshot(faction, map.wealthWatcher?.WealthItems ?? 0f, GetAirdropFactionTradeTotal(faction)).ShippingCostPerPod;
-            int finalQuoteTotal = preparedData.BudgetSilver + shippingCostForMessage;
+            int finalQuoteTotal = preparedData.BudgetSilver + preparedData.ShippingCostSilver;
             
             string stageText = $"def={selectedRecord.DefName},count={deliveredCount},budget={preparedData.BudgetSilver},reason={preparedData.SelectionReason},drop={dropCell},payment={preparedData.PaymentTotalSilver}";
             RecordStageAudit("execute", faction, preparedData.ParametersSnapshot, stageText);
@@ -403,6 +409,50 @@ namespace RimChat.DiplomacySystem
                     parameters);
             }
 
+            float needQuotedUnitSilver = ResolveAirdropNeedQuotedUnitPrice(
+                selectedRecord, faction, playerNegotiator, map, candidatePack, null);
+            int quotedNeedTotalSilver = ResolveAirdropNeedQuotedTotalSilver(
+                selectedRecord,
+                validatedCount,
+                faction,
+                playerNegotiator,
+                map,
+                candidatePack,
+                null);
+            AirdropTradeRuleSnapshot tradeRuleSnapshot = ItemAirdropTradePolicy.ResolveRuleSnapshot(
+                faction,
+                map.wealthWatcher?.WealthItems ?? 0f,
+                GetAirdropFactionTradeTotal(faction));
+            int shippingPodCount = ResolveAirdropShippingPodCount(selectedRecord?.Def, validatedCount);
+            int shippingCostSilver = shippingPodCount * tradeRuleSnapshot.ShippingCostPerPod;
+            int actualNeeded = quotedNeedTotalSilver + shippingCostSilver;
+
+            if (actualNeeded < paymentTotalSilver)
+            {
+                double scale = (double)actualNeeded / Math.Max(1, paymentTotalSilver);
+                List<ItemAirdropDeductionPlanLine> adjustedPlan = new List<ItemAirdropDeductionPlanLine>();
+                int adjustedTotal = 0;
+                foreach (ItemAirdropDeductionPlanLine line in deductionPlan)
+                {
+                    int scaledCount = Math.Max(1, (int)Math.Round(line.Count * scale));
+                    adjustedPlan.Add(new ItemAirdropDeductionPlanLine
+                    {
+                        ThingId = line.ThingId,
+                        DefName = line.DefName,
+                        Count = scaledCount
+                    });
+                    adjustedTotal += scaledCount;
+                }
+                deductionPlan = adjustedPlan;
+                budget = actualNeeded;
+                paymentTotalSilver = actualNeeded;
+
+                if (validatedCount < requestedOriginalCount)
+                {
+                    Log.Message($"[RimChat][PaymentAdjust] Quantity clamped ({requestedOriginalCount}->{validatedCount}), payment scaled to {actualNeeded} (scale={scale:F4}, deductionLines={adjustedPlan.Count}, totalDeductionCount={adjustedTotal})");
+                }
+            }
+
             int overpay = Math.Max(0, paymentTotalSilver - budget);
             string budgetMismatchSummary = hasProvidedBudget
                 ? $"{providedBudgetSilver}->{budget}(delta={providedBudgetSilver - budget})"
@@ -423,12 +473,15 @@ namespace RimChat.DiplomacySystem
                     ? $"clamped_to_hard_max({requestedOriginalCount}->{validatedCount})"
                     : "none",
                 BudgetSilver = budget,
+                NeedQuotedUnitSilver = needQuotedUnitSilver,
                 PaymentTotalSilver = paymentTotalSilver,
                 PaymentOverpaySilver = overpay,
                 MapUniqueId = map.uniqueID,
                 NeedText = need,
                 Scenario = scenario,
                 SelectionReason = selection.Reason ?? string.Empty,
+                NeedPriceSemantic = ItemAirdropTradePolicy.ResolveNeedPriceSemantic(selectedRecord?.Def, faction),
+                PaymentPriceSemantic = $"market_value_x{ItemAirdropTradePolicy.OfferPriceMultiplier:F1}",
                 PaymentLines = paymentLines,
                 DeductionPlan = deductionPlan,
                 ParametersSnapshot = CloneParameterDictionary(parameters)
@@ -463,6 +516,7 @@ namespace RimChat.DiplomacySystem
             return Mathf.Max(0, Mathf.RoundToInt(total));
         }
 
+
         private static float ResolveAirdropNeedQuotedUnitPrice(
             ThingDefRecord selectedRecord,
             Faction faction,
@@ -475,17 +529,38 @@ namespace RimChat.DiplomacySystem
             _ = playerNegotiator;
             _ = map;
             ThingDef def = selectedRecord?.Def;
-            
-            // Check if this is a special item and apply special pricing
+
+            float unitPrice;
+
             if (def != null && specialItemType.HasValue)
             {
                 if (ItemAirdropTradePolicy.TryResolveSpecialItemPrice(def, specialItemType.Value, out float specialPrice, out _))
                 {
-                    return specialPrice;
+                    unitPrice = specialPrice;
+                }
+                else
+                {
+                    unitPrice = ResolveStandardNeedUnitPrice(def, faction, playerNegotiator, map, candidatePack, selectedRecord);
                 }
             }
-            
-            // Fallback to standard pricing
+            else
+            {
+                unitPrice = ResolveStandardNeedUnitPrice(def, faction, playerNegotiator, map, candidatePack, selectedRecord);
+            }
+
+            ItemAirdropTradePolicy.ApplyUntradeablePremium(def, ref unitPrice);
+
+            return unitPrice;
+        }
+
+        private static float ResolveStandardNeedUnitPrice(
+            ThingDef def,
+            Faction faction,
+            Pawn playerNegotiator,
+            Map map,
+            ItemAirdropCandidatePack candidatePack,
+            ThingDefRecord selectedRecord)
+        {
             if (def != null && ItemAirdropTradePolicy.TryResolvePlayerBuyPrice(def, faction, playerNegotiator, map, out float unitPrice, out _))
             {
                 return unitPrice;
@@ -1018,3 +1093,5 @@ namespace RimChat.DiplomacySystem
         public int Count { get; set; }
     }
 }
+
+

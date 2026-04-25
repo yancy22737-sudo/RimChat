@@ -491,6 +491,7 @@ namespace RimChat.AI
                 "declare_war",
                 "make_peace",
                 "request_caravan",
+                "request_visitor",
                 "request_raid",
                 "request_raid_call_everyone",
                 "request_raid_waves",
@@ -543,6 +544,11 @@ namespace RimChat.AI
                 case "ask_info":
                 case "requestinformation":
                     return "request_info";
+                case "requestvisitor":
+                case "visitor_request":
+                case "request_visit":
+                case "visitorgroup":
+                    return "request_visitor";
                 case "requestraidcalleveryone":
                 case "raid_call_everyone":
                 case "call_everyone":
@@ -2156,5 +2162,4 @@ namespace RimChat.AI
         public string Reason { get; set; }
     }
 }
-
 

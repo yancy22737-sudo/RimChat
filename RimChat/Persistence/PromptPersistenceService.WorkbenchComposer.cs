@@ -100,14 +100,7 @@ namespace RimChat.Persistence
                         string message = string.IsNullOrWhiteSpace(diagnostic.ErrorMessage)
                             ? "social_circle_post native RimTalk render compatibility failed."
                             : diagnostic.ErrorMessage;
-                        Log.Warning(
-                            "[RimChat] social_circle_post native render compatibility failure. " +
-                            "Falling back to structured prompt text for this request. " +
-                            $"channel={diagnostic?.PromptChannel ?? string.Empty}, " +
-                            $"bound_method={diagnostic?.BoundMethod ?? string.Empty}, " +
-                            $"bound_variant={diagnostic?.BoundMethodVariant ?? string.Empty}, " +
-                            $"failure_stage={diagnostic?.FailureStage ?? string.Empty}, " +
-                            $"error={message}");
+                        throw new RimTalkPromptRenderCompatibilityException(message, diagnostic);
                     }
                 }
 

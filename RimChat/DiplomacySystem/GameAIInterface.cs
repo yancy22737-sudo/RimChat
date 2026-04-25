@@ -421,6 +421,7 @@ namespace RimChat.DiplomacySystem
                     ["DeclareWar"] = 0,
                     ["MakePeace"] = 0,
                     ["RequestTradeCaravan"] = 0,
+                    ["RequestVisitor"] = 0,
                     ["RequestRaid"] = 0,
                     ["RequestItemAirdrop"] = 0
                 };
@@ -930,6 +931,57 @@ namespace RimChat.DiplomacySystem
             );
         }
 
+        /// <summary>/// request访客
+ ///</summary>
+        /// <param name="faction">目标faction</param>
+        /// <returns>API调用result</returns>
+        public APIResult RequestVisitor(Faction faction, bool delayed = true)
+        {
+            if (RimChatMod.Instance == null)
+                return APIResult.FailureResult("Settings not initialized");
+            var settings = RimChatMod.Instance.InstanceSettings;
+            if (settings == null)
+                return APIResult.FailureResult("Settings not initialized");
+
+            if (faction == null)
+                return APIResult.FailureResult("Faction cannot be null");
+
+            // 检查faction独立冷却
+            int remainingCooldown = GetRemainingCooldownSeconds(faction, "RequestVisitor");
+            if (remainingCooldown > 0)
+                return APIResult.FailureResult($"Method RequestVisitor is on cooldown for {faction.Name}. Remaining: {remainingCooldown} seconds");
+
+            // 检查relation
+            if (faction.RelationKindWith(Faction.OfPlayer) == FactionRelationKind.Hostile)
+                return APIResult.FailureResult("Cannot request visitor from hostile faction");
+
+            RecordAPICall("RequestVisitor", true, $"faction={faction.Name}, delayed={delayed}");
+
+            bool eventSuccess;
+            string resultMessage;
+            if (delayed)
+            {
+                eventSuccess = DiplomacyEventManager.ScheduleDelayedVisitor(faction);
+                int delayTicks = DiplomacyEventManager.CalculateDelayTicks(faction, false);
+                float delayDays = delayTicks / 60000f;
+                resultMessage = $"Visitor group scheduled from {faction.Name}. Arrival in {delayDays:F1} days.";
+            }
+            else
+            {
+                eventSuccess = DiplomacyEventManager.TriggerVisitorEvent(faction);
+                resultMessage = $"Visitor group requested from {faction.Name}.";
+            }
+
+            if (eventSuccess)
+            {
+                SetCooldown(faction, "RequestVisitor");
+            }
+
+            return APIResult.SuccessResult(
+                resultMessage,
+                new { Faction = faction.Name, EventSuccess = eventSuccess, Delayed = delayed });
+        }
+
         public APIResult ApplySuccessfulDialogueApiGoodwillCost(
             Faction faction,
             DialogueGoodwillCost.DialogueActionType actionType,
@@ -1362,6 +1414,7 @@ namespace RimChat.DiplomacySystem
                     "DeclareWar" => settings?.WarCooldownTicks ?? 60000,
                     "MakePeace" => settings?.PeaceCooldownTicks ?? 60000,
                     "RequestTradeCaravan" => GetTradeCaravanCooldownTicks(faction),
+                    "RequestVisitor" => GetTradeCaravanCooldownTicks(faction),
                     "RequestRaid" => settings?.RaidCooldownTicks ?? 180000,
                     "RequestRaidWaves" => 5 * 60000, // 5天冷却
                     "RequestItemAirdrop" => GetItemAirdropCooldownTicks(faction, offerPercentMultiplier),

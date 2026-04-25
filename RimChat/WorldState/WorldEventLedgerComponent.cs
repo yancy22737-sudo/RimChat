@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using RimChat.Config;
 using RimChat.Persistence;
 using RimWorld;
@@ -9,8 +10,8 @@ using Verse;
 namespace RimChat.WorldState
 {
     /// <summary>/// Dependencies: Verse.GameComponent, LetterStack, and RaidThreatSnapshotProvider.
- /// Responsibility: collect and persist recent world events and raid battle intel for prompt injection.
- ///</summary>
+     /// Responsibility: collect and persist recent world events and raid battle intel for prompt injection.
+     ///</summary>
     public class WorldEventLedgerComponent : GameComponent
     {
         private const int DefaultMaxStoredRecords = 50;
@@ -22,6 +23,9 @@ namespace RimChat.WorldState
         private const int OldEventAgeThresholdTicks = 60000 * 60 * 24;
         private const int MaxCompressedSummaryLength = 100;
         private const int MaxProcessedLetterIds = 512;
+
+        private static int _globalEventRevision = 1;
+        public static int GlobalEventRevision => _globalEventRevision;
 
         public class OngoingRaidBattleState : IExposable
         {
@@ -111,6 +115,7 @@ namespace RimChat.WorldState
             Scribe_Collections.Look(ref processedLetterIds, "processedLetterIds", LookMode.Value);
             Scribe_Values.Look(ref lastLetterScanTick, "lastLetterScanTick", -LetterScanInterval);
             Scribe_Values.Look(ref lastRaidScanTick, "lastRaidScanTick", -RaidScanInterval);
+            Scribe_Values.Look(ref _globalEventRevision, "worldEventRevision", 1);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -676,6 +681,12 @@ namespace RimChat.WorldState
             TryCompressRecordImmediate(record);
             worldEvents.Add(record);
             TrimWorldEvents();
+            NotifyEventAdded();
+        }
+
+        private void NotifyEventAdded()
+        {
+            Interlocked.Increment(ref _globalEventRevision);
         }
 
         private bool CanObserverSeeEvent(string observerId, WorldEventRecord record, bool includePublic, bool includeDirect)

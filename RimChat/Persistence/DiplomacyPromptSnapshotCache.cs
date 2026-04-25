@@ -20,14 +20,20 @@ namespace RimChat.Persistence
         {
             public DiplomacyPromptRuntimeSnapshot Snapshot;
             public int NextRetryTick;
+            public bool NeedsRefresh;
+            public int NeedsRefreshSinceTick;
+            public int LastValidatedTick;
         }
 
         private const int RetryDelayTicks = 250;
+        private const int ValidationThrottleTicks = 150;
+        private const int RefreshGracePeriodTicks = 1500;
 
         private readonly Dictionary<string, CacheEntry> cacheEntries =
             new Dictionary<string, CacheEntry>(StringComparer.Ordinal);
         private readonly Queue<Faction> warmupQueue = new Queue<Faction>();
         private readonly HashSet<string> queuedFactionIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly PromptFileStampCache _fileStampCache = new PromptFileStampCache();
 
         private int lastObservedWorldEventRevision = -1;
         private long lastObservedPromptFilesStamp = -1;
@@ -47,8 +53,10 @@ namespace RimChat.Persistence
             queuedFactionIds.Clear();
             cacheEntries.Clear();
             lastObservedWorldEventRevision = ResolveWorldEventRevision();
-            lastObservedPromptFilesStamp = ComputePromptFilesStampUtcTicks();
+            lastObservedPromptFilesStamp = _fileStampCache.GetStamp(Find.TickManager?.TicksGame ?? 0);
             lastObservedSettingsSignature = ComputeSettingsSignature();
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            _fileStampCache.Prime(currentTick);
             QueueAllCandidateFactions();
         }
 
@@ -73,7 +81,8 @@ namespace RimChat.Persistence
                 return false;
             }
 
-            if (entry.Snapshot == null || !IsSnapshotFresh(faction, entry.Snapshot))
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+            if (entry.Snapshot == null || !ValidateSnapshot(faction, entry, currentTick))
             {
                 cacheEntries.Remove(factionId);
                 RequestWarmup(faction, "stale_snapshot");
@@ -131,6 +140,20 @@ namespace RimChat.Persistence
 
             RefreshGlobalInvalidationSignals();
             int budget = Math.Max(1, maxBuildsPerTick);
+
+            var refreshTargets = cacheEntries
+                .Where(kvp => kvp.Value.NeedsRefresh && kvp.Value.NextRetryTick <= currentTick)
+                .Select(kvp => FindFactionByLoadId(kvp.Key))
+                .Where(f => f != null)
+                .Take(budget)
+                .ToList();
+
+            foreach (Faction faction in refreshTargets)
+            {
+                TryBuildSnapshot(faction, currentTick);
+                budget--;
+            }
+
             for (int i = 0; i < budget; i++)
             {
                 if (!TryDequeueNextBuildTarget(currentTick, out Faction faction))
@@ -140,6 +163,31 @@ namespace RimChat.Persistence
 
                 TryBuildSnapshot(faction, currentTick);
             }
+        }
+
+        private static Faction FindFactionByLoadId(string factionId)
+        {
+            if (string.IsNullOrWhiteSpace(factionId))
+            {
+                return null;
+            }
+
+            List<Faction> factions = Find.FactionManager?.AllFactionsListForReading;
+            if (factions == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < factions.Count; i++)
+            {
+                Faction f = factions[i];
+                if (f != null && string.Equals(f.GetUniqueLoadID(), factionId, StringComparison.Ordinal))
+                {
+                    return f;
+                }
+            }
+
+            return null;
         }
 
         private static bool IsValidFaction(Faction faction)
@@ -160,8 +208,9 @@ namespace RimChat.Persistence
 
         private void RefreshGlobalInvalidationSignals()
         {
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
             int worldEventRevision = ResolveWorldEventRevision();
-            long promptStamp = ComputePromptFilesStampUtcTicks();
+            long promptStamp = _fileStampCache.GetStamp(currentTick);
             int settingsSignature = ComputeSettingsSignature();
 
             bool changed = false;
@@ -228,7 +277,7 @@ namespace RimChat.Persistence
             {
                 int memoryRevision = LeaderMemoryManager.Instance.GetFactionMemoryRevision(faction);
                 int worldEventRevision = ResolveWorldEventRevision();
-                long promptStamp = ComputePromptFilesStampUtcTicks();
+                long promptStamp = _fileStampCache.GetStamp(currentTick);
                 int settingsSignature = ComputeSettingsSignature();
                 var snapshot = PromptPersistenceService.Instance.BuildRuntimeSnapshotForFaction(
                     faction,
@@ -251,7 +300,10 @@ namespace RimChat.Persistence
                 cacheEntries[factionId] = new CacheEntry
                 {
                     Snapshot = snapshot,
-                    NextRetryTick = 0
+                    NextRetryTick = 0,
+                    NeedsRefresh = false,
+                    NeedsRefreshSinceTick = 0,
+                    LastValidatedTick = currentTick
                 };
             }
             catch (Exception ex)
@@ -265,8 +317,9 @@ namespace RimChat.Persistence
             }
         }
 
-        private bool IsSnapshotFresh(Faction faction, DiplomacyPromptRuntimeSnapshot snapshot)
+        private bool ValidateSnapshot(Faction faction, CacheEntry entry, int currentTick)
         {
+            DiplomacyPromptRuntimeSnapshot snapshot = entry.Snapshot;
             if (snapshot == null || faction == null)
             {
                 return false;
@@ -278,34 +331,40 @@ namespace RimChat.Persistence
                 return false;
             }
 
-            if (snapshot.PlayerGoodwill != faction.PlayerGoodwill)
-            {
-                return false;
-            }
-
             if (snapshot.PlayerRelationKind != faction.RelationKindWith(Faction.OfPlayer))
             {
                 return false;
             }
 
-            if (snapshot.MemoryRevision != LeaderMemoryManager.Instance.GetFactionMemoryRevision(faction))
+            if (currentTick - entry.LastValidatedTick < ValidationThrottleTicks)
             {
-                return false;
+                return true;
             }
 
-            if (snapshot.WorldEventRevision != ResolveWorldEventRevision())
-            {
-                return false;
-            }
+            entry.LastValidatedTick = currentTick;
 
-            if (snapshot.PromptFilesStampUtcTicks != ComputePromptFilesStampUtcTicks())
-            {
-                return false;
-            }
+            bool l2Changed = snapshot.PlayerGoodwill != faction.PlayerGoodwill
+                          || snapshot.MemoryRevision != LeaderMemoryManager.Instance.GetFactionMemoryRevision(faction);
 
-            if (snapshot.SettingsSignature != ComputeSettingsSignature())
+            bool l3Changed = snapshot.WorldEventRevision != ResolveWorldEventRevision()
+                          || snapshot.PromptFilesStampUtcTicks != _fileStampCache.GetStamp(currentTick)
+                          || snapshot.SettingsSignature != ComputeSettingsSignature();
+
+            if (l2Changed || l3Changed)
             {
-                return false;
+                entry.NeedsRefresh = true;
+                if (entry.NeedsRefreshSinceTick <= 0)
+                {
+                    entry.NeedsRefreshSinceTick = currentTick;
+                }
+
+                if (currentTick - entry.NeedsRefreshSinceTick > RefreshGracePeriodTicks)
+                {
+                    Log.Warning($"[RimChat] Snapshot for {faction.Name} expired after {RefreshGracePeriodTicks} ticks grace period, forcing rebuild.");
+                    return false;
+                }
+
+                RequestWarmup(faction, l2Changed ? "l2_data_changed" : "l3_config_changed");
             }
 
             return true;
@@ -313,38 +372,7 @@ namespace RimChat.Persistence
 
         private static int ResolveWorldEventRevision()
         {
-            WorldEventLedgerComponent ledger = WorldEventLedgerComponent.Instance;
-            if (ledger == null)
-            {
-                return 0;
-            }
-
-            List<WorldEventRecord> worldEvents = ledger.GetRecentWorldEvents(
-                null,
-                daysWindow: 120,
-                includePublic: true,
-                includeDirect: true);
-            List<RaidBattleReportRecord> raidReports = ledger.GetRecentRaidBattleReports(
-                null,
-                daysWindow: 120,
-                includeDirect: true);
-
-            int latestWorldEventTick = worldEvents?.Count > 0
-                ? worldEvents[0]?.OccurredTick ?? 0
-                : 0;
-            int latestRaidTick = raidReports?.Count > 0
-                ? raidReports[0]?.BattleEndTick ?? 0
-                : 0;
-
-            unchecked
-            {
-                int hash = 17;
-                hash = hash * 31 + (worldEvents?.Count ?? 0);
-                hash = hash * 31 + (raidReports?.Count ?? 0);
-                hash = hash * 31 + latestWorldEventTick;
-                hash = hash * 31 + latestRaidTick;
-                return hash;
-            }
+            return WorldEventLedgerComponent.GlobalEventRevision;
         }
 
         private static int ComputeSettingsSignature()
