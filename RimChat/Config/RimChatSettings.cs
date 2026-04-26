@@ -192,7 +192,7 @@ namespace RimChat.Config
         public bool EnableDiplomacyStrategyToggle = true;
 
         // Advanced API Parameters
-        public bool ThinkingEnabled = true;
+        public bool ThinkingEnabled = false;
         public string ReasoningEffort = "medium";
 
         // Comms Console Settings
@@ -432,7 +432,7 @@ namespace RimChat.Config
             Scribe_Values.Look(ref ExpectedActionDenyLogLevel, "ExpectedActionDenyLogLevel", ExpectedActionDenyLogLevel.Info);
             Scribe_Values.Look(ref ProactiveMessageHardLimit, "ProactiveMessageHardLimit", 0);
             Scribe_Values.Look(ref EnableDiplomacyStrategyToggle, "EnableDiplomacyStrategyToggle", true);
-            Scribe_Values.Look(ref ThinkingEnabled, "ThinkingEnabled", true);
+            Scribe_Values.Look(ref ThinkingEnabled, "ThinkingEnabled", false);
             Scribe_Values.Look(ref ReasoningEffort, "ReasoningEffort", "medium");
 
             // Comms Console Settings

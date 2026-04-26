@@ -2281,16 +2281,20 @@ namespace RimChat.AI
 
             sb.Append("],");
             sb.Append("\"temperature\":0.7,");
-            sb.Append("\"max_tokens\":2000,");
+            sb.Append("\"max_tokens\":2000");
 
-            // Thinking parameters from global settings
+            // Thinking parameters from global settings — only emit when enabled.
+            // Some providers (e.g. Gemini) reject unknown keys, even with type=disabled.
             RimChatSettings globalSettings = RimChatMod.Settings;
-            bool thinkingEnabled = globalSettings?.ThinkingEnabled ?? true;
-            string reasoningEffort = globalSettings?.ReasoningEffort ?? "medium";
-            sb.Append($"\"thinking\":{{\"type\":\"{(thinkingEnabled ? "enabled" : "disabled")}\"}}");
-            if (thinkingEnabled && !string.IsNullOrEmpty(reasoningEffort))
+            bool thinkingEnabled = globalSettings?.ThinkingEnabled ?? false;
+            if (thinkingEnabled)
             {
-                sb.Append($",\"reasoning_effort\":\"{EscapeJson(reasoningEffort)}\"");
+                string reasoningEffort = globalSettings?.ReasoningEffort ?? "medium";
+                sb.Append($",\"thinking\":{{\"type\":\"enabled\"}}");
+                if (!string.IsNullOrEmpty(reasoningEffort))
+                {
+                    sb.Append($",\"reasoning_effort\":\"{EscapeJson(reasoningEffort)}\"");
+                }
             }
             sb.Append("}");
 

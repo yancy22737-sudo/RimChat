@@ -1,3 +1,10 @@
+0.9.1033
+- [Fix] Omit `thinking` key entirely from API request JSON when disabled — prevents 400 errors on providers that reject unknown keys (e.g. Gemini).
+- [Tweak] Changed ThinkingEnabled default from true to false — new installations default to no deep thinking.
+
+0.9.1032
+- [Tweak] Changed ThinkingEnabled default from true to false — new installations default to no deep thinking.
+
 0.9.1031
 - [New] Added thinking mode toggle and reasoning effort control (low/medium/high/xhigh) in API settings, defaults to enabled + medium.
 - [New] Added "Advanced Parameters" button in API settings tab; opens Dialog_AdvancedApiParameters window for global configuration, applied to the active model.
