@@ -1,3 +1,32 @@
+0.9.1036
+- [修复] 社交圈和策略生成立场的混淆 bug：玩家对派系首领说"我不需要某样东西"后，社交新闻错误地将玩家原话署名为派系首领发布。
+  * TryAnalyzeDialogueKeywords 改为只分析 AI 文本（NPC 回复），不再合并玩家文本。社交新闻以 NPC 视角发布，分析玩家文本会导致关键字/情感分类错误。
+  * TryGenerateRandomDialogueSocialPost 不再将玩家原始消息作为 NPC 公开声明的 intentHint 传入 TryBuildFactionDialoguePublicClaim，避免生成 "{派系名}表示：{玩家原话}" 的立场混淆。
+  * 同方法 category/sentiment 推断也改为只用 AI 文本，不再合并玩家文本。
+
+0.9.1035
+- [优化] 大幅降低 GameComponent 游戏刻性能开销（4 轮架构重构）：
+  * GameComponent_NpcDialoguePushManager：factionPushStates/队列/窗口 全部添加 Dictionary/HashSet O(1) 索引；消除 LINQ Where/OrderBy/ToList 等每 tick 分配；globalDeliveryTicks 极值缓存。
+  * GameComponent_RPGManager：全量 pawn 扫描改为分帧扫描（每 tick 只扫 1 个 map），峰值从 4.38ms 降至微秒级；扫描间隔从 900 提到 9000 tick；bootstrap 完成后直接 early-return 跳过每 tick 逻辑；Persona 目标集缓存；pending 检查 O(1) HashSet。
+  * GameComponent_DiplomacyManager（上帝组件拆分）：
+    - SocialCircle 子系统拆为独立 GameComponent_SocialCircleManager，不再占用 DiplomacyManager 每 tick 开销。
+    - DelayedEvents + EventQueries 拆为独立 GameComponent_DelayedEventManager，事件处理频率从每 60 降到每 250 tick。
+    - RPGManager 恢复独立 GameComponentTick（超轻 early return），不再经 DiplomacyManager 中转。
+    - Presence 评估添加 per-faction hourly 缓存，消除重复 Rand.PushState/PopState。
+    - ProcessPeriodicDiplomacySnapshots 快照收集整体异步化（LongEventHandler），主线程只做索引更新。
+    - SnapshotCache.Tick 从每 tick 降到每 60 tick。
+    - ProcessDelayedEvents 消除每次 HashSet 分配（倒序 RemoveAt）。
+    - HandleInboundFactionMessage 消除双重 ForcePresenceOnline。
+    - RefreshPresenceOnDialogueOpen 移除不可达死代码。
+  * SocialCircleState：ProcessedOrigins、FactionActionCooldowns、PublishedPostOriginKeys 全部 O(1) Dictionary/HashSet 索引。
+  * 多项热路径优化：Initialize 方法去 LINQ ToList、ResolveMentionedFaction 去重复 ToLowerInvariant、EnqueueDeferredSocialNewsSeed O(1)、GetLastNegotiatorForSession 反向索引循环。
+- [版本] About/About.xml modVersion 提升到 0.9.1035。
+
+0.9.1034
+- [修复] AI 结束外交对话后永久无法继续对话的 bug。ExitDialogue/GoOffline/SetDnd 现在按冷却计时恢复：ExitDialogue 2 小时自动重连，GoOffline/SetDnd 在 Presence 恢复 Online 后自动清除结束状态。旧存档加载后即时恢复。
+- [调整] ExitDialogue 外交冷却从 1 小时延长到 2 游戏小时。
+- [新增] 冷却期间显示模糊提示「对方需要一些时间…（约 X 小时内可继续）」，替代原来的硬阻断文案。
+
 0.9.1033
 - [修复] 推理关闭时不再发送 thinking 字段到 API，避免 Gemini 等提供商因不识别的键名返回 400。
 - [调整] 模型推理开关（ThinkingEnabled）默认值改为关闭，新安装用户默认不启用深度思考。

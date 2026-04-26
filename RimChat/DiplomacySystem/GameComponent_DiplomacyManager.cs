@@ -47,6 +47,8 @@ namespace RimChat.DiplomacySystem
             InitializePresenceStates();
             RebuildDialogueSessionIndex();
             RebuildPresenceStateIndex();
+            presenceEvalCacheKey.Clear();
+            presenceEvalCacheResult.Clear();
             InitializeSocialCircleOnNewGame();
             LeaderMemoryManager.Instance.OnNewGame();
             DiplomacyPromptSnapshotCache.Instance.WarmupOnLoad();
@@ -74,6 +76,8 @@ namespace RimChat.DiplomacySystem
             InitializePresenceStates();
             RebuildDialogueSessionIndex();
             RebuildPresenceStateIndex();
+            presenceEvalCacheKey.Clear();
+            presenceEvalCacheResult.Clear();
             InitializeSocialCircleOnLoadedGame();
             CleanupInvalidSessions();
             CleanupInvalidPresenceStates();
@@ -83,37 +87,28 @@ namespace RimChat.DiplomacySystem
 
         private void InitializeAIControlledFactions()
         {
-            var allFactions = Find.FactionManager.AllFactions
-                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
-                .ToList();
-
-            foreach (var faction in allFactions)
+            foreach (var f in Find.FactionManager.AllFactions)
             {
-                aiControlledFactions.Add(faction);
+                if (f.IsPlayer || f.defeated || f.def.hidden) continue;
+                aiControlledFactions.Add(f);
             }
         }
 
         private void InitializeDialogueSessions()
         {
-            var allFactions = Find.FactionManager.AllFactions
-                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
-                .ToList();
-
-            foreach (var faction in allFactions)
+            foreach (var f in Find.FactionManager.AllFactions)
             {
-                GetOrCreateSession(faction);
+                if (f.IsPlayer || f.defeated || f.def.hidden) continue;
+                GetOrCreateSession(f);
             }
         }
 
         private void InitializePresenceStates()
         {
-            var allFactions = Find.FactionManager.AllFactions
-                .Where(f => !f.IsPlayer && !f.defeated && !f.def.hidden)
-                .ToList();
-
-            foreach (var faction in allFactions)
+            foreach (var f in Find.FactionManager.AllFactions)
             {
-                GetOrCreatePresenceState(faction);
+                if (f.IsPlayer || f.defeated || f.def.hidden) continue;
+                GetOrCreatePresenceState(f);
             }
         }
 
@@ -195,18 +190,21 @@ namespace RimChat.DiplomacySystem
                 return false;
             }
 
-            if (forcePresenceOnline)
-            {
-                ForcePresenceOnlineForNpcInitiated(faction);
-            }
-
             FactionDialogueSession session = GetOrCreateSession(faction);
             if (session == null)
             {
                 return false;
             }
 
-            EnsureConversationReopenedOnInbound(session, faction, forcePresenceOnline);
+            if (forcePresenceOnline)
+            {
+                ForcePresenceOnlineForNpcInitiated(faction);
+                EnsureConversationReopenedOnInbound(session, faction);
+            }
+            else
+            {
+                EnsureConversationReopenedOnInbound(session, faction);
+            }
 
             string resolvedSender = string.IsNullOrWhiteSpace(sender)
                 ? (faction.leader?.Name?.ToStringShort ?? faction.Name ?? "Unknown")
@@ -219,8 +217,7 @@ namespace RimChat.DiplomacySystem
 
         private void EnsureConversationReopenedOnInbound(
             FactionDialogueSession session,
-            Faction faction,
-            bool forcePresenceOnline)
+            Faction faction)
         {
             if (session == null || !session.isConversationEndedByNpc)
             {
@@ -228,10 +225,6 @@ namespace RimChat.DiplomacySystem
             }
 
             session.ReinitiateConversation();
-            if (forcePresenceOnline)
-            {
-                ForcePresenceOnlineForNpcInitiated(faction);
-            }
 
             // Keep an explicit audit trail when inbound messages reopen an ended dialogue.
             session.AddMessage(
@@ -347,16 +340,6 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            if (state.forcedOfflineUntilTick > 0 && state.forcedOfflineUntilTick <= currentTick)
-            {
-                state.forcedOfflineUntilTick = 0;
-            }
-
-            if (state.doNotDisturbUntilTick > 0 && state.doNotDisturbUntilTick <= currentTick)
-            {
-                state.doNotDisturbUntilTick = 0;
-            }
-
             if (state.IsCacheValid(currentTick))
             {
                 HandlePresenceRecoveryQueueCleanup(faction, previousStatus, state.status);
@@ -462,7 +445,7 @@ namespace RimChat.DiplomacySystem
                 case "exit_dialogue":
                     if (session == null || !session.isConversationEndedByNpc)
                     {
-                        session?.MarkConversationEnded(normalizedReason, true, GenDate.TicksPerHour);
+                        session?.MarkConversationEnded(normalizedReason, true, 2 * GenDate.TicksPerHour);
                     }
                     break;
                 case "go_offline":
@@ -500,31 +483,37 @@ namespace RimChat.DiplomacySystem
  ///</summary>
         public List<Faction> GetFactionsWithDialogue()
         {
-            return dialogueSessions
-                .Where(s => s.faction != null && !s.faction.defeated && s.messages.Count > 0)
-                .Select(s => s.faction)
-                .ToList();
+            var result = new List<Faction>();
+            for (int i = 0; i < dialogueSessions.Count; i++)
+            {
+                var s = dialogueSessions[i];
+                if (s.faction != null && !s.faction.defeated && s.messages.Count > 0)
+                    result.Add(s.faction);
+            }
+            return result;
         }
 
         private int lastDailyResetTick = 0;
         private int lastPeriodicSnapshotTick = 0;
         private const int PeriodicSnapshotIntervalTicks = 1500; // ~30 seconds
 
+        // Per-faction presence evaluation cache keyed by (faction.loadID, dayIndex, hour).
+        // Avoids repeated Rand.PushState/PopState when the same faction is resolved multiple times within the same game hour.
+        private readonly Dictionary<Faction, int> presenceEvalCacheKey = new Dictionary<Faction, int>();
+        private readonly Dictionary<Faction, FactionPresenceStatus> presenceEvalCacheResult = new Dictionary<Faction, FactionPresenceStatus>();
+
         public override void GameComponentTick()
         {
             int currentTick = Find.TickManager.TicksGame;
-            DiplomacyPromptSnapshotCache.Instance.Tick(currentTick, maxBuildsPerTick: 1);
 
             if (currentTick % 60 == 0)
             {
-                ProcessDeferredSocialNewsSeeds(currentTick);
-                ProcessDelayedEvents();
+                DiplomacyPromptSnapshotCache.Instance.Tick(currentTick, maxBuildsPerTick: 1);
             }
 
             if (currentTick % 2000 == 0)
             {
                 ProcessAIDecisions();
-                ProcessSocialCircleTick();
             }
 
             if (currentTick - lastPeriodicSnapshotTick >= PeriodicSnapshotIntervalTicks)
@@ -543,33 +532,50 @@ namespace RimChat.DiplomacySystem
             {
                 FactionSpecialItemsManager.Instance.Tick();
             }
+
         }
 
         private void ProcessPeriodicDiplomacySnapshots()
         {
             if (dialogueSessions == null) return;
 
-            foreach (var session in dialogueSessions)
+            // Collect pending snapshots synchronously (only cheap index updates).
+            // The expensive traversal (GetLastNegotiatorForSession + I/O) is fully offloaded.
+            var pendingSessions = new List<FactionDialogueSession>();
+            var pendingLastIndices = new List<int>();
+            for (int i = 0; i < dialogueSessions.Count; i++)
             {
+                var session = dialogueSessions[i];
                 if (session == null || session.faction == null || session.faction.defeated) continue;
                 if (session.messages == null || session.messages.Count <= session.lastSummarizedMessageIndex) continue;
 
-                Pawn negotiator = GetLastNegotiatorForSession(session);
-                RpgNpcDialogueArchiveManager.Instance.RecordDiplomacySummary(
-                    negotiator,
-                    session.faction,
-                    session.messages,
-                    session.lastSummarizedMessageIndex);
-
+                pendingSessions.Add(session);
+                pendingLastIndices.Add(session.lastSummarizedMessageIndex);
                 session.lastSummarizedMessageIndex = session.messages.Count;
             }
+
+            if (pendingSessions.Count == 0) return;
+
+            var archive = RpgNpcDialogueArchiveManager.Instance;
+            LongEventHandler.QueueLongEvent(() =>
+            {
+                for (int i = 0; i < pendingSessions.Count; i++)
+                {
+                    var session = pendingSessions[i];
+                    if (session?.faction == null || session.messages == null) continue;
+                    int lastIndex = pendingLastIndices[i];
+                    Pawn negotiator = GetLastNegotiatorForSession(session);
+                    archive.RecordDiplomacySummary(negotiator, session.faction, session.messages, lastIndex);
+                }
+            }, "RimChat_DiplomacySnapshot", false, null);
         }
 
         private Pawn GetLastNegotiatorForSession(FactionDialogueSession session)
         {
             if (session?.messages == null) return null;
-            foreach (var msg in session.messages.AsEnumerable().Reverse())
+            for (int i = session.messages.Count - 1; i >= 0; i--)
             {
+                var msg = session.messages[i];
                 if (msg == null) continue;
                 Pawn speaker = msg.ResolveSpeakerPawn();
                 if (speaker != null && !speaker.Destroyed && !speaker.Dead)
@@ -580,7 +586,7 @@ namespace RimChat.DiplomacySystem
             return null;
         }
 
-        private void ProcessDelayedEvents()
+        public void ProcessDelayedEvents()
         {
             int currentTick = Find.TickManager?.TicksGame ?? -1;
             if (currentTick >= 0 && lastProcessedDelayedEventsTick == currentTick)
@@ -600,21 +606,14 @@ namespace RimChat.DiplomacySystem
 
             isProcessingDelayedEvents = true;
             lastProcessedDelayedEventsTick = currentTick;
-            var eventsToRemove = new HashSet<DelayedDiplomacyEvent>();
             try
             {
-                for (int i = 0; i < delayedEvents.Count; i++)
+                for (int i = delayedEvents.Count - 1; i >= 0; i--)
                 {
                     DelayedDiplomacyEvent evt = delayedEvents[i];
-                    if (evt == null)
+                    if (evt == null || evt.Faction == null || evt.Faction.defeated)
                     {
-                        eventsToRemove.Add(evt);
-                        continue;
-                    }
-
-                    if (evt.Faction == null || evt.Faction.defeated)
-                    {
-                        eventsToRemove.Add(evt);
+                        delayedEvents.RemoveAt(i);
                         continue;
                     }
 
@@ -626,7 +625,7 @@ namespace RimChat.DiplomacySystem
                     bool success = evt.Execute();
                     if (success)
                     {
-                        eventsToRemove.Add(evt);
+                        delayedEvents.RemoveAt(i);
                         continue;
                     }
 
@@ -641,13 +640,12 @@ namespace RimChat.DiplomacySystem
                     {
                         string policyNote = noRetryPolicy ? " (no-retry policy)" : string.Empty;
                         Log.Error($"[RimChat] Delayed {evt.EventType} from {evt.Faction?.Name} failed after {evt.RetryCount} retries and was discarded{policyNote}.");
-                        eventsToRemove.Add(evt);
+                        delayedEvents.RemoveAt(i);
                     }
                 }
             }
             finally
             {
-                delayedEvents.RemoveAll(evt => evt == null || eventsToRemove.Contains(evt));
                 FlushPendingDelayedEvents();
                 isProcessingDelayedEvents = false;
             }
@@ -703,6 +701,11 @@ namespace RimChat.DiplomacySystem
         public bool IsAIControlled(Faction faction)
         {
             return aiControlledFactions.Contains(faction);
+        }
+
+        public List<DelayedDiplomacyEvent> GetDelayedEvents()
+        {
+            return delayedEvents;
         }
 
         public override void ExposeData()
@@ -875,9 +878,18 @@ namespace RimChat.DiplomacySystem
 
         private FactionPresenceStatus EvaluateScheduledPresence(Faction faction, int currentTick, out string reason)
         {
-            reason = "schedule";
             int currentHour = GetCurrentHourOfDay();
             int dayIndex = currentTick / 60000;
+            int cacheKey = dayIndex * 100 + currentHour;
+
+            if (presenceEvalCacheKey.TryGetValue(faction, out int cachedKey) && cachedKey == cacheKey &&
+                presenceEvalCacheResult.TryGetValue(faction, out FactionPresenceStatus cachedStatus))
+            {
+                reason = "schedule_cached";
+                return cachedStatus;
+            }
+
+            reason = "schedule";
             TechLevel techLevel = faction?.def?.techLevel ?? TechLevel.Undefined;
             GetPresenceScheduleForTechLevel(techLevel, out int startHour, out int durationHours);
             int scheduleOffset = GetScheduleOffsetHours(faction, dayIndex);
@@ -905,7 +917,10 @@ namespace RimChat.DiplomacySystem
                 }
             }
 
-            return isOnline ? FactionPresenceStatus.Online : FactionPresenceStatus.Offline;
+            FactionPresenceStatus result = isOnline ? FactionPresenceStatus.Online : FactionPresenceStatus.Offline;
+            presenceEvalCacheKey[faction] = cacheKey;
+            presenceEvalCacheResult[faction] = result;
+            return result;
         }
 
         private bool IsNightBiasEnabled()

@@ -1002,6 +1002,7 @@ ID：{5}
     <RimChat_ConversationEnded>对方已结束本轮对话。</RimChat_ConversationEnded>
     <RimChat_ConversationEndedReason>对方已结束本轮对话：{0}</RimChat_ConversationEndedReason>
     <RimChat_ConversationEndedByPlayerWithCooldown>我方结束了当前对话，{0}小时后可继续。</RimChat_ConversationEndedByPlayerWithCooldown>
+    <RimChat_ConversationCooldownFuzzyHint>对方需要一些时间…（约 {0} 小时内可继续）</RimChat_ConversationCooldownFuzzyHint>
     <RimChat_ReinitiateDialogueButton>重新发起对话</RimChat_ReinitiateDialogueButton>
     <RimChat_ReinitiateCooldownHint>可在 {0} 小时后重新发起。</RimChat_ReinitiateCooldownHint>
     <RimChat_StrategyFallbackLabel>策略建议</RimChat_StrategyFallbackLabel>
@@ -2434,6 +2435,7 @@ ID：{5}
     <RimChat_PromptNode_RpgAliveFeeling>RPG活人感</RimChat_PromptNode_RpgAliveFeeling>
     <RimChat_ImmersionFallback_Diplomacy>我们会以更专注、更体面的方式继续这次会谈。</RimChat_ImmersionFallback_Diplomacy>
     <RimChat_ImmersionFallback_Rpg>我会留在当下，用自己的心声回应你。</RimChat_ImmersionFallback_Rpg>
+    <RimChat_ImmersionGuardWarning>（检测到回复可能受机制描述干扰，对话已保留）</RimChat_ImmersionGuardWarning>
     <RimChat_DiplomacyActionPartialFailure>我尝试处理你的请求，但其中一部分未成功：{0}</RimChat_DiplomacyActionPartialFailure>
     <RimChat_DiplomacyActionAllFailed>我无法完成这次请求：{0}</RimChat_DiplomacyActionAllFailed>
     <RimChat_DiplomacyAirdropAmountMapped>已按你提供的金额处理：预算={0}银，支付={1}银。我现在提交空投请求。</RimChat_DiplomacyAirdropAmountMapped>

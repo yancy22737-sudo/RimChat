@@ -22,6 +22,11 @@ namespace RimChat.DiplomacySystem
         public int NextPostTick;
         public string LastReadPostId = string.Empty;
 
+        // Runtime O(1) indexes, rebuilt on PostLoadInit and maintained incrementally.
+        [Unsaved] private Dictionary<string, SocialProcessedOrigin> processedOriginsByKey;
+        [Unsaved] private Dictionary<Faction, SocialFactionActionCooldown> factionActionCooldownsByFaction;
+        [Unsaved] public HashSet<string> PublishedPostOriginKeys = new HashSet<string>();
+
         public void ExposeData()
         {
             Scribe_Collections.Look(ref Posts, "posts", LookMode.Deep);
@@ -41,6 +46,7 @@ namespace RimChat.DiplomacySystem
                 ScheduledEvents = ScheduledEvents ?? new List<ScheduledSocialEventRecord>();
                 CleanupInvalidEntries();
                 ClearPendingOrigins();
+                RebuildRuntimeIndexes();
             }
         }
 
@@ -58,25 +64,33 @@ namespace RimChat.DiplomacySystem
                 item.OccurredTick <= 0);
             TrimProcessedOrigins();
             TrimScheduledEvents();
+            RebuildRuntimeIndexes();
         }
 
         public int GetFactionNextActionTick(Faction faction)
         {
             if (faction == null) return 0;
-            SocialFactionActionCooldown entry = FactionActionCooldowns.FirstOrDefault(e => e.Faction == faction);
-            return entry?.NextActionAllowedTick ?? 0;
+            if (factionActionCooldownsByFaction != null &&
+                factionActionCooldownsByFaction.TryGetValue(faction, out var entry))
+                return entry.NextActionAllowedTick;
+            return 0;
         }
 
         public void SetFactionNextActionTick(Faction faction, int tick)
         {
             if (faction == null) return;
-            SocialFactionActionCooldown entry = FactionActionCooldowns.FirstOrDefault(e => e.Faction == faction);
-            if (entry == null)
+            SocialFactionActionCooldown entry;
+            if (factionActionCooldownsByFaction != null &&
+                factionActionCooldownsByFaction.TryGetValue(faction, out entry))
             {
-                entry = new SocialFactionActionCooldown { Faction = faction };
-                FactionActionCooldowns.Add(entry);
+                entry.NextActionAllowedTick = tick;
+                return;
             }
-            entry.NextActionAllowedTick = tick;
+
+            entry = new SocialFactionActionCooldown { Faction = faction, NextActionAllowedTick = tick };
+            FactionActionCooldowns.Add(entry);
+            if (factionActionCooldownsByFaction != null)
+                factionActionCooldownsByFaction[faction] = entry;
         }
 
         public bool HasHandledOrigin(SocialNewsOriginType originType, string originKey, bool includeFailed = true)
@@ -101,25 +115,41 @@ namespace RimChat.DiplomacySystem
                 return;
             }
 
-            SocialProcessedOrigin entry = FindProcessedOrigin(originType, originKey);
-            if (entry == null)
+            string key = BuildOriginKey(originType, originKey);
+            SocialProcessedOrigin entry;
+            if (processedOriginsByKey != null && processedOriginsByKey.TryGetValue(key, out entry))
             {
-                entry = new SocialProcessedOrigin
-                {
-                    OriginType = originType,
-                    OriginKey = originKey
-                };
-                ProcessedOrigins.Add(entry);
+                entry.State = state;
+                entry.ProcessedTick = processedTick;
+                TrimProcessedOrigins();
+                return;
             }
 
-            entry.State = state;
-            entry.ProcessedTick = processedTick;
+            entry = new SocialProcessedOrigin
+            {
+                OriginType = originType,
+                OriginKey = originKey,
+                State = state,
+                ProcessedTick = processedTick
+            };
+            ProcessedOrigins.Add(entry);
+            if (processedOriginsByKey != null)
+                processedOriginsByKey[key] = entry;
             TrimProcessedOrigins();
         }
 
         public void ClearPendingOrigins()
         {
-            ProcessedOrigins.RemoveAll(item => item != null && item.State == SocialNewsGenerationState.Pending);
+            for (int i = ProcessedOrigins.Count - 1; i >= 0; i--)
+            {
+                var item = ProcessedOrigins[i];
+                if (item != null && item.State == SocialNewsGenerationState.Pending)
+                {
+                    ProcessedOrigins.RemoveAt(i);
+                    if (processedOriginsByKey != null && !string.IsNullOrWhiteSpace(item.OriginKey))
+                        processedOriginsByKey.Remove(BuildOriginKey(item.OriginType, item.OriginKey));
+                }
+            }
         }
 
         private SocialProcessedOrigin FindProcessedOrigin(SocialNewsOriginType originType, string originKey)
@@ -129,10 +159,45 @@ namespace RimChat.DiplomacySystem
                 return null;
             }
 
-            return ProcessedOrigins.FirstOrDefault(item =>
-                item != null &&
-                item.OriginType == originType &&
-                string.Equals(item.OriginKey, originKey, System.StringComparison.Ordinal));
+            if (processedOriginsByKey != null &&
+                processedOriginsByKey.TryGetValue(BuildOriginKey(originType, originKey), out var entry))
+            {
+                return entry;
+            }
+
+            return null;
+        }
+
+        private static string BuildOriginKey(SocialNewsOriginType originType, string originKey)
+        {
+            return $"{(int)originType}:{originKey}";
+        }
+
+        private void RebuildRuntimeIndexes()
+        {
+            processedOriginsByKey = new Dictionary<string, SocialProcessedOrigin>();
+            for (int i = 0; i < ProcessedOrigins.Count; i++)
+            {
+                var item = ProcessedOrigins[i];
+                if (item != null && !string.IsNullOrWhiteSpace(item.OriginKey))
+                    processedOriginsByKey[BuildOriginKey(item.OriginType, item.OriginKey)] = item;
+            }
+
+            factionActionCooldownsByFaction = new Dictionary<Faction, SocialFactionActionCooldown>();
+            for (int i = 0; i < FactionActionCooldowns.Count; i++)
+            {
+                var item = FactionActionCooldowns[i];
+                if (item?.Faction != null)
+                    factionActionCooldownsByFaction[item.Faction] = item;
+            }
+
+            PublishedPostOriginKeys.Clear();
+            for (int i = 0; i < Posts.Count; i++)
+            {
+                var post = Posts[i];
+                if (post != null && !string.IsNullOrWhiteSpace(post.OriginKey))
+                    PublishedPostOriginKeys.Add(BuildOriginKey(post.OriginType, post.OriginKey));
+            }
         }
 
         private void TrimProcessedOrigins()
@@ -146,6 +211,7 @@ namespace RimChat.DiplomacySystem
                 .OrderByDescending(item => item?.ProcessedTick ?? 0)
                 .Take(MaxProcessedOrigins)
                 .ToList();
+            RebuildRuntimeIndexes();
         }
 
         public void AddScheduledEvent(ScheduledSocialEventRecord record)

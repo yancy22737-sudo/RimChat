@@ -1,3 +1,32 @@
+0.9.1036
+- [Fix] Social circle and strategy generation perspective attribution bug: player's first-person statements were incorrectly attributed to faction leaders in social news posts (e.g., player says "I don't need your iron", NPC's faction publishes it as their own statement).
+  * TryAnalyzeDialogueKeywords now analyzes only AI text (NPC response) instead of merged player+AI text — social news is published from the NPC's perspective; including player text polluted keyword/sentiment classification.
+  * TryGenerateRandomDialogueSocialPost no longer passes player's raw message as intentHint to TryBuildFactionDialoguePublicClaim, preventing "{Faction} says: {player's words}" misattribution.
+  * Category/sentiment inference in the same method now uses AI text only instead of merged text.
+
+0.9.1035
+- [Optimization] Dramatically reduced GameComponent per-tick performance overhead (4-round architectural refactor):
+  * GameComponent_NpcDialoguePushManager: Dictionary/HashSet O(1) indexes for factionPushStates/queues/windows; eliminated LINQ Where/OrderBy/ToList per-tick allocations; globalDeliveryTicks min-value caching.
+  * GameComponent_RPGManager: Full pawn sweep replaced with multi-frame scan (1 map per tick), peak from 4.38ms to microsecond level; scan interval increased from 900 to 9000 ticks; ultra-light early-return after bootstrap completes; persona target caching; pending check O(1) HashSet.
+  * GameComponent_DiplomacyManager (god component split):
+    - SocialCircle subsystem extracted to GameComponent_SocialCircleManager, removed from DiplomacyManager per-tick path.
+    - DelayedEvents + EventQueries extracted to GameComponent_DelayedEventManager, event processing reduced from every 60 to every 250 ticks.
+    - RPGManager restored to independent GameComponentTick (ultra-light early return), no longer routed through DiplomacyManager.
+    - Presence evaluation added per-faction hourly cache, eliminating repeated Rand.PushState/PopState.
+    - ProcessPeriodicDiplomacySnapshots fully async (LongEventHandler), main thread only updates indices.
+    - SnapshotCache.Tick reduced from every tick to every 60 ticks.
+    - ProcessDelayedEvents HashSet allocation eliminated (reverse RemoveAt).
+    - HandleInboundFactionMessage double ForcePresenceOnline eliminated.
+    - RefreshPresenceOnDialogueOpen unreachable dead code removed.
+  * SocialCircleState: ProcessedOrigins, FactionActionCooldowns, PublishedPostOriginKeys all O(1) Dictionary/HashSet indexes.
+  * Multiple hot-path optimizations: Initialize methods de-LINQ'd, ResolveMentionedFaction ToLowerInvariant deduplication, EnqueueDeferredSocialNewsSeed O(1), GetLastNegotiatorForSession reverse index loop.
+- [Version] About/About.xml modVersion bumped to 0.9.1035.
+
+0.9.1034
+- [Fix] AI-ended diplomacy conversations were permanently blocked from re-initiation. ExitDialogue/GoOffline/SetDnd now recover via cooldown: ExitDialogue auto-reconnects after 2 hours; GoOffline/SetDnd auto-clear ended state when presence recovers to Online. Legacy saves recover instantly on load.
+- [Tweak] ExitDialogue diplomacy cooldown extended from 1 to 2 in-game hours.
+- [New] Fuzzy cooldown hint "They need a moment... (available within ~X hours)" shown during cooldown instead of hard block text.
+
 0.9.1033
 - [Fix] Omit `thinking` key entirely from API request JSON when disabled — prevents 400 errors on providers that reject unknown keys (e.g. Gemini).
 - [Tweak] Changed ThinkingEnabled default from true to false — new installations default to no deep thinking.

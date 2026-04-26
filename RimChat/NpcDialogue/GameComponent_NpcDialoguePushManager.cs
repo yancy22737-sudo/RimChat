@@ -47,14 +47,18 @@ namespace RimChat.NpcDialogue
         public static GameComponent_NpcDialoguePushManager Instance;
 
         private List<FactionNpcPushState> factionPushStates = new List<FactionNpcPushState>();
+        private Dictionary<Faction, FactionNpcPushState> factionPushStatesByFaction = new Dictionary<Faction, FactionNpcPushState>();
         private List<QueuedNpcDialogueTrigger> queuedTriggers = new List<QueuedNpcDialogueTrigger>();
 
         private readonly Queue<NpcDialogueTriggerContext> incomingTriggers = new Queue<NpcDialogueTriggerContext>();
         private readonly Dictionary<string, PendingGenerationContext> pendingRequests = new Dictionary<string, PendingGenerationContext>();
+        private readonly HashSet<Faction> factionsWithPendingRequests = new HashSet<Faction>();
+        private readonly HashSet<Faction> factionsInQueue = new HashSet<Faction>();
         private readonly Queue<int> clickTicks = new Queue<int>();
         private readonly HashSet<Faction> activeCandidateFactions = new HashSet<Faction>();
         private readonly Dictionary<Faction, int> candidateTouchTicks = new Dictionary<Faction, int>();
         private readonly List<int> globalDeliveryTicks = new List<int>();
+        private int globalDeliveryOldestInWindow;
         private int lastGlobalDeliveredTick = -DefaultGlobalDeliveryCooldownTicks;
         private int lastCandidateCacheMaintenanceTick;
         private int lastCandidateSessionSyncTick;
@@ -70,10 +74,13 @@ namespace RimChat.NpcDialogue
             Instance = this;
             incomingTriggers.Clear();
             pendingRequests.Clear();
+            factionsWithPendingRequests.Clear();
+            factionsInQueue.Clear();
             clickTicks.Clear();
             activeCandidateFactions.Clear();
             candidateTouchTicks.Clear();
             globalDeliveryTicks.Clear();
+            globalDeliveryOldestInWindow = 0;
             lastGlobalDeliveredTick = -DefaultGlobalDeliveryCooldownTicks;
             lastCandidateCacheMaintenanceTick = 0;
             lastCandidateSessionSyncTick = 0;
@@ -85,8 +92,11 @@ namespace RimChat.NpcDialogue
             Instance = this;
             incomingTriggers.Clear();
             pendingRequests.Clear();
+            factionsWithPendingRequests.Clear();
+            factionsInQueue.Clear();
             clickTicks.Clear();
             globalDeliveryTicks.Clear();
+            globalDeliveryOldestInWindow = 0;
             CleanupInvalidState();
             RebuildCandidateCache();
         }
@@ -117,6 +127,7 @@ namespace RimChat.NpcDialogue
                     lastGlobalDeliveredTick = -DefaultGlobalDeliveryCooldownTicks;
                 }
                 CleanupInvalidState();
+                RebuildAllRuntimeIndexes();
                 RebuildCandidateCache();
             }
         }
@@ -366,22 +377,28 @@ namespace RimChat.NpcDialogue
         {
             CleanupExpiredQueue(currentTick);
 
-            List<QueuedNpcDialogueTrigger> dueItems = queuedTriggers
-                .Where(q => q != null && q.dueTick <= currentTick)
-                .OrderBy(q => q.dueTick)
-                .ToList();
+            int dueCount = 0;
+            for (int i = 0; i < queuedTriggers.Count; i++)
+            {
+                if (queuedTriggers[i]?.dueTick <= currentTick) dueCount++;
+            }
+
+            if (dueCount > 1)
+            {
+                queuedTriggers.Sort((a, b) => (a?.dueTick ?? 0).CompareTo(b?.dueTick ?? 0));
+            }
 
             int processed = 0;
-            foreach (QueuedNpcDialogueTrigger item in dueItems)
+            for (int i = queuedTriggers.Count - 1; i >= 0; i--)
             {
-                if (processed >= 3)
-                {
-                    break;
-                }
+                if (processed >= 3) break;
+                var item = queuedTriggers[i];
+                if (item == null || item.dueTick > currentTick) continue;
 
                 if (!IsValidTargetFaction(item.faction))
                 {
-                    queuedTriggers.Remove(item);
+                    queuedTriggers.RemoveAt(i);
+                    factionsInQueue.Remove(item.faction);
                     continue;
                 }
 
@@ -438,7 +455,8 @@ namespace RimChat.NpcDialogue
                     continue;
                 }
 
-                queuedTriggers.Remove(item);
+                queuedTriggers.RemoveAt(i);
+                factionsInQueue.Remove(item.faction);
                 StartGeneration(context);
                 processed++;
             }
@@ -551,6 +569,7 @@ namespace RimChat.NpcDialogue
                 Messages = messages,
                 Attempt = 1
             };
+            factionsWithPendingRequests.Add(context.Faction);
         }
 
         private void OnGenerationSuccess(string requestId, string response)
@@ -561,6 +580,7 @@ namespace RimChat.NpcDialogue
             }
 
             pendingRequests.Remove(requestId);
+            UpdatePendingFactionIndex(pending.Context?.Faction);
             string message = SanitizeModelOutput(response);
             if (string.IsNullOrWhiteSpace(message))
             {
@@ -584,6 +604,7 @@ namespace RimChat.NpcDialogue
             }
 
             pendingRequests.Remove(requestId);
+            UpdatePendingFactionIndex(pending.Context?.Faction);
             if (pending.Attempt < 2 && AIChatServiceAsync.Instance.IsConfigured())
             {
                 RetryGeneration(pending);
@@ -619,6 +640,25 @@ namespace RimChat.NpcDialogue
                 Messages = pending.Messages,
                 Attempt = pending.Attempt + 1
             };
+            factionsWithPendingRequests.Add(pending.Context.Faction);
+        }
+
+        private void UpdatePendingFactionIndex(Faction faction)
+        {
+            if (faction == null)
+            {
+                return;
+            }
+
+            foreach (var pair in pendingRequests)
+            {
+                if (pair.Value?.Context?.Faction == faction)
+                {
+                    return;
+                }
+            }
+
+            factionsWithPendingRequests.Remove(faction);
         }
 
         private bool TryGetPromptRuntimeSnapshotOrDefer(
@@ -672,6 +712,8 @@ namespace RimChat.NpcDialogue
                 state.nextAllowedTick = currentTick + Rand.RangeInclusive(GetFactionCooldownMinTicks(), GetFactionCooldownMaxTicks());
                 lastGlobalDeliveredTick = currentTick;
                 globalDeliveryTicks.Add(currentTick);
+                if (currentTick < globalDeliveryOldestInWindow)
+                    globalDeliveryOldestInWindow = currentTick;
             }
         }
 
@@ -875,16 +917,29 @@ namespace RimChat.NpcDialogue
             int expireTicks = Mathf.RoundToInt((settings?.NpcQueueExpireHours ?? 12f) * TickPerHour);
             expireTicks = Mathf.Max(expireTicks, TickPerHour);
 
-            List<QueuedNpcDialogueTrigger> sameFaction = queuedTriggers
-                .Where(q => q?.faction == context.Faction)
-                .ToList();
-
-            if (sameFaction.Count >= maxPerFaction)
+            int sameFactionCount = 0;
+            QueuedNpcDialogueTrigger lowestPriority = null;
+            int lowestScore = int.MaxValue;
+            for (int i = 0; i < queuedTriggers.Count; i++)
             {
-                QueuedNpcDialogueTrigger lowestPriority = sameFaction
-                    .OrderBy(GetQueueItemPriority)
-                    .First();
+                var q = queuedTriggers[i];
+                if (q?.faction != context.Faction) continue;
+                sameFactionCount++;
+                int score = GetQueueItemPriority(q);
+                if (score < lowestScore)
+                {
+                    lowestScore = score;
+                    lowestPriority = q;
+                }
+            }
+
+            if (sameFactionCount >= maxPerFaction && lowestPriority != null)
+            {
                 queuedTriggers.Remove(lowestPriority);
+                if (!queuedTriggers.Exists(q => q != null && q.faction == lowestPriority.faction))
+                {
+                    factionsInQueue.Remove(lowestPriority.faction);
+                }
                 LogThrottleDebug($"queue evict lowest priority: faction={context.Faction?.Name}, evicted={lowestPriority.sourceTag}");
             }
 
@@ -894,6 +949,7 @@ namespace RimChat.NpcDialogue
                 dueTick,
                 nowTick + expireTicks);
             queuedTriggers.Add(item);
+            factionsInQueue.Add(context.Faction);
             MarkFactionCandidate(context.Faction, nowTick);
             LogThrottleDebug($"queue add: faction={context.Faction?.Name}, due={dueTick}, expire={nowTick + expireTicks}, reason={context.SourceTag}");
         }
@@ -916,11 +972,24 @@ namespace RimChat.NpcDialogue
 
         private void CleanupExpiredQueue(int currentTick)
         {
+            var removedFactions = new HashSet<Faction>();
             queuedTriggers.RemoveAll(q =>
-                q == null ||
-                q.faction == null ||
-                q.faction.defeated ||
-                q.expireTick <= currentTick);
+            {
+                if (q == null || q.faction == null || q.faction.defeated || q.expireTick <= currentTick)
+                {
+                    if (q?.faction != null) removedFactions.Add(q.faction);
+                    return true;
+                }
+                return false;
+            });
+
+            foreach (Faction f in removedFactions)
+            {
+                if (!queuedTriggers.Exists(q => q != null && q.faction == f))
+                {
+                    factionsInQueue.Remove(f);
+                }
+            }
         }
 
         public int CancelQueuedTriggersForFaction(Faction faction, string reason = "manual")
@@ -933,6 +1002,7 @@ namespace RimChat.NpcDialogue
             int removed = queuedTriggers.RemoveAll(q => q != null && q.faction == faction);
             if (removed > 0)
             {
+                factionsInQueue.Remove(faction);
                 LogThrottleDebug($"queue clear: faction={faction.Name}, removed={removed}, reason={reason}");
             }
             return removed;
@@ -981,24 +1051,34 @@ namespace RimChat.NpcDialogue
             float windowHours = settings?.NpcGlobalWindowHours ?? 24f;
             int windowTicks = Mathf.RoundToInt(windowHours * TickPerHour);
 
-            globalDeliveryTicks.RemoveAll(t => currentTick - t > windowTicks);
+            globalDeliveryOldestInWindow = int.MaxValue;
+            for (int i = globalDeliveryTicks.Count - 1; i >= 0; i--)
+            {
+                if (currentTick - globalDeliveryTicks[i] > windowTicks)
+                {
+                    globalDeliveryTicks.RemoveAt(i);
+                }
+                else if (globalDeliveryTicks[i] < globalDeliveryOldestInWindow)
+                {
+                    globalDeliveryOldestInWindow = globalDeliveryTicks[i];
+                }
+            }
 
             return globalDeliveryTicks.Count >= maxMessages;
         }
 
         private int GetGlobalWindowNextAvailableTick(int currentTick)
         {
-            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
-            float windowHours = settings?.NpcGlobalWindowHours ?? 24f;
-            int windowTicks = Mathf.RoundToInt(windowHours * TickPerHour);
-
             if (globalDeliveryTicks.Count == 0)
             {
                 return currentTick;
             }
 
-            int oldestInWindow = globalDeliveryTicks.Min();
-            return oldestInWindow + windowTicks;
+            RimChatSettings settings = RimChatMod.Instance?.InstanceSettings;
+            float windowHours = settings?.NpcGlobalWindowHours ?? 24f;
+            int windowTicks = Mathf.RoundToInt(windowHours * TickPerHour);
+
+            return globalDeliveryOldestInWindow + windowTicks;
         }
 
         private bool CanBypassCooldown(NpcDialogueTriggerContext context)
@@ -1056,20 +1136,7 @@ namespace RimChat.NpcDialogue
 
         private bool IsFactionPending(Faction faction)
         {
-            if (faction == null)
-            {
-                return false;
-            }
-
-            foreach (var pair in pendingRequests)
-            {
-                if (pair.Value?.Context?.Faction == faction)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return faction != null && factionsWithPendingRequests.Contains(faction);
         }
 
         private bool IsPlayerBusy()
@@ -1195,8 +1262,7 @@ namespace RimChat.NpcDialogue
 
         private FactionNpcPushState GetOrCreateState(Faction faction)
         {
-            FactionNpcPushState state = factionPushStates.FirstOrDefault(s => s?.faction == faction);
-            if (state != null)
+            if (factionPushStatesByFaction.TryGetValue(faction, out FactionNpcPushState state))
             {
                 return state;
             }
@@ -1207,6 +1273,7 @@ namespace RimChat.NpcDialogue
                 lastInteractionTick = Find.TickManager?.TicksGame ?? 0
             };
             factionPushStates.Add(state);
+            factionPushStatesByFaction[faction] = state;
             return state;
         }
 
@@ -1218,6 +1285,33 @@ namespace RimChat.NpcDialogue
                 q.faction == null ||
                 q.faction.defeated ||
                 (q.category == NpcDialogueCategory.WarningThreat && !q.bypassCategoryGate));
+        }
+
+        private void RebuildAllRuntimeIndexes()
+        {
+            factionPushStatesByFaction.Clear();
+            for (int i = 0; i < factionPushStates.Count; i++)
+            {
+                var s = factionPushStates[i];
+                if (s?.faction != null)
+                    factionPushStatesByFaction[s.faction] = s;
+            }
+
+            factionsInQueue.Clear();
+            for (int i = 0; i < queuedTriggers.Count; i++)
+            {
+                var q = queuedTriggers[i];
+                if (q?.faction != null)
+                    factionsInQueue.Add(q.faction);
+            }
+
+            factionsWithPendingRequests.Clear();
+            foreach (var pair in pendingRequests)
+            {
+                var f = pair.Value?.Context?.Faction;
+                if (f != null)
+                    factionsWithPendingRequests.Add(f);
+            }
         }
 
         private void MaintainCandidateCache(int currentTick)
@@ -1282,12 +1376,7 @@ namespace RimChat.NpcDialogue
                 return false;
             }
 
-            if (IsFactionPending(faction))
-            {
-                return true;
-            }
-
-            if (queuedTriggers.Any(q => q != null && q.faction == faction))
+            if (IsFactionPending(faction) || factionsInQueue.Contains(faction))
             {
                 return true;
             }
@@ -1298,8 +1387,8 @@ namespace RimChat.NpcDialogue
                 return true;
             }
 
-            FactionNpcPushState state = factionPushStates.FirstOrDefault(s => s?.faction == faction);
-            if (state != null && currentTick - state.lastInteractionTick <= RecentInteractionWindowTicks)
+            if (factionPushStatesByFaction.TryGetValue(faction, out FactionNpcPushState state) &&
+                currentTick - state.lastInteractionTick <= RecentInteractionWindowTicks)
             {
                 MarkFactionCandidate(faction, state.lastInteractionTick);
                 return true;

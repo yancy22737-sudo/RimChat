@@ -181,16 +181,16 @@ namespace RimChat.DiplomacySystem
             out int sentiment,
             out string intentHint)
         {
-            string merged = $"{playerText} {aiText}".ToLowerInvariant();
-            category = InferCategory(merged, string.Empty);
-            sentiment = InferSentiment(merged);
+            string aiLower = (aiText ?? string.Empty).ToLowerInvariant();
+            category = InferCategory(aiLower, string.Empty);
+            sentiment = InferSentiment(aiLower);
             intentHint = string.Empty;
             if (sentiment == 0)
             {
                 return false;
             }
 
-            if (sentiment <= -1 && ContainsAny(merged, MilitaryKeywords))
+            if (sentiment <= -1 && ContainsAny(aiLower, MilitaryKeywords))
             {
                 intentHint = SocialIntentType.Raid.ToString();
             }

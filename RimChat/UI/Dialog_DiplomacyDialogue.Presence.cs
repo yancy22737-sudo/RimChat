@@ -165,16 +165,39 @@ namespace RimChat.UI
                 return false;
             }
 
+            int currentTick = Find.TickManager?.TicksGame ?? 0;
+
             if (session.conversationEndReason == "player_initiated")
             {
-                int currentTick = Find.TickManager?.TicksGame ?? 0;
-                int remainingTicks = session.GetReinitiateRemainingTicks(currentTick);
-                if (remainingTicks > 0)
+                int playerRemainingTicks = session.GetReinitiateRemainingTicks(currentTick);
+                if (playerRemainingTicks > 0)
                 {
-                    float remainingHours = remainingTicks / 2500f;
+                    float remainingHours = playerRemainingTicks / 2500f;
                     reason = "RimChat_ConversationEndedByPlayerWithCooldown".Translate(remainingHours.ToString("F1"));
                     return true;
                 }
+                session.ReinitiateConversation();
+                return false;
+            }
+
+            // ExitDialogue sets canReinitiate=true with a cooldown; respect it.
+            if (session.IsReinitiateAvailable(currentTick))
+            {
+                session.ReinitiateConversation();
+                return false;
+            }
+
+            int aiRemainingTicks = session.GetReinitiateRemainingTicks(currentTick);
+            if (aiRemainingTicks > 0)
+            {
+                float remainingHours = aiRemainingTicks / 2500f;
+                reason = "RimChat_ConversationCooldownFuzzyHint".Translate(remainingHours.ToString("F1"));
+                return true;
+            }
+
+            // GoOffline / SetDnd: presence status has recovered to Online, clear ended state.
+            if (status == FactionPresenceStatus.Online)
+            {
                 session.ReinitiateConversation();
                 return false;
             }

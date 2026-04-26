@@ -22,14 +22,17 @@ namespace RimChat.DiplomacySystem
             new Dictionary<string, PendingSocialNewsRequest>();
         private readonly List<DeferredSocialNewsSeed> deferredSocialNewsSeeds =
             new List<DeferredSocialNewsSeed>();
+        private readonly Dictionary<string, DeferredSocialNewsSeed> deferredSocialNewsSeedsByKey =
+            new Dictionary<string, DeferredSocialNewsSeed>();
 
         private void ClearSocialTransientState()
         {
             pendingSocialNewsRequests.Clear();
             deferredSocialNewsSeeds.Clear();
+            deferredSocialNewsSeedsByKey.Clear();
         }
 
-        private void ProcessDeferredSocialNewsSeeds(int currentTick)
+        public void ProcessDeferredSocialNewsSeeds(int currentTick)
         {
             if (deferredSocialNewsSeeds.Count == 0) return;
             if (!IsSocialCircleEnabled() || currentTick <= 0)
@@ -52,6 +55,8 @@ namespace RimChat.DiplomacySystem
                 }
 
                 deferredSocialNewsSeeds.RemoveAt(i);
+                if (item.Key != null)
+                    deferredSocialNewsSeedsByKey.Remove(item.Key);
                 if (item.Seed == null || !item.Seed.IsValid())
                 {
                     continue;
@@ -269,22 +274,22 @@ namespace RimChat.DiplomacySystem
             }
 
             string key = BuildDeferredSocialSeedKey(seed);
-            DeferredSocialNewsSeed existing = deferredSocialNewsSeeds.FirstOrDefault(item =>
-                item != null && string.Equals(item.Key, key, StringComparison.Ordinal));
-            if (existing != null)
+            if (deferredSocialNewsSeedsByKey.TryGetValue(key, out DeferredSocialNewsSeed existing))
             {
                 existing.DueTick = Math.Min(existing.DueTick, dueTick);
                 existing.AllowFailedRetry |= allowFailedRetry;
                 return;
             }
 
-            deferredSocialNewsSeeds.Add(new DeferredSocialNewsSeed
+            var item = new DeferredSocialNewsSeed
             {
                 Key = key,
                 Seed = seed,
                 DueTick = dueTick,
                 AllowFailedRetry = allowFailedRetry
-            });
+            };
+            deferredSocialNewsSeeds.Add(item);
+            deferredSocialNewsSeedsByKey[key] = item;
         }
 
         private static string BuildDeferredSocialSeedKey(SocialNewsSeed seed)
@@ -371,10 +376,10 @@ namespace RimChat.DiplomacySystem
 
         private bool HasPublishedOrigin(SocialNewsSeed seed)
         {
-            return socialCircleState.Posts.Any(post =>
-                post != null &&
-                post.OriginType == seed.OriginType &&
-                string.Equals(post.OriginKey, seed.OriginKey, System.StringComparison.Ordinal));
+            if (seed == null || string.IsNullOrWhiteSpace(seed.OriginKey))
+                return false;
+            return socialCircleState.PublishedPostOriginKeys.Contains(
+                $"{(int)seed.OriginType}:{seed.OriginKey}");
         }
 
         private void OnSocialNewsRequestSuccess(string requestId, string response)
@@ -466,6 +471,8 @@ namespace RimChat.DiplomacySystem
         private void AddCompletedSocialPost(PublicSocialPost post, SocialNewsSeed seed, int currentTick)
         {
             socialCircleState.Posts.Add(post);
+            if (!string.IsNullOrWhiteSpace(post.OriginKey))
+                socialCircleState.PublishedPostOriginKeys.Add($"{(int)post.OriginType}:{post.OriginKey}");
             socialPostsCacheDirty = true;
             TrimSocialPosts();
             if (seed.ApplyDiplomaticImpact)

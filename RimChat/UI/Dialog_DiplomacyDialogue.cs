@@ -3019,6 +3019,7 @@ namespace RimChat.UI
 
             // Getdialoguetext
             string dialogueText = parsedResponse.DialogueText;
+            bool immersionGuardFlagged = false;
             ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogueParts(
                 dialogueText,
                 envelope?.ActionsJson);
@@ -3026,6 +3027,7 @@ namespace RimChat.UI
             {
                 Log.Warning($"[RimChat] Immersion guard blocked diplomacy visible text at display stage: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
                 dialogueText = (dialogueText ?? string.Empty).Trim();
+                immersionGuardFlagged = true;
             }
             else
             {
@@ -3078,6 +3080,10 @@ namespace RimChat.UI
             }
             AppendSuccessfulActionSystemMessages(actionOutcomes, currentSession, currentFaction);
             AppendFailedActionSystemMessages(actionOutcomes, currentSession);
+            if (immersionGuardFlagged)
+            {
+                currentSession.AddMessage("System", "RimChat_ImmersionGuardWarning".Translate(), false, DialogueMessageType.System);
+            }
 
             // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
 
@@ -3813,46 +3819,9 @@ namespace RimChat.UI
 
         private string FinalizeDialogueTextWithActionOutcomes(string baseDialogueText, List<ActionExecutionOutcome> outcomes)
         {
-            if (outcomes == null || outcomes.Count == 0)
-            {
-                return baseDialogueText;
-            }
-
-            List<ActionExecutionOutcome> failures = outcomes
-                .Where(outcome => !outcome.IsSuccess && !IsExpectedActionDenyFailure(outcome))
-                .ToList();
-            if (failures.Count == 0)
-            {
-                return baseDialogueText;
-            }
-
-            string failureSummary = BuildActionFailureSummary(failures);
-            int successCount = outcomes.Count(outcome => outcome.IsSuccess);
-            if (successCount > 0)
-            {
-                return "RimChat_DiplomacyActionPartialFailure".Translate(failureSummary).ToString();
-            }
-
-            return "RimChat_DiplomacyActionAllFailed".Translate(failureSummary).ToString();
-        }
-
-        private static string BuildActionFailureSummary(List<ActionExecutionOutcome> failures)
-        {
-            if (failures == null || failures.Count == 0)
-            {
-                return "RimChat_Unknown".Translate().ToString();
-            }
-
-            return string.Join(" | ", failures
-                .Take(2)
-                .Select(outcome =>
-                {
-                    string actionName = outcome.Action?.ActionType ?? "RimChat_Unknown".Translate().ToString();
-                    string reason = string.IsNullOrWhiteSpace(outcome.Message)
-                        ? "RimChat_Unknown".Translate().ToString()
-                        : outcome.Message;
-                    return $"{actionName}: {reason}";
-                }));
+            // Action failures are displayed as separate system messages via AppendFailedActionSystemMessages.
+            // Preserve the AI's dialogue instead of replacing it with failure summaries.
+            return baseDialogueText ?? string.Empty;
         }
 
         /// <summary>/// 执行 AI 动作

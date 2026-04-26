@@ -126,14 +126,14 @@ namespace RimChat.UI
                 return;
             }
 
-            string merged = $"{playerMessage} {aiText}".Trim();
-            if (string.IsNullOrWhiteSpace(merged))
+            string aiTextOnly = (aiText ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(aiTextOnly))
             {
                 return;
             }
 
-            SocialPostCategory category = SocialCircleService.InferCategory(merged, string.Empty);
-            int sentiment = SocialCircleService.InferSentiment(merged);
+            SocialPostCategory category = SocialCircleService.InferCategory(aiTextOnly, string.Empty);
+            int sentiment = SocialCircleService.InferSentiment(aiTextOnly);
             if (sentiment == 0)
             {
                 sentiment = category == SocialPostCategory.Military ? -1 : 1;
@@ -145,7 +145,7 @@ namespace RimChat.UI
                 category,
                 sentiment,
                 aiText,
-                playerMessage,
+                string.Empty,
                 targetFaction);
             bool queued = GameComponent_DiplomacyManager.Instance != null &&
                           GameComponent_DiplomacyManager.Instance.EnqueuePublicPost(

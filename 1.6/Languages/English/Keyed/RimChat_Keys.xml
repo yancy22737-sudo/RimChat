@@ -1351,6 +1351,7 @@ Selected prisoners: {1}
     <RimChat_ConversationEnded>The other side ended this dialogue session.</RimChat_ConversationEnded>
     <RimChat_ConversationEndedReason>The other side ended this dialogue session: {0}</RimChat_ConversationEndedReason>
     <RimChat_ConversationEndedByPlayerWithCooldown>We ended the current dialogue. Available in {0} hours.</RimChat_ConversationEndedByPlayerWithCooldown>
+    <RimChat_ConversationCooldownFuzzyHint>They need a moment... (available within ~{0} hours)</RimChat_ConversationCooldownFuzzyHint>
     <RimChat_ReinitiateDialogueButton>Reinitiate Dialogue</RimChat_ReinitiateDialogueButton>
     <RimChat_ReinitiateCooldownHint>Reinitiate available in {0} hours.</RimChat_ReinitiateCooldownHint>
     <RimChat_StrategyFallbackLabel>Strategy</RimChat_StrategyFallbackLabel>
@@ -2342,6 +2343,7 @@ Selected prisoners: {1}
     <RimChat_PromptNode_RpgAliveFeeling>RPG Alive Feeling</RimChat_PromptNode_RpgAliveFeeling>
     <RimChat_ImmersionFallback_Diplomacy>We will continue this talk with focus and dignity.</RimChat_ImmersionFallback_Diplomacy>
     <RimChat_ImmersionFallback_Rpg>I stay in the moment and speak from my heart.</RimChat_ImmersionFallback_Rpg>
+    <RimChat_ImmersionGuardWarning>(Detected possible mechanic leakage in response, original dialogue preserved)</RimChat_ImmersionGuardWarning>
     <RimChat_DiplomacyActionPartialFailure>I attempted your request, but part of it failed: {0}</RimChat_DiplomacyActionPartialFailure>
     <RimChat_DiplomacyActionAllFailed>I could not complete that request: {0}</RimChat_DiplomacyActionAllFailed>
     <RimChat_DiplomacyAirdropAmountMapped>I applied your amount: budget={0} silver, payment={1} silver. I will submit the airdrop request now.</RimChat_DiplomacyAirdropAmountMapped>

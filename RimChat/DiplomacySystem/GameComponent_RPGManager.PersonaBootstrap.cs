@@ -29,7 +29,7 @@ namespace RimChat.DiplomacySystem
         }
 
         private const int PersonaBootstrapTickInterval = 150;
-        private const int PersonaRuntimeScanIntervalTicks = 900;
+        private const int PersonaRuntimeScanIntervalTicks = 9000; // was 900; reduced peak frequency 10x
         private const int PersonaPromptMaxLength = 1200;
         private const int CurrentNpcPersonaBootstrapVersion = 3;
         private const string RimTalkPersonaServiceTypeName = "RimTalk.Data.PersonaService";
@@ -49,6 +49,14 @@ namespace RimChat.DiplomacySystem
         private readonly Queue<Pawn> npcPersonaBootstrapTargets = new Queue<Pawn>();
         private readonly Dictionary<string, PendingPersonaGenerationContext> npcPersonaPendingRequests =
             new Dictionary<string, PendingPersonaGenerationContext>();
+        private readonly HashSet<int> npcPersonaPendingThingIds = new HashSet<int>();
+        private List<Pawn> cachedNpcPersonaTargets;
+        private int npcPersonaTargetsCacheTick;
+        // Multi-frame scan state to avoid blocking the game tick on full pawn sweep.
+        private bool personaScanInProgress;
+        private int personaScanMapIndex;
+        private List<Pawn> personaScanAccumulatedTargets;
+        private HashSet<int> personaScanSeenIds;
         private int nextPersonaBootstrapTick;
         private int nextPersonaRuntimeScanTick;
         private bool npcPersonaRuntimeScanDisabledNoRimTalk;
@@ -79,7 +87,12 @@ namespace RimChat.DiplomacySystem
 
         public override void GameComponentTick()
         {
-            base.GameComponentTick();
+            if (Current.ProgramState != ProgramState.Playing)
+                return;
+
+            if (npcPersonaBootstrapCompleted && npcPersonaRuntimeScanDisabledNoRimTalk)
+                return;
+
             ProcessNpcPersonaBootstrapTick();
             ProcessNpcPersonaRuntimeTick();
         }
@@ -169,25 +182,21 @@ namespace RimChat.DiplomacySystem
         private void ProcessNpcPersonaRuntimeTick()
         {
             if (Current.ProgramState != ProgramState.Playing || Find.TickManager == null)
-            {
                 return;
-            }
-
-            if (npcPersonaPendingRequests.Count > 0)
-            {
+            if (npcPersonaPendingRequests.Count > 0 || npcPersonaRuntimeScanDisabledNoRimTalk)
                 return;
-            }
-
-            if (npcPersonaRuntimeScanDisabledNoRimTalk)
-            {
-                return;
-            }
 
             int currentTick = Find.TickManager.TicksGame;
-            if (currentTick < nextPersonaRuntimeScanTick)
+
+            // Process ongoing multi-frame scan: one map per tick to avoid peaks.
+            if (personaScanInProgress)
             {
+                ProcessPersonaScanOneFrame(currentTick);
                 return;
             }
+
+            if (currentTick < nextPersonaRuntimeScanTick)
+                return;
 
             if (!IsRimTalkLoadedForPersonaBlock())
             {
@@ -196,11 +205,64 @@ namespace RimChat.DiplomacySystem
             }
 
             nextPersonaRuntimeScanTick = currentTick + PersonaRuntimeScanIntervalTicks;
-            if (TryApplyRimTalkPersonaFromRuntimeScan())
+
+            // Kick off multi-frame scan instead of blocking single-frame collection.
+            var maps = Find.Maps;
+            if (maps == null || maps.Count == 0)
             {
-                nextPersonaRuntimeScanTick = currentTick + PersonaBootstrapTickInterval;
+                cachedNpcPersonaTargets = new List<Pawn>(0);
+                npcPersonaTargetsCacheTick = currentTick;
                 return;
             }
+
+            personaScanInProgress = true;
+            personaScanMapIndex = 0;
+            personaScanAccumulatedTargets = new List<Pawn>();
+            personaScanSeenIds = new HashSet<int>();
+            ProcessPersonaScanOneFrame(currentTick);
+        }
+
+        private void ProcessPersonaScanOneFrame(int currentTick)
+        {
+            var maps = Find.Maps;
+            if (maps == null || personaScanMapIndex >= maps.Count)
+            {
+                FinishPersonaScan(currentTick);
+                return;
+            }
+
+            // Scan exactly one map this tick.
+            Map map = maps[personaScanMapIndex];
+            personaScanMapIndex++;
+            if (map?.mapPawns?.AllPawnsSpawned == null)
+                return;
+
+            foreach (Pawn pawn in map.mapPawns.AllPawnsSpawned)
+            {
+                AppendUniqueNpcTarget(personaScanAccumulatedTargets, personaScanSeenIds, pawn);
+            }
+
+            // If this was the last map, finish and trigger persona application.
+            if (personaScanMapIndex >= maps.Count)
+            {
+                // Also include faction leaders (cheap, single pass).
+                foreach (Faction faction in Find.FactionManager?.AllFactionsVisible ?? System.Linq.Enumerable.Empty<Faction>())
+                {
+                    AppendUniqueNpcTarget(personaScanAccumulatedTargets, personaScanSeenIds, faction?.leader);
+                }
+                FinishPersonaScan(currentTick);
+            }
+        }
+
+        private void FinishPersonaScan(int currentTick)
+        {
+            cachedNpcPersonaTargets = personaScanAccumulatedTargets;
+            npcPersonaTargetsCacheTick = currentTick;
+            personaScanInProgress = false;
+            personaScanAccumulatedTargets = null;
+            personaScanSeenIds = null;
+
+            TryApplyRimTalkPersonaFromRuntimeScan();
         }
 
         private void InitializeNpcPersonaBootstrapQueue()
@@ -300,9 +362,14 @@ namespace RimChat.DiplomacySystem
 
         private bool TryApplyRimTalkPersonaFromRuntimeScan()
         {
+            var targets = cachedNpcPersonaTargets;
+            if (targets == null || targets.Count == 0)
+                return false;
+
             string template = ResolveRimTalkPersonaCopyTemplateOrDefaultCached();
-            foreach (Pawn candidate in CollectNpcPersonaBootstrapTargets())
+            for (int i = 0; i < targets.Count; i++)
             {
+                Pawn candidate = targets[i];
                 if (!CanCopyPawnPersonaFromRimTalk(candidate) ||
                     IsPawnPersonaGenerationPending(candidate))
                 {
@@ -320,22 +387,32 @@ namespace RimChat.DiplomacySystem
 
         private bool TryFindMissingPersonaPawn(out Pawn pawn)
         {
-            pawn = CollectNpcPersonaBootstrapTargets().FirstOrDefault(candidate =>
-                IsEligibleNpcPersonaTarget(candidate) &&
-                !CanCopyPawnPersonaFromRimTalk(candidate) &&
-                !HasPersonaPrompt(candidate) &&
-                !IsPawnPersonaGenerationPending(candidate));
-            return pawn != null;
+            var targets = cachedNpcPersonaTargets;
+            if (targets != null)
+            {
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    Pawn candidate = targets[i];
+                    if (IsEligibleNpcPersonaTarget(candidate) &&
+                        !CanCopyPawnPersonaFromRimTalk(candidate) &&
+                        !HasPersonaPrompt(candidate) &&
+                        !IsPawnPersonaGenerationPending(candidate))
+                    {
+                        pawn = candidate;
+                        return true;
+                    }
+                }
+            }
+            pawn = null;
+            return false;
         }
 
         private bool IsPawnPersonaGenerationPending(Pawn pawn)
         {
-            if (pawn == null || npcPersonaPendingRequests.Count == 0)
-            {
-                return false;
-            }
-
-            return npcPersonaPendingRequests.Values.Any(item => item?.Pawn == pawn);
+            return pawn != null
+                && pawn.thingIDNumber > 0
+                && npcPersonaPendingRequests.Count > 0
+                && npcPersonaPendingThingIds.Contains(pawn.thingIDNumber);
         }
 
         private static bool CanStartPersonaGeneration()
@@ -509,8 +586,9 @@ namespace RimChat.DiplomacySystem
             unchanged = 0;
             skipped = 0;
             string template = ResolveRimTalkPersonaCopyTemplateOrDefaultCached();
+            var targets = cachedNpcPersonaTargets ?? CollectNpcPersonaBootstrapTargets();
 
-            foreach (Pawn pawn in CollectNpcPersonaBootstrapTargets())
+            foreach (Pawn pawn in targets)
             {
                 if (!CanCopyPawnPersonaFromRimTalk(pawn) || IsPawnPersonaGenerationPending(pawn))
                 {
@@ -1071,6 +1149,9 @@ namespace RimChat.DiplomacySystem
         {
             npcPersonaBootstrapTargets.Clear();
             npcPersonaPendingRequests.Clear();
+            npcPersonaPendingThingIds.Clear();
+            cachedNpcPersonaTargets = null;
+            npcPersonaTargetsCacheTick = 0;
             nextPersonaBootstrapTick = 0;
             nextPersonaRuntimeScanTick = 0;
             npcPersonaRuntimeScanDisabledNoRimTalk = false;

@@ -45,7 +45,7 @@ namespace RimChat.DiplomacySystem
             EnsureNextSocialPostTick(Find.TickManager?.TicksGame ?? 0);
         }
 
-        private void ProcessSocialCircleTick()
+        public void ProcessSocialCircleTick()
         {
             if (!IsSocialCircleEnabled())
             {
@@ -428,12 +428,14 @@ namespace RimChat.DiplomacySystem
                     continue;
                 }
 
-                if (!string.IsNullOrEmpty(faction.Name) && normalized.Contains(faction.Name.ToLowerInvariant()))
+                string factionNameLower = faction.Name?.ToLowerInvariant();
+                if (!string.IsNullOrEmpty(factionNameLower) && normalized.Contains(factionNameLower))
                 {
                     return faction;
                 }
 
-                if (!string.IsNullOrEmpty(faction.def?.label) && normalized.Contains(faction.def.label.ToLowerInvariant()))
+                string factionDefLabelLower = faction.def?.label?.ToLowerInvariant();
+                if (!string.IsNullOrEmpty(factionDefLabelLower) && normalized.Contains(factionDefLabelLower))
                 {
                     return faction;
                 }
