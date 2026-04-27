@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using RimChat.Persistence;
 using RimChat.Prompting;
 using RimChat.UI;
-using RimChat.UI.UGui;
-using RimChat.UI.UGui.Bridge;
-using RimChat.UI.UGui.Panels;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -55,53 +53,8 @@ namespace RimChat.Config
         private PromptWorkbenchChipEditor _promptWorkspaceChipEditor;
         private PromptWorkspaceStructuredPreviewRenderer _promptWorkspacePreviewRenderer;
         private bool _promptWorkspaceChipEditorDisabledForSession;
-        private bool _promptWorkspaceForceImguiFallback;
-        private bool _promptWorkspaceFallbackWarningSent;
-
-        // UGUI panel data caches (avoid per-frame DTO reconstruction)
-        private string _promptWorkspaceHeaderDataSignature = string.Empty;
-        private WorkspaceHeaderPanel.HeaderData _promptWorkspaceHeaderDataCache;
-        private string _promptWorkspacePresetPanelDataSignature = string.Empty;
-        private WorkspacePresetPanel.PresetPanelData _promptWorkspacePresetPanelDataCache;
-        private string _promptWorkspaceSidePanelDataSignature = string.Empty;
-        private WorkspaceSidePanel.SidePanelData _promptWorkspaceSidePanelDataCache;
-        private string _promptWorkspaceEditorPanelDataSignature = string.Empty;
-        private WorkspaceEditorPanel.EditorData _promptWorkspaceEditorPanelDataCache;
-
-        // RenderTexture caches for offscreen rendering (reduces DrawCalls from N to 1 per panel)
+        // RenderTexture caches for offscreen rendering
         private CachedRenderTexture _sidePanelContentRtCache;
-
-        // UGUI rendering infrastructure for structured preview panel
-        private UGuiCanvasHost _uguiPreviewHost;
-        private PromptPreviewPanel _uguiPreviewPanel;
-        private ImguiToUguiInputBridge _uguiInputBridge;
-        private bool _uguiPreviewInitialized;
-        private int _uguiLastRtWidth;
-        private int _uguiLastRtHeight;
-
-        // UGUI rendering infrastructure for workspace header panel
-        private UGuiCanvasHost _uguiHeaderHost;
-        private WorkspaceHeaderPanel _uguiHeaderPanel;
-        private ImguiToUguiInputBridge _uguiHeaderInputBridge;
-        private bool _uguiHeaderInitialized;
-
-        // UGUI rendering infrastructure for workspace preset panel
-        private UGuiCanvasHost _uguiPresetHost;
-        private WorkspacePresetPanel _uguiPresetPanel;
-        private ImguiToUguiInputBridge _uguiPresetInputBridge;
-        private bool _uguiPresetInitialized;
-
-        // UGUI rendering infrastructure for workspace side panel tabs
-        private UGuiCanvasHost _uguiSidePanelHost;
-        private WorkspaceSidePanel _uguiSidePanel;
-        private ImguiToUguiInputBridge _uguiSidePanelInputBridge;
-        private bool _uguiSidePanelInitialized;
-
-        // UGUI rendering infrastructure for workspace editor chrome
-        private UGuiCanvasHost _uguiEditorHost;
-        private WorkspaceEditorPanel _uguiEditorPanel;
-        private ImguiToUguiInputBridge _uguiEditorInputBridge;
-        private bool _uguiEditorInitialized;
         private string _promptWorkspaceDraggingNodeId = string.Empty;
         private string _promptWorkspaceDropTargetNodeId = string.Empty;
         private string _promptWorkspaceNodeListCacheChannel = string.Empty;
@@ -131,7 +84,6 @@ namespace RimChat.Config
             }
 
             _promptWorkspacePerformance.LayoutVersion++;
-            InvalidatePromptWorkspacePanelDataCaches();
         }
         private bool IsWorkspaceDirty(int flag)      { return (_workspaceDirtyFlags & flag) != 0; }
         private void ClearWorkspaceDirty(int flags)  { _workspaceDirtyFlags &= ~flags; }
@@ -139,7 +91,6 @@ namespace RimChat.Config
         {
             _workspaceDirtyFlags = WorkspaceDirtyAll;
             _promptWorkspacePerformance.LayoutVersion++;
-            InvalidatePromptWorkspacePanelDataCaches();
         }
 
         // Cached module list to avoid per-frame rebuilds (A+B+C optimization)
@@ -174,59 +125,42 @@ namespace RimChat.Config
         private static readonly Color NodeInfoText = new Color(0.70f, 0.80f, 0.95f);
         private static readonly Color DimmedText = new Color(0.75f, 0.80f, 0.85f);
 
+        private bool _pwDiagOnce;
+
         private void DrawPromptSectionWorkspace(Rect root)
         {
-            EvaluatePromptWorkspaceUguiCapability();
+            if (!_pwDiagOnce) { _pwDiagOnce = true; PreRasterizeWorkbenchFontGlyphs(); }
+
             EnsurePresetStoreReady();
             EnsurePromptWorkspaceSelection();
             TryRunDeferredPromptWorkspaceNavigation();
             TryAutoSavePromptWorkspaceBuffer();
 
-            // Freeze full preview while editor has focus to reduce per-frame rebuild cost
             bool editorHasFocus = GUI.GetNameOfFocusedControl() == PromptWorkspaceEditorControlName;
-            if (editorHasFocus && !_promptWorkspacePreviewFrozen)
-            {
-                _promptWorkspacePreviewFrozen = true;
-            }
+            if (editorHasFocus && !_promptWorkspacePreviewFrozen) _promptWorkspacePreviewFrozen = true;
             else if (!editorHasFocus && _promptWorkspacePreviewFrozen)
             {
                 _promptWorkspacePreviewFrozen = false;
-                // Mark cache stale so next Tick rebuilds, but don't discard existing partial data.
-                // This avoids a full rebuild blast on every focus loss — the incremental builder
-                // will reuse any completed blocks and only re-render changed steps.
                 _promptWorkspacePreviewCacheValid = false;
-                // Invalidate RT caches since preview data will change
                 _sidePanelContentRtCache?.MarkDirty();
                 _promptWorkspacePreviewRenderer?.MarkDirty();
             }
 
             if (!_promptWorkspacePreviewFrozen || _workbenchSidePanelTab == PromptWorkbenchInfoPanel.Preview)
             {
-                bool canRunPreviewBuild = TryRunDeferredPreviewBuild();
-                // Frame skipping: only check build every N frames to reduce CPU usage (A optimization)
+                bool canBuild = TryRunDeferredPreviewBuild();
                 _promptWorkspacePreviewFrameCounter++;
                 if (_promptWorkspacePreviewFrameCounter >= PromptWorkspacePreviewFrameSkip)
-                {
                     _promptWorkspacePreviewFrameCounter = 0;
-                }
-
-                // Skip Tick when cache is valid and no build is in progress, or when frame skipping
-                if (canRunPreviewBuild &&
-                    (_promptWorkspacePreviewFrameCounter == 0 || _promptWorkspacePreviewBuildState != null) &&
-                    (!_promptWorkspacePreviewCacheValid || _promptWorkspacePreviewBuildState != null))
-                {
+                if (canBuild && (_promptWorkspacePreviewFrameCounter == 0 || _promptWorkspacePreviewBuildState != null)
+                    && (!_promptWorkspacePreviewCacheValid || _promptWorkspacePreviewBuildState != null))
                     TickPromptWorkspacePreviewBuild(PromptWorkspacePreviewFrameBudgetSeconds);
-                }
             }
 
-            // IMGUI requires all panels to render every frame — skipping Draw calls causes flicker.
-            // Dirty flags are kept for cache-invalidation signaling only, not for frame-throttle.
             Widgets.DrawBoxSolid(root, WorkspaceBackground);
             Rect frame = root.ContractedBy(8f);
-            Rect headerRect = new Rect(frame.x, frame.y, frame.width, 74f);
-            Rect bodyRect = new Rect(frame.x, headerRect.yMax + 6f, frame.width, frame.height - headerRect.height - 6f);
-
-            DrawPromptWorkspaceHeader(headerRect);
+            DrawPromptWorkspaceHeader(new Rect(frame.x, frame.y, frame.width, 74f));
+            Rect bodyRect = new Rect(frame.x, frame.y + 80f, frame.width, frame.height - 80f);
             DrawPromptWorkspaceBody(bodyRect);
         }
 
@@ -253,16 +187,34 @@ namespace RimChat.Config
             action.Invoke();
         }
 
+        private void PreRasterizeWorkbenchFontGlyphs()
+        {
+            try
+            {
+                var sb = new System.Text.StringBuilder();
+                // Module list labels + kind tags
+                foreach (var m in GetCachedPromptWorkspaceModules())
+                    sb.Append(m.Label).Append(' ');
+                sb.Append("RimChat_PromptWorkspaceKind_Section RimChat_PromptWorkspaceKind_Node ".Translate());
+                // Header / common strings
+                sb.Append("RimChat_Tab_PromptWorkbench RimChat_PromptWorkbench_PresetHeader "
+                    + "RimChat_PromptWorkbench_ModuleHeader RimChat_PromptPreset_Create "
+                    + "RimChat_PromptPreset_Duplicate RimChat_Import RimChat_Export "
+                    + "RimChat_PreviewTitleShort RimChat_PromptWorkbench_FullPreviewTab "
+                    + "RimChat_PromptWorkbench_VariablesTab RimChat_RimTalkCompatEnable "
+                    + "RimChat_PromptWorkbench_ChannelDiplomacy RimChat_PromptWorkbench_ChannelRpg".Translate());
+                // Pre-render all CJK glyphs into the font texture to avoid per-frame rasterization
+                GUI.skin.font.RequestCharactersInTexture(sb.ToString());
+                Log.Message($"[RimChat] Font pre-rasterized, {sb.Length} chars");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Font pre-rasterize failed (non-fatal): {ex.Message}");
+            }
+        }
+
         private void DrawPromptWorkspaceHeader(Rect rect)
         {
-            // UGUI rendering path for header
-            if (CanUsePromptWorkspaceUguiHeader())
-            {
-                DrawPromptWorkspaceHeaderUgui(rect);
-                return;
-            }
-
-            // IMGUI fallback path
             Widgets.DrawBoxSolid(rect, WorkspaceHeaderBg);
             Rect inner = rect.ContractedBy(8f);
 
@@ -370,53 +322,47 @@ namespace RimChat.Config
             Rect middleRect = new Rect(leftRect.xMax + gap, rect.y, middleWidth, rect.height);
             Rect rightRect = new Rect(middleRect.xMax + gap, rect.y, Mathf.Max(1f, rect.xMax - (middleRect.xMax + gap)), rect.height);
 
-            DrawPromptWorkspaceEditorPanel(middleRect);
             DrawPromptWorkspacePresetPanel(leftRect);
+            DrawPromptWorkspaceEditorPanel(middleRect);
             DrawPromptWorkspaceSidePanel(rightRect);
         }
 
         private void DrawPromptWorkspacePresetPanel(Rect rect)
         {
-            // UGUI rendering path for preset panel
-            if (CanUsePromptWorkspaceUguiPresetPanel())
-            {
-                DrawPromptWorkspacePresetPanelUgui(rect);
-                return;
-            }
-
-            // IMGUI fallback path
             Widgets.DrawBoxSolid(rect, PresetPanelBg);
             Rect inner = rect.ContractedBy(8f);
-            float y = inner.y;
-            Widgets.Label(new Rect(inner.x, y, inner.width, 22f), "RimChat_PromptWorkbench_PresetHeader".Translate());
-            y += 24f;
-            DrawPromptWorkspacePresetActions(new Rect(inner.x, y, inner.width, 24f));
-            y += 28f;
-            float presetListHeight = ResolvePromptWorkspacePresetListHeight(y, inner.yMax, inner.height);
-            DrawPromptWorkspacePresetList(new Rect(inner.x, y, inner.width, presetListHeight));
-            y += presetListHeight + 8f;
+            Listing_Standard listing = new Listing_Standard();
+            listing.Begin(inner);
 
-            Widgets.Label(
-                new Rect(inner.x, y, inner.width, 22f),
-                "RimChat_PromptWorkspaceModuleHeader".Translate());
-            y += 24f;
-            float moduleListHeight = Mathf.Max(72f, inner.yMax - y - 6f);
+            Rect headerRect = listing.GetRect(22f);
+            Widgets.Label(headerRect, "RimChat_PromptWorkbench_PresetHeader".Translate());
+            listing.Gap(2f);
 
-            // Module list has interactive elements (checkbox, click) — keep direct IMGUI rendering.
-            // RenderTexture caching only applies to read-only panels.
-            DrawPromptWorkspaceModuleList(new Rect(inner.x, y, inner.width, moduleListHeight));
+            Rect actionRect = listing.GetRect(24f);
+            DrawPromptWorkspacePresetActions(actionRect);
+            listing.Gap(4f);
+
+            float consumed = 52f;
+            float presetListHeight = ResolvePromptWorkspacePresetListHeight(inner.y + consumed, inner.yMax, inner.height);
+            Rect presetListRect = listing.GetRect(presetListHeight);
+            DrawPromptWorkspacePresetList(presetListRect);
+            listing.Gap(8f);
+            consumed += presetListHeight + 8f;
+
+            Rect moduleHeaderRect = listing.GetRect(22f);
+            Widgets.Label(moduleHeaderRect, "RimChat_PromptWorkspaceModuleHeader".Translate());
+            listing.Gap(2f);
+            consumed += 24f;
+
+            float moduleListHeight = Mathf.Max(72f, inner.height - consumed - 6f);
+            Rect moduleListRect = listing.GetRect(moduleListHeight);
+            DrawPromptWorkspaceModuleList(moduleListRect);
+
+            listing.End();
         }
 
         private void DrawPromptWorkspaceEditorPanel(Rect rect)
         {
-            // UGUI rendering path for editor chrome (metadata, toolbar, validation)
-            if (CanUsePromptWorkspaceUguiEditorPanel())
-            {
-                DrawPromptWorkspaceEditorPanelUgui(rect);
-                return;
-            }
-
-            // IMGUI fallback path
             Widgets.DrawBoxSolid(rect, EditorPanelBg);
             Rect inner = rect.ContractedBy(8f);
             float y = inner.y;
@@ -427,9 +373,7 @@ namespace RimChat.Config
             Rect toolbarRect = new Rect(inner.x, y, inner.width, 26f);
             y += 32f;
 
-            // RimTalk-style metadata row: module label + enabled checkbox + slot selector
-            DrawPromptWorkspaceModuleMetadataRow(new Rect(inner.x, y, inner.width, 24f));
-            y += 28f;
+            // Metadata row removed — redundant with module list (selection highlight + per-row checkbox)
 
             // Second metadata row for nodes: slot selector
             if (_promptWorkspaceEditNodeMode)
@@ -468,19 +412,11 @@ namespace RimChat.Config
                     ? section.GetDisplayLabel()
                     : _promptWorkspaceSelectedSectionId);
 
-            Color oldColor = GUI.color;
-            TextAnchor oldAnchor = Text.Anchor;
-            GUI.color = MetadataTagText;
-            Text.Anchor = TextAnchor.MiddleLeft;
-            Widgets.Label(new Rect(rect.x, rect.y, 60f, rect.height), $"[{kindTag}]");
-            GUI.color = WorkspaceAccentBrightGold;
             bool oldWrap = Text.WordWrap;
             Text.WordWrap = false;
-            Widgets.Label(new Rect(rect.x + 62f, rect.y, rect.width - 200f, rect.height),
-                label.Truncate(rect.width - 200f));
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width - 190f, rect.height),
+                $"[{kindTag}] {label}".Truncate(rect.width - 190f));
             Text.WordWrap = oldWrap;
-            GUI.color = oldColor;
-            Text.Anchor = oldAnchor;
 
             // Enabled checkbox (RimTalk-style)
             List<PromptSectionLayoutConfig> sectionLayouts = GetPromptWorkspaceSectionLayouts();
@@ -645,7 +581,6 @@ namespace RimChat.Config
             _promptWorkspacePerformance.LastValidatedTextVersion = textVersion;
             _promptWorkspacePerformance.ValidationPending = false;
             _promptWorkspacePerformance.ValidationResultVersion++;
-            _promptWorkspaceEditorPanelDataSignature = string.Empty;
         }
 
         private void DrawPromptWorkspaceEditModeSwitch(Rect rect)
@@ -765,14 +700,6 @@ namespace RimChat.Config
 
         private void DrawPromptWorkspaceSidePanel(Rect rect)
         {
-            // UGUI rendering path for side panel tab bar
-            if (CanUsePromptWorkspaceUguiSidePanel())
-            {
-                DrawPromptWorkspaceSidePanelUgui(rect);
-                return;
-            }
-
-            // IMGUI fallback path
             Widgets.DrawBoxSolid(rect, PresetPanelBg);
             Rect inner = rect.ContractedBy(8f);
             float buttonWidth = (inner.width - 12f) / 3f;
@@ -794,22 +721,24 @@ namespace RimChat.Config
                 return;
             }
 
-            _sidePanelContentRtCache ??= new CachedRenderTexture();
-            string sidePanelSig = BuildSidePanelRenderSignature();
-            _sidePanelContentRtCache.MarkDirtyIfChanged(sidePanelSig);
-
-            _sidePanelContentRtCache.DrawWithCacheTracking(contentRect, localRect =>
+            // Preview/FullPreview: read-only content — skip during Layout (only Repaint renders blocks).
+            if (Event.current.type != EventType.Repaint)
             {
-                switch (_workbenchSidePanelTab)
-                {
-                    case PromptWorkbenchInfoPanel.FullPreview:
-                        DrawPromptWorkspaceFullPreview(localRect);
-                        break;
-                    default:
-                        DrawPromptWorkspacePreview(localRect);
-                        break;
-                }
-            });
+                GUI.BeginScrollView(contentRect, _promptWorkspacePreviewScroll,
+                    new Rect(0f, 0f, contentRect.width - 16f, 200f), false, true);
+                GUI.EndScrollView();
+                return;
+            }
+
+            switch (_workbenchSidePanelTab)
+            {
+                case PromptWorkbenchInfoPanel.FullPreview:
+                    DrawPromptWorkspaceFullPreview(contentRect);
+                    break;
+                default:
+                    DrawPromptWorkspacePreview(contentRect);
+                    break;
+            }
         }
 
         private string BuildSidePanelRenderSignature()
@@ -820,8 +749,8 @@ namespace RimChat.Config
             string selectedSection = _promptWorkspaceSelectedSectionId ?? string.Empty;
             string selectedNode = _promptWorkspaceSelectedNodeId ?? string.Empty;
             string tab = _workbenchSidePanelTab.ToString();
-            long editorVersion = _promptWorkspacePerformance.EditorTextVersion;
-            return $"{tab}|{previewSig}|{editMode}|{selectedSection}|{selectedNode}|v{editorVersion}|{_promptWorkspacePreviewScroll.y:F0}";
+            // Only include stable state — scroll and editor version change too frequently for pixel cache
+            return $"{tab}|{previewSig}|{editMode}|{selectedSection}|{selectedNode}";
         }
 
         private void DrawPromptWorkspaceFullPreview(Rect rect)
@@ -1262,7 +1191,6 @@ namespace RimChat.Config
             _promptWorkspaceLastEditUtc = now;
             _promptWorkspacePerformance.LastEditorTextChangedUtc = now;
             _promptWorkspacePerformance.EditorTextVersion++;
-            _promptWorkspaceEditorPanelDataSignature = string.Empty;
             TryScheduleValidation(immediate: false);
         }
 
@@ -1271,7 +1199,6 @@ namespace RimChat.Config
             DateTime now = DateTime.UtcNow;
             _promptWorkspacePerformance.LastEditorTextChangedUtc = now;
             _promptWorkspacePerformance.EditorTextVersion++;
-            _promptWorkspaceEditorPanelDataSignature = string.Empty;
             TryScheduleValidation(immediate: true);
         }
 
@@ -1310,80 +1237,6 @@ namespace RimChat.Config
 
             _promptWorkspacePerformance.PreviewStartPending = false;
             return true;
-        }
-
-        private void InvalidatePromptWorkspacePanelDataCaches()
-        {
-            _promptWorkspaceHeaderDataSignature = string.Empty;
-            _promptWorkspacePresetPanelDataSignature = string.Empty;
-            _promptWorkspaceSidePanelDataSignature = string.Empty;
-            _promptWorkspaceEditorPanelDataSignature = string.Empty;
-        }
-
-        private bool CanUsePromptWorkspaceUguiHeader()
-        {
-            return !_promptWorkspaceForceImguiFallback && UGuiFeatureFlags.UseUguiHeaderPanel;
-        }
-
-        private bool CanUsePromptWorkspaceUguiPresetPanel()
-        {
-            return !_promptWorkspaceForceImguiFallback && UGuiFeatureFlags.UseUguiPresetPanel;
-        }
-
-        private bool CanUsePromptWorkspaceUguiSidePanel()
-        {
-            return !_promptWorkspaceForceImguiFallback && UGuiFeatureFlags.UseUguiSidePanel;
-        }
-
-        private bool CanUsePromptWorkspaceUguiEditorPanel()
-        {
-            return !_promptWorkspaceForceImguiFallback && UGuiFeatureFlags.UseUguiEditorPanel;
-        }
-
-        private bool CanUsePromptWorkspaceUguiPreviewPanel()
-        {
-            return !_promptWorkspaceForceImguiFallback && UGuiFeatureFlags.UseUguiPreviewPanel;
-        }
-
-        private void EvaluatePromptWorkspaceUguiCapability()
-        {
-            if (_promptWorkspaceForceImguiFallback || !UGuiFeatureFlags.UseUguiRendering)
-            {
-                return;
-            }
-
-            string folder = LanguageDatabase.activeLanguage?.folderName ?? string.Empty;
-            bool cjkLanguage = folder.IndexOf("Chinese", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                               folder.IndexOf("Japanese", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                               folder.IndexOf("Korean", StringComparison.OrdinalIgnoreCase) >= 0;
-            if (!cjkLanguage)
-            {
-                return;
-            }
-
-            UGuiFontManager.EnsureInitialized();
-            if (UGuiFontManager.SupportsCjk)
-            {
-                return;
-            }
-
-            _promptWorkspaceForceImguiFallback = true;
-            DisposePromptWorkspaceRenderTextures();
-            if (_promptWorkspaceFallbackWarningSent)
-            {
-                return;
-            }
-
-            _promptWorkspaceFallbackWarningSent = true;
-            string activeLanguage = string.IsNullOrWhiteSpace(folder) ? "unknown" : folder;
-            string fontName = UGuiFontManager.DefaultFont != null ? UGuiFontManager.DefaultFont.name : "null";
-            Log.Warning(
-                "[RimChat] Prompt workspace switched to IMGUI compatibility mode. " +
-                $"language={activeLanguage}, font={fontName}, supportsCjk={UGuiFontManager.SupportsCjk}, " +
-                $"uguiMaster={UGuiFeatureFlags.UseUguiRendering}, uguiHeader={UGuiFeatureFlags.UseUguiHeaderPanel}, " +
-                $"uguiPreset={UGuiFeatureFlags.UseUguiPresetPanel}, uguiEditor={UGuiFeatureFlags.UseUguiEditorPanel}, " +
-                $"uguiSide={UGuiFeatureFlags.UseUguiSidePanel}, uguiPreview={UGuiFeatureFlags.UseUguiPreviewPanel}.");
-            Messages.Message("RimChat_PromptRenderCompatibilityMode".Translate(), MessageTypeDefOf.NeutralEvent, false);
         }
 
         private void TryAutoSavePromptWorkspaceBuffer()
@@ -1575,51 +1428,6 @@ namespace RimChat.Config
             _sidePanelContentRtCache?.Dispose();
             _sidePanelContentRtCache = null;
             _promptWorkspacePreviewRenderer?.Dispose();
-
-            // Dispose UGUI rendering resources - preview panel
-            _uguiInputBridge?.Dispose();
-            _uguiInputBridge = null;
-            _uguiPreviewPanel?.Dispose();
-            _uguiPreviewPanel = null;
-            _uguiPreviewHost?.Dispose();
-            _uguiPreviewHost = null;
-            _uguiPreviewInitialized = false;
-
-            // Dispose UGUI rendering resources - header panel
-            _uguiHeaderInputBridge?.Dispose();
-            _uguiHeaderInputBridge = null;
-            _uguiHeaderPanel?.Dispose();
-            _uguiHeaderPanel = null;
-            _uguiHeaderHost?.Dispose();
-            _uguiHeaderHost = null;
-            _uguiHeaderInitialized = false;
-
-            // Dispose UGUI rendering resources - preset panel
-            _uguiPresetInputBridge?.Dispose();
-            _uguiPresetInputBridge = null;
-            _uguiPresetPanel?.Dispose();
-            _uguiPresetPanel = null;
-            _uguiPresetHost?.Dispose();
-            _uguiPresetHost = null;
-            _uguiPresetInitialized = false;
-
-            // Dispose UGUI rendering resources - side panel
-            _uguiSidePanelInputBridge?.Dispose();
-            _uguiSidePanelInputBridge = null;
-            _uguiSidePanel?.Dispose();
-            _uguiSidePanel = null;
-            _uguiSidePanelHost?.Dispose();
-            _uguiSidePanelHost = null;
-            _uguiSidePanelInitialized = false;
-
-            // Dispose UGUI rendering resources - editor panel
-            _uguiEditorInputBridge?.Dispose();
-            _uguiEditorInputBridge = null;
-            _uguiEditorPanel?.Dispose();
-            _uguiEditorPanel = null;
-            _uguiEditorHost?.Dispose();
-            _uguiEditorHost = null;
-            _uguiEditorInitialized = false;
         }
 
         private float ResolvePromptWorkspacePresetListHeight(float startY, float bottomY, float panelHeight)
@@ -1674,659 +1482,8 @@ namespace RimChat.Config
 
         private void DrawPromptWorkspaceStructuredPreview(Rect rect, PromptWorkspaceStructuredPreview preview)
         {
-            // UGUI rendering path: Canvas → RenderTexture → GUI.DrawTexture
-            if (CanUsePromptWorkspaceUguiPreviewPanel())
-            {
-                DrawPromptWorkspaceStructuredPreviewUgui(rect, preview);
-                return;
-            }
-
-            // IMGUI fallback path: original renderer
             _promptWorkspacePreviewRenderer ??= new PromptWorkspaceStructuredPreviewRenderer();
             _promptWorkspacePreviewRenderer.Draw(rect, preview, ref _promptWorkspacePreviewScroll);
-        }
-
-        private void DrawPromptWorkspaceStructuredPreviewUgui(Rect rect, PromptWorkspaceStructuredPreview preview)
-        {
-            EnsureUguiPreviewInitialized(rect);
-            ResizeUguiPreviewIfNeeded(rect);
-
-            // Update data and check if panel needs refresh
-            _uguiPreviewPanel.SetData(preview);
-            bool needsRender = _uguiPreviewPanel.IsDirty;
-
-            // Refresh UGUI elements if dirty (clears IsDirty flag)
-            _uguiPreviewPanel.RefreshIfDirty();
-
-            // Re-render the Camera when content changed
-            if (needsRender)
-            {
-                _uguiPreviewHost.Render();
-            }
-
-            // Bridge input events (scroll, click) from IMGUI to UGUI
-            if (_uguiInputBridge != null && ShouldProcessUguiInput(rect))
-            {
-                _uguiInputBridge.ProcessEvent(rect);
-            }
-
-            // Draw the RenderTexture into the IMGUI rect (single DrawCall)
-            _uguiPreviewHost.DrawToImgui(rect);
-        }
-
-        private void EnsureUguiPreviewInitialized(Rect initialRect)
-        {
-            if (_uguiPreviewInitialized)
-            {
-                return;
-            }
-
-            int w = Mathf.Max(1, (int)initialRect.width);
-            int h = Mathf.Max(1, (int)initialRect.height);
-
-            _uguiPreviewHost = new UGuiCanvasHost();
-            _uguiPreviewHost.Initialize(w, h, "RimChat_PreviewCanvas");
-            _uguiLastRtWidth = w;
-            _uguiLastRtHeight = h;
-
-            _uguiPreviewPanel = new PromptPreviewPanel();
-            _uguiPreviewPanel.Initialize(_uguiPreviewHost, "PreviewPanel");
-
-            _uguiInputBridge = new ImguiToUguiInputBridge(_uguiPreviewHost);
-
-            _uguiPreviewInitialized = true;
-        }
-
-        private void ResizeUguiPreviewIfNeeded(Rect rect)
-        {
-            int newW = Mathf.Max(1, (int)rect.width);
-            int newH = Mathf.Max(1, (int)rect.height);
-            if (newW != _uguiLastRtWidth || newH != _uguiLastRtHeight)
-            {
-                _uguiPreviewHost.Resize(newW, newH);
-                _uguiLastRtWidth = newW;
-                _uguiLastRtHeight = newH;
-            }
-        }
-
-        #region UGUI Header Panel
-
-        private void DrawPromptWorkspaceHeaderUgui(Rect rect)
-        {
-            EnsureUguiHeaderInitialized(rect);
-            ResizeUguiHostIfNeeded(_uguiHeaderHost, rect, ref _uguiHeaderInitialized);
-
-            _uguiHeaderPanel.SetData(BuildHeaderData());
-            bool needsRender = _uguiHeaderPanel.IsDirty;
-            _uguiHeaderPanel.RefreshIfDirty();
-            if (needsRender) _uguiHeaderHost.Render();
-
-            if (_uguiHeaderInputBridge != null && ShouldProcessUguiInput(rect))
-            {
-                _uguiHeaderInputBridge.ProcessEvent(rect);
-            }
-
-            _uguiHeaderHost.DrawToImgui(rect);
-        }
-
-        private void EnsureUguiHeaderInitialized(Rect initialRect)
-        {
-            if (_uguiHeaderInitialized) return;
-
-            int w = Mathf.Max(1, (int)initialRect.width);
-            int h = Mathf.Max(1, (int)initialRect.height);
-
-            _uguiHeaderHost = new UGuiCanvasHost();
-            _uguiHeaderHost.Initialize(w, h, "RimChat_HeaderCanvas");
-
-            _uguiHeaderPanel = new WorkspaceHeaderPanel();
-            _uguiHeaderPanel.Initialize(_uguiHeaderHost, "HeaderPanel");
-
-            // Wire callbacks
-            _uguiHeaderPanel.OnDiplomacyClicked = () => SchedulePromptWorkspaceNavigation(() => SetPromptWorkspaceRoot(PromptWorkbenchChannel.Diplomacy));
-            _uguiHeaderPanel.OnRpgClicked = () => SchedulePromptWorkspaceNavigation(() => SetPromptWorkspaceRoot(PromptWorkbenchChannel.Rpg));
-            _uguiHeaderPanel.OnChannelDropdownClicked = () =>
-            {
-                List<FloatMenuOption> options = GetPromptWorkspaceChannels()
-                    .Select(channelId => new FloatMenuOption(
-                        RimTalkPromptEntryChannelCatalog.GetLabel(channelId),
-                        () => SchedulePromptWorkspaceNavigation(() => SetPromptWorkspaceChannel(channelId))))
-                    .ToList();
-                Find.WindowStack.Add(new FloatMenu(options));
-            };
-            _uguiHeaderPanel.OnQuickFactionClicked = () => OpenPromptWorkspaceFactionTemplateMenu();
-            _uguiHeaderPanel.OnQuickPawnClicked = () => OpenPromptWorkspaceQuickPawnMenu();
-            _uguiHeaderPanel.OnImportClicked = () =>
-            {
-                if (!PersistPromptWorkspaceBufferNow(force: true)) return;
-                ShowImportPresetDialog();
-            };
-            _uguiHeaderPanel.OnExportClicked = () =>
-            {
-                if (!PersistPromptWorkspaceBufferNow(force: true)) return;
-                ShowExportPresetDialog();
-            };
-
-            _uguiHeaderInputBridge = new ImguiToUguiInputBridge(_uguiHeaderHost);
-            _uguiHeaderInitialized = true;
-        }
-
-        private WorkspaceHeaderPanel.HeaderData BuildHeaderData()
-        {
-            string selectedChannel = EnsurePromptWorkspaceSelection();
-            string signature = (_workbenchChannel == PromptWorkbenchChannel.Diplomacy ? "d" : "r") +
-                "|" + selectedChannel;
-            if (string.Equals(signature, _promptWorkspaceHeaderDataSignature, StringComparison.Ordinal))
-            {
-                return _promptWorkspaceHeaderDataCache;
-            }
-
-            _promptWorkspaceHeaderDataSignature = signature;
-            _promptWorkspaceHeaderDataCache = new WorkspaceHeaderPanel.HeaderData
-            {
-                Title = "RimChat_Tab_PromptWorkbench".Translate().ToString(),
-                DiplomacyLabel = "RimChat_PromptWorkbench_ChannelDiplomacy".Translate().ToString(),
-                RpgLabel = "RimChat_PromptWorkbench_ChannelRpg".Translate().ToString(),
-                IsDiplomacySelected = _workbenchChannel == PromptWorkbenchChannel.Diplomacy,
-                ChannelLabel = RimTalkPromptEntryChannelCatalog.GetLabel(selectedChannel),
-                QuickFactionLabel = "RimChat_PromptWorkbench_QuickFaction".Translate().ToString(),
-                QuickPawnLabel = "RimChat_PromptWorkbench_QuickPawn".Translate().ToString(),
-                ImportLabel = "RimChat_Import".Translate().ToString(),
-                ExportLabel = "RimChat_Export".Translate().ToString()
-            };
-            return _promptWorkspaceHeaderDataCache;
-        }
-
-        #endregion
-
-        #region UGUI Preset Panel
-
-        private void DrawPromptWorkspacePresetPanelUgui(Rect rect)
-        {
-            EnsureUguiPresetInitialized(rect);
-            ResizeUguiHostIfNeeded(_uguiPresetHost, rect, ref _uguiPresetInitialized);
-
-            _uguiPresetPanel.SetData(BuildPresetPanelData());
-            bool needsRender = _uguiPresetPanel.IsDirty;
-            _uguiPresetPanel.RefreshIfDirty();
-            if (needsRender) _uguiPresetHost.Render();
-
-            if (_uguiPresetInputBridge != null && ShouldProcessUguiInput(rect))
-            {
-                _uguiPresetInputBridge.ProcessEvent(rect);
-            }
-
-            _uguiPresetHost.DrawToImgui(rect);
-        }
-
-        private void EnsureUguiPresetInitialized(Rect initialRect)
-        {
-            if (_uguiPresetInitialized) return;
-
-            int w = Mathf.Max(1, (int)initialRect.width);
-            int h = Mathf.Max(1, (int)initialRect.height);
-
-            _uguiPresetHost = new UGuiCanvasHost();
-            _uguiPresetHost.Initialize(w, h, "RimChat_PresetCanvas");
-
-            _uguiPresetPanel = new WorkspacePresetPanel();
-            _uguiPresetPanel.Initialize(_uguiPresetHost, "PresetPanel");
-
-            // Wire callbacks
-            _uguiPresetPanel.OnCreateClicked = () =>
-            {
-                try
-                {
-                    PromptPresetConfig created = _promptPresetService.CreateFromLegacy(this, NextPresetName("Preset"));
-                    _promptPresetStore.Presets.Add(created);
-                    InvalidatePresetSummariesCache();
-                    _selectedPromptPresetId = created.Id;
-                    _presetRenameBuffer = created.Name;
-                    if (!TryActivatePresetById(created.Id, showSuccessMessage: false))
-                    {
-                        _promptPresetService.SaveAll(_promptPresetStore);
-                    }
-                    Messages.Message("RimChat_PromptPreset_CreateSuccess".Translate(created.Name), MessageTypeDefOf.NeutralEvent, false);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"[RimChat] Preset create failed: {ex}");
-                }
-            };
-            _uguiPresetPanel.OnDuplicateClicked = () =>
-            {
-                PromptPresetConfig selected = GetSelectedPreset();
-                if (selected == null) return;
-                try
-                {
-                    PromptPresetConfig duplicated = _promptPresetService.Duplicate(this, selected, NextPresetName(selected.Name));
-                    _promptPresetStore.Presets.Add(duplicated);
-                    InvalidatePresetSummariesCache();
-                    _selectedPromptPresetId = duplicated.Id;
-                    _presetRenameBuffer = duplicated.Name;
-                    if (!TryActivatePresetById(duplicated.Id, showSuccessMessage: false))
-                    {
-                        _promptPresetService.SaveAll(_promptPresetStore);
-                    }
-                    Messages.Message("RimChat_PromptPreset_DuplicateSuccess".Translate(duplicated.Name), MessageTypeDefOf.NeutralEvent, false);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"[RimChat] Preset duplicate failed: {ex}");
-                }
-            };
-            _uguiPresetPanel.OnPresetClicked = presetId =>
-            {
-                SchedulePromptWorkspaceNavigation(() =>
-                {
-                    if (!PersistPromptWorkspaceBufferNow(force: true)) return;
-                    _selectedPromptPresetId = presetId;
-                    PromptPresetSummary row = GetCachedPresetSummaries().FirstOrDefault(p => string.Equals(p.Id, presetId, StringComparison.Ordinal));
-                    if (row != null)
-                    {
-                        _presetRenameBuffer = row.Name;
-                        if (!row.IsActive) TryActivatePresetById(row.Id, showSuccessMessage: false);
-                    }
-                });
-            };
-            _uguiPresetPanel.OnModuleClicked = moduleId =>
-            {
-                // Determine if it's a section or node by checking the module list
-                List<PromptWorkbenchModuleItem> modules = GetCachedPromptWorkspaceModules();
-                PromptWorkbenchModuleItem target = modules.FirstOrDefault(m => string.Equals(m.Id, moduleId, StringComparison.OrdinalIgnoreCase));
-                if (string.IsNullOrEmpty(target.Id)) return;
-
-                if (target.Kind == ModuleKind.Section)
-                {
-                    SchedulePromptWorkspaceNavigation(() => SelectPromptWorkspaceSection(moduleId));
-                }
-                else
-                {
-                    SchedulePromptWorkspaceNavigation(() =>
-                    {
-                        if (!PersistPromptWorkspaceBufferNow(force: true)) return;
-                        _promptWorkspaceEditNodeMode = true;
-                        _promptWorkspaceSelectedNodeId = moduleId;
-                        EnsurePromptWorkspaceBuffer();
-                        InvalidatePromptWorkspacePreviewCache();
-                    });
-                }
-            };
-            _uguiPresetPanel.OnModuleToggled = (moduleId, enabled) =>
-            {
-                if (!EnsurePromptWorkspaceEditablePresetForMutation("workspace.module_toggle")) return;
-                List<PromptSectionLayoutConfig> sectionLayouts = GetPromptWorkspaceSectionLayouts();
-                List<PromptUnifiedNodeLayoutConfig> nodeLayouts = GetPromptWorkspaceNodeLayouts();
-                List<PromptWorkbenchModuleItem> modules = GetCachedPromptWorkspaceModules();
-                PromptWorkbenchModuleItem target = modules.FirstOrDefault(m => string.Equals(m.Id, moduleId, StringComparison.OrdinalIgnoreCase));
-                if (string.IsNullOrEmpty(target.Id)) return;
-
-                if (target.Kind == ModuleKind.Section)
-                {
-                    PromptSectionLayoutConfig layout = sectionLayouts.FirstOrDefault(item => string.Equals(item.SectionId, moduleId, StringComparison.OrdinalIgnoreCase));
-                    if (layout != null) { layout.Enabled = enabled; SavePromptWorkspaceSectionLayouts(sectionLayouts); }
-                }
-                else
-                {
-                    PromptUnifiedNodeLayoutConfig layout = nodeLayouts.FirstOrDefault(item => string.Equals(item.NodeId, moduleId, StringComparison.OrdinalIgnoreCase));
-                    if (layout != null) { layout.Enabled = enabled; SavePromptWorkspaceNodeLayouts(nodeLayouts); }
-                }
-            };
-
-            _uguiPresetInputBridge = new ImguiToUguiInputBridge(_uguiPresetHost);
-            _uguiPresetInitialized = true;
-        }
-
-        private WorkspacePresetPanel.PresetPanelData BuildPresetPanelData()
-        {
-            List<PromptPresetSummary> presets = GetCachedPresetSummaries();
-            List<PromptWorkbenchModuleItem> modules = GetCachedPromptWorkspaceModules();
-
-            int presetHash = 17;
-            for (int i = 0; i < presets.Count; i++)
-            {
-                PromptPresetSummary p = presets[i];
-                presetHash = presetHash * 31 + ((p.Id ?? string.Empty).GetHashCode());
-                presetHash = presetHash * 31 + ((p.Name ?? string.Empty).GetHashCode());
-                presetHash = presetHash * 31 + (p.IsActive ? 1 : 0);
-                presetHash = presetHash * 31 + (p.IsDefault ? 1 : 0);
-            }
-
-            int moduleHash = 23;
-            for (int i = 0; i < modules.Count; i++)
-            {
-                PromptWorkbenchModuleItem m = modules[i];
-                moduleHash = moduleHash * 31 + ((m.Id ?? string.Empty).GetHashCode());
-                moduleHash = moduleHash * 31 + (m.Enabled ? 1 : 0);
-                moduleHash = moduleHash * 31 + (int)m.Kind;
-            }
-
-            string signature = _promptWorkspacePerformance.LayoutVersion +
-                "|presetHash=" + presetHash +
-                "|moduleHash=" + moduleHash +
-                "|selPreset=" + (_selectedPromptPresetId ?? string.Empty) +
-                "|mode=" + (_promptWorkspaceEditNodeMode ? "node" : "section") +
-                "|selSection=" + (_promptWorkspaceSelectedSectionId ?? string.Empty) +
-                "|selNode=" + (_promptWorkspaceSelectedNodeId ?? string.Empty);
-            if (string.Equals(signature, _promptWorkspacePresetPanelDataSignature, StringComparison.Ordinal))
-            {
-                return _promptWorkspacePresetPanelDataCache;
-            }
-
-            var presetRows = new List<WorkspacePresetPanel.PresetRowData>();
-            foreach (PromptPresetSummary p in presets)
-            {
-                presetRows.Add(new WorkspacePresetPanel.PresetRowData
-                {
-                    Id = p.Id ?? string.Empty,
-                    Name = p.Name ?? string.Empty,
-                    IsSelected = string.Equals(p.Id, _selectedPromptPresetId, StringComparison.Ordinal),
-                    IsActive = p.IsActive,
-                    IsDefault = p.IsDefault
-                });
-            }
-
-            var moduleRows = new List<WorkspacePresetPanel.ModuleRowData>();
-            foreach (PromptWorkbenchModuleItem m in modules)
-            {
-                moduleRows.Add(new WorkspacePresetPanel.ModuleRowData
-                {
-                    Id = m.Id ?? string.Empty,
-                    Label = m.Label ?? string.Empty,
-                    KindTag = m.Kind == ModuleKind.Section
-                        ? "RimChat_PromptWorkspaceKind_Section".Translate().ToString()
-                        : "RimChat_PromptWorkspaceKind_Node".Translate().ToString(),
-                    IsSelected = m.Kind == ModuleKind.Section
-                        ? (!_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedSectionId, m.Id, StringComparison.OrdinalIgnoreCase))
-                        : (_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedNodeId, m.Id, StringComparison.OrdinalIgnoreCase)),
-                    IsEnabled = m.Enabled
-                });
-            }
-
-            _promptWorkspacePresetPanelDataSignature = signature;
-            _promptWorkspacePresetPanelDataCache = new WorkspacePresetPanel.PresetPanelData
-            {
-                PresetHeaderLabel = "RimChat_PromptWorkbench_PresetHeader".Translate().ToString(),
-                CreateLabel = "RimChat_PromptPreset_Create".Translate().ToString(),
-                DuplicateLabel = "RimChat_PromptPreset_Duplicate".Translate().ToString(),
-                Presets = presetRows,
-                ModuleHeaderLabel = "RimChat_PromptWorkspaceModuleHeader".Translate().ToString(),
-                Modules = moduleRows
-            };
-            return _promptWorkspacePresetPanelDataCache;
-        }
-
-        #endregion
-
-        #region UGUI Side Panel
-
-        private void DrawPromptWorkspaceSidePanelUgui(Rect rect)
-        {
-            EnsureUguiSidePanelInitialized(rect);
-            ResizeUguiHostIfNeeded(_uguiSidePanelHost, rect, ref _uguiSidePanelInitialized);
-
-            _uguiSidePanel.SetData(BuildSidePanelTabData());
-            bool needsRender = _uguiSidePanel.IsDirty;
-            _uguiSidePanel.RefreshIfDirty();
-            if (needsRender) _uguiSidePanelHost.Render();
-
-            if (_uguiSidePanelInputBridge != null && ShouldProcessUguiInput(rect))
-            {
-                _uguiSidePanelInputBridge.ProcessEvent(rect);
-            }
-
-            _uguiSidePanelHost.DrawToImgui(rect);
-        }
-
-        private void EnsureUguiSidePanelInitialized(Rect initialRect)
-        {
-            if (_uguiSidePanelInitialized) return;
-
-            int w = Mathf.Max(1, (int)initialRect.width);
-            int h = Mathf.Max(1, (int)initialRect.height);
-
-            _uguiSidePanelHost = new UGuiCanvasHost();
-            _uguiSidePanelHost.Initialize(w, h, "RimChat_SidePanelCanvas");
-
-            _uguiSidePanel = new WorkspaceSidePanel();
-            _uguiSidePanel.Initialize(_uguiSidePanelHost, "SidePanel");
-
-            _uguiSidePanel.OnTabChanged = tab =>
-            {
-                switch (tab)
-                {
-                    case WorkspaceSidePanel.SidePanelTab.Preview:
-                        _workbenchSidePanelTab = PromptWorkbenchInfoPanel.Preview;
-                        break;
-                    case WorkspaceSidePanel.SidePanelTab.FullPreview:
-                        _workbenchSidePanelTab = PromptWorkbenchInfoPanel.FullPreview;
-                        break;
-                    case WorkspaceSidePanel.SidePanelTab.Variables:
-                        _workbenchSidePanelTab = PromptWorkbenchInfoPanel.Variables;
-                        break;
-                }
-                MarkWorkspaceDirty(WorkspaceDirtySidePanel);
-            };
-
-            _uguiSidePanelInputBridge = new ImguiToUguiInputBridge(_uguiSidePanelHost);
-            _uguiSidePanelInitialized = true;
-        }
-
-        private WorkspaceSidePanel.SidePanelData BuildSidePanelTabData()
-        {
-            WorkspaceSidePanel.SidePanelTab activeTab;
-            switch (_workbenchSidePanelTab)
-            {
-                case PromptWorkbenchInfoPanel.FullPreview:
-                    activeTab = WorkspaceSidePanel.SidePanelTab.FullPreview;
-                    break;
-                case PromptWorkbenchInfoPanel.Variables:
-                    activeTab = WorkspaceSidePanel.SidePanelTab.Variables;
-                    break;
-                default:
-                    activeTab = WorkspaceSidePanel.SidePanelTab.Preview;
-                    break;
-            }
-
-            string signature = "tab=" + (int)activeTab;
-            if (string.Equals(signature, _promptWorkspaceSidePanelDataSignature, StringComparison.Ordinal))
-            {
-                return _promptWorkspaceSidePanelDataCache;
-            }
-
-            _promptWorkspaceSidePanelDataSignature = signature;
-            _promptWorkspaceSidePanelDataCache = new WorkspaceSidePanel.SidePanelData
-            {
-                ActiveTab = activeTab,
-                PreviewTabLabel = "RimChat_PreviewTitleShort".Translate().ToString(),
-                FullPreviewTabLabel = "RimChat_PromptWorkbench_FullPreviewTab".Translate().ToString(),
-                VariablesTabLabel = "RimChat_PromptWorkbench_VariablesTab".Translate().ToString()
-            };
-            return _promptWorkspaceSidePanelDataCache;
-        }
-
-        #endregion
-
-        #region UGUI Editor Panel
-
-        private void DrawPromptWorkspaceEditorPanelUgui(Rect rect)
-        {
-            EnsureUguiEditorInitialized(rect);
-            ResizeUguiHostIfNeeded(_uguiEditorHost, rect, ref _uguiEditorInitialized);
-
-            _uguiEditorPanel.SetData(BuildEditorChromeData());
-            bool needsRender = _uguiEditorPanel.IsDirty;
-            _uguiEditorPanel.RefreshIfDirty();
-            if (needsRender) _uguiEditorHost.Render();
-
-            if (_uguiEditorInputBridge != null && ShouldProcessUguiInput(rect))
-            {
-                _uguiEditorInputBridge.ProcessEvent(rect);
-            }
-
-            _uguiEditorHost.DrawToImgui(rect);
-        }
-
-        private void EnsureUguiEditorInitialized(Rect initialRect)
-        {
-            if (_uguiEditorInitialized) return;
-
-            int w = Mathf.Max(1, (int)initialRect.width);
-            int h = Mathf.Max(1, (int)initialRect.height);
-
-            _uguiEditorHost = new UGuiCanvasHost();
-            _uguiEditorHost.Initialize(w, h, "RimChat_EditorCanvas");
-
-            _uguiEditorPanel = new WorkspaceEditorPanel();
-            _uguiEditorPanel.Initialize(_uguiEditorHost, "EditorPanel");
-
-            _uguiEditorPanel.OnEnabledToggled = () =>
-            {
-                if (!EnsurePromptWorkspaceEditablePresetForMutation("workspace.module_toggle")) return;
-                List<PromptSectionLayoutConfig> sectionLayouts = GetPromptWorkspaceSectionLayouts();
-                List<PromptUnifiedNodeLayoutConfig> nodeLayouts = GetPromptWorkspaceNodeLayouts();
-                if (_promptWorkspaceEditNodeMode)
-                {
-                    PromptUnifiedNodeLayoutConfig layout = nodeLayouts.FirstOrDefault(item =>
-                        string.Equals(item.NodeId, _promptWorkspaceSelectedNodeId, StringComparison.OrdinalIgnoreCase));
-                    if (layout != null) { layout.Enabled = !layout.Enabled; SavePromptWorkspaceNodeLayouts(nodeLayouts); }
-                }
-                else
-                {
-                    PromptSectionLayoutConfig layout = sectionLayouts.FirstOrDefault(item =>
-                        string.Equals(item.SectionId, _promptWorkspaceSelectedSectionId, StringComparison.OrdinalIgnoreCase));
-                    if (layout != null) { layout.Enabled = !layout.Enabled; SavePromptWorkspaceSectionLayouts(sectionLayouts); }
-                }
-            };
-            _uguiEditorPanel.OnUndoClicked = TryUndoPromptWorkspaceText;
-            _uguiEditorPanel.OnRedoClicked = TryRedoPromptWorkspaceText;
-            _uguiEditorPanel.OnSaveClicked = TrySavePromptWorkspaceNow;
-            _uguiEditorPanel.OnResetClicked = TryResetPromptWorkspaceCurrentEntry;
-
-            _uguiEditorInputBridge = new ImguiToUguiInputBridge(_uguiEditorHost);
-            _uguiEditorInitialized = true;
-        }
-
-        private WorkspaceEditorPanel.EditorData BuildEditorChromeData()
-        {
-            string kindTag = _promptWorkspaceEditNodeMode
-                ? "RimChat_PromptWorkspaceKind_Node".Translate().ToString()
-                : "RimChat_PromptWorkspaceKind_Section".Translate().ToString();
-            string label = _promptWorkspaceEditNodeMode
-                ? PromptUnifiedNodeSchemaCatalog.GetDisplayLabel(_promptWorkspaceSelectedNodeId)
-                : (PromptSectionSchemaCatalog.TryGetSection(_promptWorkspaceSelectedSectionId, out PromptSectionSchemaItem section)
-                    ? section.GetDisplayLabel()
-                    : _promptWorkspaceSelectedSectionId);
-
-            // Resolve enabled state
-            List<PromptSectionLayoutConfig> sectionLayouts = GetPromptWorkspaceSectionLayouts();
-            List<PromptUnifiedNodeLayoutConfig> nodeLayouts = GetPromptWorkspaceNodeLayouts();
-            bool isEnabled;
-            if (_promptWorkspaceEditNodeMode)
-            {
-                PromptUnifiedNodeLayoutConfig layout = nodeLayouts.FirstOrDefault(item =>
-                    string.Equals(item.NodeId, _promptWorkspaceSelectedNodeId, StringComparison.OrdinalIgnoreCase));
-                isEnabled = layout?.Enabled ?? true;
-            }
-            else
-            {
-                PromptSectionLayoutConfig layout = sectionLayouts.FirstOrDefault(item =>
-                    string.Equals(item.SectionId, _promptWorkspaceSelectedSectionId, StringComparison.OrdinalIgnoreCase));
-                isEnabled = layout?.Enabled ?? true;
-            }
-
-            // Validation
-            string editorText = _promptWorkspaceEditorBuffer ?? string.Empty;
-            TemplateVariableValidationContext validationContext = BuildPromptWorkspaceValidationContext();
-            UpdatePromptWorkspaceValidationState(editorText, validationContext);
-            string validationText = BuildLiveValidationStatusText(_promptWorkspaceValidationResult, editorText);
-            WorkspaceEditorPanel.ValidationState validationState;
-            if (_promptWorkspaceValidationResult.HasScribanError)
-            {
-                validationState = WorkspaceEditorPanel.ValidationState.Error;
-            }
-            else if (_promptWorkspaceValidationResult.UnknownVariables.Count > 0)
-            {
-                validationState = WorkspaceEditorPanel.ValidationState.Warning;
-            }
-            else
-            {
-                validationState = WorkspaceEditorPanel.ValidationState.Ok;
-            }
-
-            bool canUndo = CanUndoPromptWorkspaceText();
-            bool canRedo = CanRedoPromptWorkspaceText();
-            string signature =
-                "layout=" + _promptWorkspacePerformance.LayoutVersion +
-                "|editor=" + _promptWorkspacePerformance.EditorTextVersion +
-                "|validation=" + _promptWorkspacePerformance.ValidationResultVersion +
-                "|mode=" + (_promptWorkspaceEditNodeMode ? "node" : "section") +
-                "|section=" + (_promptWorkspaceSelectedSectionId ?? string.Empty) +
-                "|node=" + (_promptWorkspaceSelectedNodeId ?? string.Empty) +
-                "|enabled=" + (isEnabled ? "1" : "0") +
-                "|undo=" + (canUndo ? "1" : "0") +
-                "|redo=" + (canRedo ? "1" : "0") +
-                "|state=" + (int)validationState +
-                "|text=" + validationText;
-            if (string.Equals(signature, _promptWorkspaceEditorPanelDataSignature, StringComparison.Ordinal))
-            {
-                return _promptWorkspaceEditorPanelDataCache;
-            }
-
-            _promptWorkspaceEditorPanelDataSignature = signature;
-            _promptWorkspaceEditorPanelDataCache = new WorkspaceEditorPanel.EditorData
-            {
-                KindTag = $"[{kindTag}]",
-                ModuleLabel = label,
-                EnabledLabel = "RimChat_RimTalkCompatEnable".Translate().ToString(),
-                IsEnabled = isEnabled,
-                UndoLabel = "RimChat_PromptWorkspaceToolbar_Undo".Translate().ToString(),
-                RedoLabel = "RimChat_PromptWorkspaceToolbar_Redo".Translate().ToString(),
-                SaveLabel = "RimChat_PromptWorkspaceToolbar_Save".Translate().ToString(),
-                ResetLabel = "RimChat_PromptWorkspaceToolbar_Reset".Translate().ToString(),
-                CanUndo = canUndo,
-                CanRedo = canRedo,
-                ValidationText = validationText,
-                Validation = validationState
-            };
-            return _promptWorkspaceEditorPanelDataCache;
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Shared utility: resize a UGuiCanvasHost if the IMGUI rect dimensions changed.
-        /// </summary>
-        private static void ResizeUguiHostIfNeeded(UGuiCanvasHost host, Rect rect, ref bool initialized)
-        {
-            if (host == null || !initialized) return;
-            int newW = Mathf.Max(1, (int)rect.width);
-            int newH = Mathf.Max(1, (int)rect.height);
-            host.Resize(newW, newH);
-        }
-
-        private static bool ShouldProcessUguiInput(Rect rect)
-        {
-            Event evt = Event.current;
-            if (evt == null)
-            {
-                return false;
-            }
-
-            switch (evt.type)
-            {
-                case EventType.MouseDown:
-                case EventType.MouseUp:
-                case EventType.MouseDrag:
-                case EventType.ScrollWheel:
-                case EventType.MouseMove:
-                    return rect.Contains(evt.mousePosition);
-                case EventType.KeyDown:
-                case EventType.KeyUp:
-                    return true;
-                default:
-                    return false;
-            }
         }
 
         private PromptWorkspaceStructuredPreview GetPromptWorkspaceStructuredPreview()
@@ -2419,9 +1576,6 @@ namespace RimChat.Config
             MarkWorkspaceDirty(WorkspaceDirtySidePanel);
             _sidePanelContentRtCache?.MarkDirty();
             _promptWorkspacePreviewRenderer?.MarkDirty();
-            _uguiPreviewPanel?.MarkDirty();
-            _uguiSidePanel?.MarkDirty();
-            _uguiEditorPanel?.MarkDirty();
         }
 
         private void InvalidatePromptWorkspaceNodeUiCaches()
@@ -2436,8 +1590,6 @@ namespace RimChat.Config
             _promptWorkspaceModuleCache.Clear();
             MarkWorkspaceDirty(WorkspaceDirtyPresetPanel | WorkspaceDirtyModuleList | WorkspaceDirtySidePanel);
             _sidePanelContentRtCache?.MarkDirty();
-            _uguiPresetPanel?.MarkDirty();
-            _uguiEditorPanel?.MarkDirty();
         }
 
         private bool TryInsertVariableTokenToPromptWorkspace(string token)

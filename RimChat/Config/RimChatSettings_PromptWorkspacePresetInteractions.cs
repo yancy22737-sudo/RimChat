@@ -81,7 +81,10 @@ namespace RimChat.Config
             const float rowStep = 26f;
             Rect view = new Rect(0f, 0f, rect.width - 16f, Mathf.Max(rect.height, rows.Count * rowStep));
             Widgets.BeginScrollView(rect, ref _promptPresetScroll, view);
-            for (int i = 0; i < rows.Count; i++)
+
+            int firstVisible = Mathf.Max(0, Mathf.FloorToInt(_promptPresetScroll.y / rowStep) - 1);
+            int lastVisible = Mathf.Min(rows.Count - 1, Mathf.CeilToInt((_promptPresetScroll.y + rect.height) / rowStep) + 1);
+            for (int i = firstVisible; i <= lastVisible; i++)
             {
                 DrawPromptWorkspacePresetRow(rows[i], new Rect(0f, i * rowStep, view.width, rowStep - 2f));
             }

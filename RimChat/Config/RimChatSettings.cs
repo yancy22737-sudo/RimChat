@@ -349,7 +349,7 @@ namespace RimChat.Config
         private EnhancedTextArea factionPromptTextArea;
 
         // Tab Settings
-        private int selectedTab = 0;
+        internal int selectedTab = 0;
         private readonly string[] tabNames = { "RimChat_Tab_API", "RimChat_Tab_ModOptions", "RimChat_Tab_PromptWorkbench", "RimChat_Tab_ImageApi" };
         private const string ModVariablesSectionId = "mod_variables";
         private static readonly PromptWorkbenchSectionDefinition[] PromptWorkbenchSections =
@@ -528,18 +528,6 @@ namespace RimChat.Config
             NormalizeCloudConfigUrls();
             EnsureDiplomacyImageDefaults();
             UserDefinedPromptVariableService.NormalizeSettingsCollections(this);
-
-            // UGUI rendering feature flags (persisted, synchronized to static accessors)
-            Scribe_Values.Look(ref _useUguiRendering, "UseUguiRendering", true);
-            Scribe_Values.Look(ref _useUguiPreviewPanel, "UseUguiPreviewPanel", true);
-            Scribe_Values.Look(ref _useUguiSidePanel, "UseUguiSidePanel", true);
-            Scribe_Values.Look(ref _useUguiChatMessages, "UseUguiChatMessages", false);
-            Scribe_Values.Look(ref _useUguiHeaderPanel, "UseUguiHeaderPanel", true);
-            Scribe_Values.Look(ref _useUguiPresetPanel, "UseUguiPresetPanel", true);
-            Scribe_Values.Look(ref _useUguiEditorPanel, "UseUguiEditorPanel", true);
-            UI.UGui.UGuiFeatureFlags.SyncFromSettings(
-                _useUguiRendering, _useUguiPreviewPanel, _useUguiSidePanel, _useUguiChatMessages,
-                _useUguiHeaderPanel, _useUguiPresetPanel, _useUguiEditorPanel);
 
             base.ExposeData();
         }
@@ -1320,12 +1308,22 @@ namespace RimChat.Config
             return result;
         }
 
+        private int _previousTab = -1;
+
         public void DoWindowContents(Rect inRect)
         {
             if (selectedTab < 0 || selectedTab >= tabNames.Length)
             {
                 selectedTab = 0;
             }
+
+            // Flush workbench edits when leaving the workbench tab
+            if (_previousTab == 2 && selectedTab != 2)
+            {
+                FlushPromptWorkspaceEdits(persistToDisk: true);
+                DisposePromptWorkspaceRenderTextures();
+            }
+            _previousTab = selectedTab;
 
             // Draw tabs at the top
             float tabHeight = 32f;
@@ -1341,10 +1339,7 @@ namespace RimChat.Config
             }
             else if (selectedTab == 2)
             {
-                // selectedTab=2 should never be reached (Tab 2 click opens popup directly),
-                // but if it does, open the workbench and reset to tab 0.
-                OpenPromptWorkbenchWindow();
-                selectedTab = 0;
+                DrawTab_PromptSettingsDirect(contentRect);
             }
             else if (selectedTab == 3)
             {
@@ -1401,14 +1396,7 @@ namespace RimChat.Config
                 // Click handling
                 if (Widgets.ButtonInvisible(singleTabRect))
                 {
-                    if (i == 2)
-                    {
-                        OpenPromptWorkbenchWindow();
-                    }
-                    else
-                    {
-                        selectedTab = i;
-                    }
+                    selectedTab = i;
                 }
             }
         }
@@ -1527,15 +1515,6 @@ namespace RimChat.Config
 
         private Vector2 promptTabScrollPosition = Vector2.zero;
         private bool _promptWorkbenchExperimentalEnabled;
-
-        // UGUI rendering feature flags
-        private bool _useUguiRendering = true;
-        private bool _useUguiPreviewPanel = true;
-        private bool _useUguiSidePanel = true;
-        private bool _useUguiChatMessages;
-        private bool _useUguiHeaderPanel = true;
-        private bool _useUguiPresetPanel = true;
-        private bool _useUguiEditorPanel = true;
 
         internal void DrawTab_PromptSettingsDirect(Rect rect)
         {

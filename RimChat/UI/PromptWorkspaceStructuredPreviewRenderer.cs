@@ -108,62 +108,61 @@ namespace RimChat.UI
             bool needsLayoutRecalc)
         {
             EnsureStyles();
-            Rect contentRect = ResolveContentRectWithStatus(rect, preview);
             List<PromptWorkspacePreviewBlock> blocks = preview?.Blocks ?? new List<PromptWorkspacePreviewBlock>();
-            if (blocks.Count == 0)
+            float width = Mathf.Max(1f, rect.width - 16f);
+
+            // Repaint: full rendering with layout calc. Layout: only ScrollView shell.
+            if (Event.current.type != EventType.Repaint)
             {
-                Widgets.Label(contentRect, "RimChat_PromptWorkbench_PreviewEmpty".Translate());
+                scroll = GUI.BeginScrollView(rect, scroll,
+                    new Rect(0f, 0f, width, Mathf.Max(1f, _cachedContentHeight)), false, true);
+                GUI.EndScrollView();
                 return;
             }
 
-            // Snapshot data source indicator (shown after build completes)
-            if (preview != null && preview.Stage == PromptWorkspacePreviewBuildStage.Completed)
-            {
-                float indicatorHeight = 20f;
-                Rect indicatorRect = new Rect(contentRect.x, contentRect.y, contentRect.width, indicatorHeight);
-                DrawSnapshotIndicator(indicatorRect, preview.UsesSnapshotData);
-                contentRect = new Rect(contentRect.x, contentRect.y + indicatorHeight + 2f, contentRect.width, Mathf.Max(1f, contentRect.height - indicatorHeight - 2f));
-            }
-
-            float width = Mathf.Max(1f, contentRect.width - 16f);
             string signature = preview?.Signature ?? string.Empty;
+            if (needsLayoutRecalc) EnsureLayoutCache(signature, blocks, width);
 
-            // Only recalculate layout if content signature or dimensions changed
-            if (needsLayoutRecalc)
-            {
-                EnsureLayoutCache(signature, blocks, width);
-            }
-
+            Rect contentRect = ResolveContentRectWithStatus(rect, preview);
             Rect viewRect = new Rect(0f, 0f, width, _cachedContentHeight);
             float maxScrollY = Mathf.Max(0f, viewRect.height - contentRect.height);
             scroll = new Vector2(0f, Mathf.Clamp(scroll.y, 0f, maxScrollY));
             scroll = GUI.BeginScrollView(contentRect, scroll, viewRect, false, true);
 
-            float y = 0f;
-            for (int i = 0; i < blocks.Count; i++)
+            if (blocks.Count > 0)
             {
-                PromptWorkspacePreviewBlock block = blocks[i];
-                float headerHeight = i < _cachedHeaderHeights.Count
-                    ? _cachedHeaderHeights[i]
-                    : ResolveHeaderHeight(ResolveHeaderText(block), width);
-                float bodyHeight = i < _cachedBodyHeights.Count
-                    ? _cachedBodyHeights[i]
-                    : ResolveBodyHeight(block, width);
+                float effectiveY = 0f;
+                if (preview != null && preview.Stage == PromptWorkspacePreviewBuildStage.Completed)
+                {
+                    DrawSnapshotIndicator(new Rect(0f, effectiveY, width, 20f), preview.UsesSnapshotData);
+                    effectiveY += 22f;
+                }
 
-                Rect headerRect = new Rect(0f, y, width, headerHeight);
-                Widgets.DrawBoxSolid(headerRect, ResolveHeaderColor(block));
-                GUI.Label(new Rect(
-                    headerRect.x + HeaderPadding,
-                    headerRect.y + 1f,
-                    headerRect.width - HeaderPadding * 2f,
-                    headerRect.height - 2f),
-                    ResolveHeaderText(block),
-                    _headerStyle);
-                y += headerHeight;
+                for (int i = 0; i < blocks.Count; i++)
+                {
+                    PromptWorkspacePreviewBlock block = blocks[i];
+                    float headerHeight = i < _cachedHeaderHeights.Count
+                        ? _cachedHeaderHeights[i]
+                        : ResolveHeaderHeight(ResolveHeaderText(block), width);
+                    float bodyHeight = i < _cachedBodyHeights.Count
+                        ? _cachedBodyHeights[i]
+                        : ResolveBodyHeight(block, width);
 
-                Rect bodyRect = new Rect(0f, y, width, bodyHeight);
-                DrawBodyContent(bodyRect, block, i);
-                y += bodyHeight + BlockGap;
+                    Rect headerRect = new Rect(0f, effectiveY, width, headerHeight);
+                    Widgets.DrawBoxSolid(headerRect, ResolveHeaderColor(block));
+                    GUI.Label(new Rect(headerRect.x + HeaderPadding, headerRect.y + 1f,
+                        headerRect.width - HeaderPadding * 2f, headerRect.height - 2f),
+                        ResolveHeaderText(block), _headerStyle);
+                    effectiveY += headerHeight;
+
+                    Rect bodyRect = new Rect(0f, effectiveY, width, bodyHeight);
+                    DrawBodyContent(bodyRect, block, i);
+                    effectiveY += bodyHeight + BlockGap;
+                }
+            }
+            else
+            {
+                Widgets.Label(new Rect(0f, 0f, width, 24f), "RimChat_PromptWorkbench_PreviewEmpty".Translate());
             }
 
             GUI.EndScrollView();

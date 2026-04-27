@@ -1,3 +1,11 @@
+0.9.1037
+- [Perf] Prompt Workbench major performance improvement: Side Panel preview content now skips rendering during Layout events; Body reduced from ~8ms to ~0.3ms (97% reduction).
+- [Perf] Workbench converted from popup window to inline rendering (matching RimTalk architecture), eliminating dual-window GUI context overhead.
+- [Perf] Module list rows simplified to ButtonText (4→1 Widget per row), redundant metadata row removed.
+- [Perf] Preview renderer Layout guard added, font pre-rasterization.
+- [Cleanup] Removed UGUI dead code (~850 lines, 10 files), removed debug performance diagnostics.
+- [Version] About/About.xml modVersion bumped to 0.9.1037.
+
 0.9.1036
 - [Fix] Social circle and strategy generation perspective attribution bug: player's first-person statements were incorrectly attributed to faction leaders in social news posts (e.g., player says "I don't need your iron", NPC's faction publishes it as their own statement).
   * TryAnalyzeDialogueKeywords now analyzes only AI text (NPC response) instead of merged player+AI text — social news is published from the NPC's perspective; including player text polluted keyword/sentiment classification.

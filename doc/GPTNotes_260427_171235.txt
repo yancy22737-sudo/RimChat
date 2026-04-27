@@ -1,0 +1,65 @@
+我的判断：真正的根因大概率不在“ModSettings 基类本身慢”，而在 RimChat 工作台的 Body 路径里有一段“Layout 阶段固定执行的重活”。
+你现在的证据更像是在指向：某个剩余的单点成本，而不是 Widget 总数、ScrollView、partial class、using 数、字段数量本身。
+你已经测到：Ensure=0ms、Build=0ms、Header≈0.1ms，只有 Body≈7–8ms；同时削掉大量 Widget、移除 ScrollView 后 Body 仍几乎不变；并且采样里全是 Layout，没有看到 Repaint。这些事实非常关键。
+结论先说清楚
+我会把嫌疑排序成这样：
+• 最高嫌疑：在 Body 绘制路径里触发了 ModSettings.Write() / Mod.WriteSettings() / ExposeData() / Scribe 序列化。
+这能同时解释“ModSettings 架构相关”“字段很多”“Widget 削减无效”“固定 7–8ms”。字段数量本身不会让绘制慢，但如果每次 Layout 都序列化 200+ 个字段，就会变成固定成本。
+• 同样高嫌疑：Body 里还保留了一个大文本控件或大文本测量路径，例如 TextArea、长 prompt preview、自动换行高度计算、GUIStyle.CalcHeight、长字符串 Label。
+你削掉 56 个 Widget 仍不变，说明不是“很多小控件累加”，而是“一个没削掉的大东西”。
+• 中等嫌疑：Repaint 没进到 Body，但 Layout 进了。
+这说明你的 Repaint 分支、tab 分支、scroll/clip 分支、early return、ExitGUI、异常捕获或上层 wrapper 有分流。可视 UI 必然要有 Repaint；Unity 文档说明 OnGUI 会按事件被多次调用，而 Repaint 是每帧发送的绘制事件。
+• 低嫌疑：RimChatSettings : ModSettings 这个继承关系本身。
+RimWorld 常规结构是 Mod 作为 UI 入口，ModSettings 作为可序列化数据存储；DoSettingsWindowContents() 是 Mod 侧负责渲染的入口，ModSettings.ExposeData() 负责序列化。
+所以“把入口提到 RimChatMod.DoSettingsWindowContents”值得做，但它是一个隔离实验，不应直接解释为“ModSettings 基类有 7ms 开销”。
+“全是 Layout”这个现象怎么解读
+Unity IMGUI 不是 retained UI。OnGUI 会按事件反复调用；Layout 在其他事件之前发送，用于自动布局；Repaint 是之后的绘制事件。
+所以你看到“DrawPromptSectionWorkspace 只在 Layout 被调用”，我不会解释成“Unity 没有 Repaint”。我会解释成：
+Repaint 存在，但没有走到你计时的 Body 位置。
+这通常有三类原因：
+// 1. 上层分支导致 Layout 走 Body，Repaint 不走 Body if (Event.current.type == EventType.Layout) { DrawPromptSectionWorkspace(rect); } // 2. Layout 阶段改变了某个状态，Repaint 阶段 tab/section/visibility 条件变了 if (currentTab == PromptWorkbench) { DrawPromptSectionWorkspace(rect); } // 3. Repaint 之前发生 ExitGUI / exception / early return GUIUtility.ExitGUI(); return; 
+你提到“Layout/Repaint 守卫有效但破坏按钮”，这也符合 IMGUI 机制：交互控件不能整段跳过非 Repaint 事件。按钮、文本框、滚动条需要在 Layout、MouseDown、MouseUp、KeyDown 等事件中保持一致的 control ID 顺序。正确做法不是整段 guard，而是只 guard 纯绘制、纯格式化、纯预览渲染的重活。
+例如：
+// 可以 guard：纯 preview、纯 label 格式化、昂贵字符串拼接 if (Event.current.type == EventType.Repaint) { DrawHeavyPreview(rect); } // 不要这样 guard：按钮、TextField、TextArea、ScrollView 控件本身 if (Event.current.type == EventType.Repaint) { if (Widgets.ButtonText(rect, "Save")) { ... } // 这会破坏交互 } 
+我认为你当前“ModSettings 基类开销”的推论有偏差
+你列出的架构差异里，真正有运行时意义的是：
+差异是否可能造成 7–8msSettings : Mod vs RimChatSettings : ModSettings本身几乎不可能UI 入口在 Mod 还是转发到 settings 对象可能，取决于转发时做了什么ModSettings 字段 200+只有在序列化、反射、拷贝、dirty compare 时才重要partial class 多文件不重要，编译后仍是一个类using 数量不重要，编译期概念文件行数几千行本身不重要，只有执行到的代码重要 
+因此更准确的根因表述应该是：
+不是 ModSettings 继承导致渲染慢，而是 RimChat 把“设置数据对象”和“工作台 UI 渲染对象”耦合后，Body 在 Layout 事件中触发了某个固定成本路径。这个路径可能是 settings 序列化，也可能是大文本 IMGUI 控件。
+最该优先验证的两个点
+1. 查 ExposeData / WriteSettings 是否在 UI 绘制时被调用
+这个非常重要。RimWorld 的 ModSettings 正常职责是序列化数据，不是每帧绘制。社区资料也把 Mod 描述为 UI entry point，把 ModSettings 描述为 serializable data store。
+你应该在这些位置加一次性或聚合计时：
+public override void ExposeData() { var sw = Stopwatch.StartNew(); try { base.ExposeData(); // 你的 Scribe_Values.Look / Scribe_Collections.Look ... } finally { sw.Stop(); // 不要每帧刷屏，先只在超过 1ms 时打一次 if (sw.Elapsed.TotalMilliseconds > 1.0) { Log.Message( $"[RimChatPerf] ExposeData {sw.Elapsed.TotalMilliseconds:F2}ms " + $"event={Event.current?.type.ToString() ?? "null"} raw={Event.current?.rawType.ToString() ?? "null"}" ); } } } 
+同时全文搜索：
+.Write() .WriteSettings() ExposeData() Scribe_ GUI.changed 
+尤其警惕这种模式：
+if (GUI.changed) { settings.Write(); // 危险：GUI.changed 可能比你想象的更频繁 } settings.Write(); // 更危险：每次 OnGUI / Layout 都写 mod.WriteSettings(); // 同理 
+更安全的模式是：
+private bool dirty; private void SetDirtyIfChanged<T>(ref T field, T newValue) { if (!EqualityComparer<T>.Default.Equals(field, newValue)) { field = newValue; dirty = true; } } // 只在关闭设置页、切换页、点击保存、或明确应用时写 public override void DoSettingsWindowContents(Rect inRect) { DrawSettings(inRect); } public void FlushSettingsIfDirty() { if (!dirty) return; dirty = false; LoadedModManager.GetMod<RimChatMod>().WriteSettings(); } 
+如果 ExposeData 在 Layout 中出现，并且耗时接近 7–8ms，根因就基本锁死了：不是 UI 渲染慢，是设置序列化被塞进了 UI Layout 热路径。
+2. 把大文本控件完全替换成常量，别只优化 WordWrap 缓存
+你已经试过 WordWrap/Translate 缓存无效，但这不等于“大文本控件无嫌疑”。因为 TextArea、TextField、长文本 Label、prompt preview 这类控件可能在 Unity/RimWorld 的 IMGUI 事件流里仍然做 control ID、文本编辑状态、光标、选择区、换行、裁剪或高度计算。
+做一个更狠的测试：
+// 临时测试版 Body：保留相同入口、相同 rect、相同 tab，但移除所有真实内容 private void DrawPromptSectionWorkspace(Rect rect) { Widgets.Label(rect.TopPartPixels(30f), "stub"); } 
+如果这样从 7–8ms 掉到 <1ms，说明不是上下文问题，是 Body 内容问题。
+然后再单独恢复：
+// 只恢复主 TextArea promptText = Widgets.TextArea(textAreaRect, promptText); // 只恢复 preview Widgets.Label(previewRect, cachedPreview); // 只恢复模块列表 DrawModuleList(moduleRect); // 只恢复按钮区 DrawButtons(buttonRect); 
+不要按“Widget 数量”削，要按“控件类型和数据规模”削。一个 20,000 字符的 TextArea 可能比 50 个按钮更贵。
+你下一步的架构迁移实验应该这样做
+把入口从 RimChatSettings.DoWindowContents 提到 RimChatMod.DoSettingsWindowContents 是值得做的，但要用矩阵判断，否则容易误判。
+实验入口Body 内容结果如何解读A当前 RimChatSettings.DoWindowContents真实 Body当前 7–8ms 基线B当前 RimChatSettings.DoWindowContents空 Body / stub Label如果仍 7–8ms，才说明上下文有锅C新 RimChatMod.DoSettingsWindowContents真实 Body如果仍 7–8ms，说明成本跟着 Body 走D新 RimChatMod.DoSettingsWindowContents空 Body / stub Label应接近 RimTalk 的空壳成本 
+最关键的是 B 和 C：
+• B 掉到 <1ms：根因在真实 Body，不在 ModSettings 上下文。
+• B 仍是 7–8ms：根因在当前入口 wrapper、父级窗口、重复调用、序列化、dirty 写入或异常路径。
+• C 仍是 7–8ms：迁移无效，说明真实 Body 自带固定成本。
+• C 掉到 ~1ms：迁移绕开了某个上下文成本；继续查“旧路径多做了什么”，不要停在“ModSettings 慢”这个解释上。
+我会怎么命名真正的根因
+按你已有数据，我会把根因暂时命名为：
+RimChat 工作台 Body 在 Unity IMGUI Layout 事件中执行了固定成本路径；该路径与可见 Widget 数量弱相关，与 RimChat 的 settings/UI 耦合强相关。最优先排查 settings 序列化写入，其次排查大文本编辑/预览控件。
+这比“ModSettings 基类有潜在开销”更精确，也更容易定位。
+最小修复方向
+建议的最终结构是：
+public sealed class RimChatMod : Mod { internal static RimChatSettings Settings; public RimChatMod(ModContentPack content) : base(content) { Settings = GetSettings<RimChatSettings>(); } public override string SettingsCategory() => "RimChat"; public override void DoSettingsWindowContents(Rect inRect) { RimChatSettingsUI.Draw(inRect, Settings); } } public sealed class RimChatSettings : ModSettings { // 只放数据 public string prompt; public bool someOption; public override void ExposeData() { base.ExposeData(); Scribe_Values.Look(ref prompt, "prompt", ""); Scribe_Values.Look(ref someOption, "someOption", false); } } public static class RimChatSettingsUI { public static void Draw(Rect inRect, RimChatSettings settings) { // 只画 UI，不在这里无条件 WriteSettings } } 
+这个结构的价值不是“Mod 比 ModSettings 快”，而是强制切断数据序列化对象和 IMGUI 热路径的耦合。
+我会先查 ExposeData/WriteSettings。如果那里没有命中，再查主 TextArea / 长 prompt preview。按照你现在的证据，这两个比“ScrollView/Widget 数量/partial class/using 数量”更接近真正根因。

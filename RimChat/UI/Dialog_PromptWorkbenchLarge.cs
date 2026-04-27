@@ -7,8 +7,6 @@ namespace RimChat.UI
     /// Dependencies: RimChat prompt section workspace renderer and RimWorld window stack lifecycle.
     /// Responsibility: host prompt workspace in a dedicated large-size window for stable editing space,
     /// and manage RenderTexture lifecycle (creation/disposal) for offscreen cached rendering.
-    /// UGUI rendering infrastructure is managed by RimChatSettings_PromptSectionWorkspace
-    /// and disposed via DisposePromptWorkspaceRenderTextures().
     /// </summary>
     public sealed class Dialog_PromptWorkbenchLarge : Window
     {

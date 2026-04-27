@@ -416,154 +416,49 @@ namespace RimChat.Config
             const float rowStep = 26f;
             const float buttonSize = 22f;
             float totalHeight = modules.Count * rowStep;
-
             Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(inner.height, totalHeight));
             Widgets.BeginScrollView(inner, ref _promptWorkspaceSectionScroll, viewRect);
+            int firstVisible = Mathf.Max(0, Mathf.FloorToInt(_promptWorkspaceSectionScroll.y / rowStep) - 1);
+            int lastVisible = Mathf.Min(modules.Count - 1, Mathf.CeilToInt((_promptWorkspaceSectionScroll.y + inner.height) / rowStep) + 1);
 
-            float rowY = 0f;
-            for (int i = 0; i < modules.Count; i++)
+            string sectionTag = "RimChat_PromptWorkspaceKind_Section".Translate().ToString();
+            string nodeTag = "RimChat_PromptWorkspaceKind_Node".Translate().ToString();
+            int selectedIndex = -1;
+
+            for (int i = firstVisible; i <= lastVisible; i++)
             {
                 PromptWorkbenchModuleItem module = modules[i];
-                Rect rowRect = new Rect(0f, rowY, viewRect.width, rowHeight);
+                float rowY = i * rowStep;
+                float rowWidth = viewRect.width;
+                Rect rowRect = new Rect(0f, rowY, rowWidth, rowHeight);
 
                 bool selected = module.Kind == ModuleKind.Section
                     ? (!_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedSectionId, module.Id, StringComparison.OrdinalIgnoreCase))
                     : (_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedNodeId, module.Id, StringComparison.OrdinalIgnoreCase));
 
-                // RimTalk-style selection highlight
-                if (selected)
-                {
-                    Widgets.DrawHighlight(rowRect);
-                }
-                else if (Mouse.IsOver(rowRect))
-                {
-                    Widgets.DrawBoxSolid(rowRect, RowHoverBg);
-                }
+                if (selected) selectedIndex = i;
 
-                // Checkbox (both Section and Node)
-                bool enabled = module.Enabled;
-                Widgets.Checkbox(new Vector2(4f, rowY + 4f), ref enabled, 16f);
-                if (enabled != module.Enabled)
-                {
-                    if (!EnsurePromptWorkspaceEditablePresetForMutation("workspace.module_toggle"))
-                    {
-                        enabled = module.Enabled;
-                    }
-                    else if (module.Kind == ModuleKind.Section)
-                    {
-                        PromptSectionLayoutConfig layoutItem = sectionLayouts.FirstOrDefault(item =>
-                            string.Equals(item.SectionId, module.Id, StringComparison.OrdinalIgnoreCase));
-                        if (layoutItem != null)
-                        {
-                            layoutItem.Enabled = enabled;
-                            SavePromptWorkspaceSectionLayouts(sectionLayouts);
-                        }
-                    }
-                    else
-                    {
-                        PromptUnifiedNodeLayoutConfig layoutItem = nodeLayouts.FirstOrDefault(item =>
-                            string.Equals(item.NodeId, module.Id, StringComparison.OrdinalIgnoreCase));
-                        if (layoutItem != null)
-                        {
-                            layoutItem.Enabled = enabled;
-                            SavePromptWorkspaceNodeLayouts(nodeLayouts);
-                        }
-                    }
-                }
-
-                // Label (clickable)
-                float labelX = 24f;
-                float labelWidth = viewRect.width - labelX - buttonSize - 6f;
-                Rect labelRect = new Rect(labelX, rowY + 1f, labelWidth, rowHeight - 2f);
-                string kindTag = module.Kind == ModuleKind.Section
-                    ? "RimChat_PromptWorkspaceKind_Section".Translate().ToString()
-                    : "RimChat_PromptWorkspaceKind_Node".Translate().ToString();
+                // Minimal row: Label only (ButtonText combines label + click, like RimTalk)
+                string kindTag = module.Kind == ModuleKind.Section ? sectionTag : nodeTag;
                 string displayText = $"{module.Label} [{kindTag}]";
-                bool oldWordWrap = Text.WordWrap;
-                Text.WordWrap = false;
-                Widgets.Label(labelRect, displayText.Truncate(labelRect.width));
-                Text.WordWrap = oldWordWrap;
-
-                if (Widgets.ButtonInvisible(labelRect))
+                if (Widgets.ButtonText(rowRect, displayText.Truncate(rowRect.width), false))
                 {
                     if (module.Kind == ModuleKind.Section)
-                    {
                         SchedulePromptWorkspaceNavigation(() => SelectPromptWorkspaceSection(module.Id));
-                    }
                     else
-                    {
                         SchedulePromptWorkspaceNavigation(() =>
                         {
-                            if (!PersistPromptWorkspaceBufferNow(force: true))
-                            {
-                                return;
-                            }
-
+                            if (!PersistPromptWorkspaceBufferNow(force: true)) return;
                             _promptWorkspaceEditNodeMode = true;
                             _promptWorkspaceSelectedNodeId = module.Id;
                             EnsurePromptWorkspaceBuffer();
                             InvalidatePromptWorkspacePreviewCache();
                         });
-                    }
                 }
 
-                // Move up/down buttons (RimTalk style, bottom of list)
-                rowY += rowStep;
+                // bottom of list
             }
-
             Widgets.EndScrollView();
-
-            // Bottom bar with ▲▼ sort buttons (RimTalk style)
-            if (modules.Count > 0)
-            {
-                PromptWorkbenchModuleItem selectedModule = default;
-                int selectedIndex = -1;
-                for (int i = 0; i < modules.Count; i++)
-                {
-                    PromptWorkbenchModuleItem m = modules[i];
-                    bool isSel = m.Kind == ModuleKind.Section
-                        ? (!_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedSectionId, m.Id, StringComparison.OrdinalIgnoreCase))
-                        : (_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedNodeId, m.Id, StringComparison.OrdinalIgnoreCase));
-                    if (isSel)
-                    {
-                        selectedModule = m;
-                        selectedIndex = i;
-                        break;
-                    }
-                }
-
-                float buttonWidth = (inner.width - 4f) * 0.5f;
-                Rect upRect = new Rect(inner.x, inner.yMax - 24f, buttonWidth, 24f);
-                Rect downRect = new Rect(upRect.xMax + 4f, inner.yMax - 24f, buttonWidth, 24f);
-
-                if (selectedIndex > 0)
-                {
-                    if (Widgets.ButtonText(upRect, "▲"))
-                    {
-                        MovePromptWorkspaceModule(modules, selectedIndex, -1, sectionLayouts, nodeLayouts);
-                    }
-                }
-                else
-                {
-                    GUI.enabled = false;
-                    Widgets.ButtonText(upRect, "▲");
-                    GUI.enabled = true;
-                }
-
-                if (selectedIndex >= 0 && selectedIndex < modules.Count - 1)
-                {
-                    if (Widgets.ButtonText(downRect, "▼"))
-                    {
-                        MovePromptWorkspaceModule(modules, selectedIndex, 1, sectionLayouts, nodeLayouts);
-                    }
-                }
-                else
-                {
-                    GUI.enabled = false;
-                    Widgets.ButtonText(downRect, "▼");
-                    GUI.enabled = true;
-                }
-            }
         }
 
         private void MovePromptWorkspaceModule(

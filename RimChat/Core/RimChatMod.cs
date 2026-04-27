@@ -76,7 +76,50 @@ namespace RimChat.Core
 
         public override void DoSettingsWindowContents(Rect inRect)
         {
-            Settings.DoWindowContents(inRect);
+            bool workbenchActive = Settings.selectedTab == 2;
+            ResizeSettingsWindowForWorkbench(workbenchActive);
+
+            if (workbenchActive)
+            {
+                // Block GUI.changed from propagating to parent Dialog_ModSettings,
+                // which would otherwise trigger WriteSettings() → ExposeData() (80+ Scribe fields) every Repaint.
+                bool guiChanged = GUI.changed;
+                Settings.DrawTab_PromptSettingsDirect(inRect);
+                GUI.changed = guiChanged;
+            }
+            else
+            {
+                Settings.DoWindowContents(inRect);
+            }
+        }
+
+        private static void ResizeSettingsWindowForWorkbench(bool workbenchActive)
+        {
+            Dialog_ModSettings settingsWindow = Find.WindowStack.WindowOfType<Dialog_ModSettings>();
+            if (settingsWindow == null) return;
+
+            settingsWindow.doCloseX = true;
+            settingsWindow.draggable = true;
+            settingsWindow.closeOnAccept = false;
+            settingsWindow.absorbInputAroundWindow = false;
+            settingsWindow.preventCameraMotion = false;
+            settingsWindow.closeOnClickedOutside = false;
+
+            float targetWidth = workbenchActive
+                ? Mathf.Min(Verse.UI.screenWidth * 0.9f, 1580f)
+                : 900f;
+            float targetHeight = workbenchActive
+                ? Mathf.Min(Verse.UI.screenHeight * 0.9f, 960f)
+                : 700f;
+
+            if (Mathf.Abs(settingsWindow.windowRect.width - targetWidth) > 1f ||
+                Mathf.Abs(settingsWindow.windowRect.height - targetHeight) > 1f)
+            {
+                settingsWindow.windowRect.width = targetWidth;
+                settingsWindow.windowRect.height = targetHeight;
+                settingsWindow.windowRect.x = (Verse.UI.screenWidth - targetWidth) / 2f;
+                settingsWindow.windowRect.y = (Verse.UI.screenHeight - targetHeight) / 2f;
+            }
         }
 
         /// <summary>
