@@ -1,3 +1,11 @@
+0.9.1046
+- [New] Draggable initiator portrait: spring physics follow + spring-back, collision detection (30% overlap), shake+flash animation, dynamic relationship FloatMenu (romance/marry/breakup/divorce/date/gift/recruit/reduce resistance/will/inspiration/incident)
+- [New] Hover pendulum swing animation on top 2/3 of initiator portrait (28° damped rotation, top-center pivot), tooltip "Hold and drag to force actions"
+- [New] Dialogue box background color adapts to target pawn status: romance pink, prisoner brown, hostile red, neutral blue, default dark; smooth gradient transitions
+- [Improve] Job pathing: Touch mode, 3-tick repath interval, 5-repath lenient threshold at 2.8f
+- [Fix] Trade caravan pawn dialogue blocked by IsTradeCaravanPawn check causing click-no-response
+- [Fix] Collision menu actions missing required parameters (defName/amount) causing silent failures
+
 0.9.1043
 - [New] RPG dialogue: pawn name hover tooltip + click FloatMenu (Log/Gear/Social/Character/Needs/Health) to open vanilla inspect pane tabs. Name click area narrowed to exact text width.
 - [New] Inspect pane coexistence: when opened via pawn menu, hovering left screen above dialogue box fades target portrait to fully transparent; clicks in inspect pane area pass through without closing RPG dialogue; clicks inside dialogue box explicitly consume events to prevent game-world interaction leaks.
