@@ -185,12 +185,48 @@ namespace RimChat.UI
             return new Rect(x, y, w, h);
         }
 
+        // ── hover swing (damped pendulum rotation, pivot at top-center) ──
+        private float hoverSwingStartTime = -99f;
+        private bool hoverSwingWasOverLastFrame;
+        private const float HoverSwingDuration = 1.1f;
+        private const float HoverSwingAmplitudeDeg = 28f;
+        private const float HoverSwingFrequency = 12f;   // rad/s
+        private const float HoverSwingDecay = 3.0f;
+
         // ── drawing ──
 
         private void DrawInitiatorPortraitWithDrag(Rect inRect)
         {
             Rect drawRect = GetInitiatorDragRect(inRect);
             Rect originalRect = GetInitiatorPortraitRect(inRect);
+
+            // Only the top 2/3 (above dialogue box) triggers the pendulum swing
+            Rect topTwoThirdsRect = new Rect(originalRect.x, originalRect.y,
+                originalRect.width, originalRect.height * 0.667f);
+            bool isHoveringTopPortion = !isDraggingInitiator && !isSpringReturning
+                && Mouse.IsOver(topTwoThirdsRect);
+
+            // Retrigger on fresh hover enter
+            if (isHoveringTopPortion && !hoverSwingWasOverLastFrame)
+            {
+                hoverSwingStartTime = Time.time;
+            }
+            hoverSwingWasOverLastFrame = isHoveringTopPortion;
+
+            // Compute damped pendulum rotation angle
+            float swingAngle = 0f;
+            bool swingActive = false;
+            if (!isDraggingInitiator && !isSpringReturning)
+            {
+                float elapsed = Time.time - hoverSwingStartTime;
+                if (elapsed >= 0f && elapsed < HoverSwingDuration)
+                {
+                    swingActive = true;
+                    float damped = Mathf.Exp(-HoverSwingDecay * elapsed);
+                    float oscillation = Mathf.Sin(elapsed * HoverSwingFrequency);
+                    swingAngle = Mathf.Deg2Rad * HoverSwingAmplitudeDeg * damped * oscillation;
+                }
+            }
 
             // Collision shake offset
             Vector2 shakeOffset = Vector2.zero;
@@ -203,7 +239,7 @@ namespace RimChat.UI
                     (float)((Verse.Rand.Value - 0.5) * 2.0 * mag));
             }
 
-            Rect shakenRect = new Rect(
+            Rect finalRect = new Rect(
                 drawRect.x + shakeOffset.x,
                 drawRect.y + shakeOffset.y,
                 drawRect.width,
@@ -225,11 +261,28 @@ namespace RimChat.UI
                 DrawPawnPortrait(new Rect(originalRect.x + 4f, originalRect.y + 4f, originalRect.width, originalRect.height), initiator, true);
             }
 
-            // Draw the dynamic portrait
+            // Draw the dynamic portrait with pendulum rotation
             GUI.color = new Color(portraitColor.r, portraitColor.g, portraitColor.b, baseAlpha);
-            DrawPawnPortrait(shakenRect, initiator, true);
+            if (swingActive)
+            {
+                Matrix4x4 savedMatrix = GUI.matrix;
+                Vector2 pivot = new Vector2(finalRect.center.x, finalRect.yMin);
+                GUIUtility.RotateAroundPivot(swingAngle, pivot);
+                DrawPawnPortrait(finalRect, initiator, true);
+                GUI.matrix = savedMatrix;
+            }
+            else
+            {
+                DrawPawnPortrait(finalRect, initiator, true);
+            }
 
             GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha);
+
+            // Hover tooltip hinting at drag interaction
+            if (isHoveringTopPortion)
+            {
+                TooltipHandler.TipRegion(originalRect, "RimChat_DragMenu_HoverHint".Translate());
+            }
         }
 
         // ── input ──

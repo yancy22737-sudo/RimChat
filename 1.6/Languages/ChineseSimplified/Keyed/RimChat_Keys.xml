@@ -2536,4 +2536,5 @@ ID：{5}
     <RimChat_DragMenu_Recruit>招募</RimChat_DragMenu_Recruit>
     <RimChat_DragMenu_Inspiration>赋予灵感</RimChat_DragMenu_Inspiration>
     <RimChat_DragMenu_Incident>触发事件</RimChat_DragMenu_Incident>
+    <RimChat_DragMenu_HoverHint>按住拖拽以触发强制行为</RimChat_DragMenu_HoverHint>
 </LanguageData>

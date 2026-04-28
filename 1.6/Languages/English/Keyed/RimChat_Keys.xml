@@ -2444,4 +2444,5 @@ Selected prisoners: {1}
     <RimChat_DragMenu_Recruit>Recruit</RimChat_DragMenu_Recruit>
     <RimChat_DragMenu_Inspiration>Grant Inspiration</RimChat_DragMenu_Inspiration>
     <RimChat_DragMenu_Incident>Trigger Incident</RimChat_DragMenu_Incident>
+    <RimChat_DragMenu_HoverHint>Hold and drag to force actions</RimChat_DragMenu_HoverHint>
 </LanguageData>

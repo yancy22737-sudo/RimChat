@@ -14,10 +14,13 @@ namespace RimChat.AI
     // Dependencies: Verse.AI JobDriver/Toils, RimWorld Messages, RimChat RPG UI and cooldown manager.
     public class JobDriver_RPGPawnDialogue : JobDriver
     {
-        private const float InteractionDistanceThreshold = 1.9f;
-        private const int RepathCheckIntervalTicks = 15;
+        private const float InteractionDistanceThreshold = 1.5f;
+        private const float InteractionDistanceLenient = 2.8f;
+        private const int RepathCheckIntervalTicks = 3;
+        private const int MaxRepathCount = 5;
 
         private int _lastRepathTick = -9999;
+        private int _repathCount;
         private IntVec3 _lastTrackedTargetPos = IntVec3.Invalid;
 
         protected Pawn TargetPawn => ResolveTargetPawn();
@@ -48,11 +51,11 @@ namespace RimChat.AI
                 return target == null ||
                        target.Downed ||
                        !PawnDialogueRoutingPolicy.ShouldUseRpgDialogue(pawn, target, out _) ||
-                       !pawn.CanReach(target, PathEndMode.InteractionCell, Danger.Deadly);
+                       !pawn.CanReach(target, PathEndMode.Touch, Danger.Deadly);
             });
 
-            // Keep following moving target pawn until actual interaction distance is reached.
-            Toil gotoTarget = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
+            // Follow the target; use Touch mode for closest approach.
+            Toil gotoTarget = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
             Action originalInitAction = gotoTarget.initAction;
             gotoTarget.initAction = () =>
             {
@@ -78,6 +81,12 @@ namespace RimChat.AI
                     return false;
                 }
 
+                // After too many repaths, stop chasing and open from current distance
+                if (_repathCount >= MaxRepathCount)
+                {
+                    return pawn.Position.DistanceTo(target.Position) > InteractionDistanceLenient;
+                }
+
                 return pawn.Position.DistanceTo(target.Position) > InteractionDistanceThreshold;
             });
             yield return refreshTargetAlignment;
@@ -101,7 +110,11 @@ namespace RimChat.AI
                         return;
                     }
 
-                    if (initiator.Position.DistanceTo(target.Position) > InteractionDistanceThreshold)
+                    float dist = initiator.Position.DistanceTo(target.Position);
+                    float threshold = _repathCount >= MaxRepathCount
+                        ? InteractionDistanceLenient
+                        : InteractionDistanceThreshold;
+                    if (dist > threshold)
                     {
                         return;
                     }
@@ -151,7 +164,8 @@ namespace RimChat.AI
 
             _lastTrackedTargetPos = target.Position;
             _lastRepathTick = currentTick;
-            actor.pather?.StartPath(target, PathEndMode.InteractionCell);
+            _repathCount++;
+            actor.pather?.StartPath(target, PathEndMode.Touch);
         }
 
         private Pawn ResolveTargetPawn()
