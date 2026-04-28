@@ -1520,13 +1520,22 @@ namespace RimChat.AI
             string reasonTag)
         {
             List<ChatMessageData> updated = CloneMessages(messages);
+            string example = usageChannel == DialogueUsageChannel.Rpg
+                ? "{\"visible_dialogue\":\"角色的一句对白\"}"
+                : "{\"visible_dialogue\":\"外交发言文本\"}";
             string hint = usageChannel == DialogueUsageChannel.Rpg
-                ? "Return exactly one JSON object with required key visible_dialogue and optional key actions. visible_dialogue must be one in-character NPC line."
-                : "Return exactly one JSON object with required key visible_dialogue and optional key actions. visible_dialogue must stay fully in-character.";
+                ? "Put one in-character NPC line inside visible_dialogue."
+                : "Put 1-2 in-character diplomacy sentences inside visible_dialogue.";
             updated.Add(new ChatMessageData
             {
                 role = "user",
-                content = $"DIALOGUE_PROTOCOL_VIOLATION={reasonTag ?? "invalid_dialogue_contract"}. {hint} The first character must be '{{' and the last character must be '}}'. Put all visible text inside visible_dialogue. Do not place dialogue before or after the JSON object. Do not append a second trailing JSON object. Allowed top-level keys: visible_dialogue, actions, meta, debug. Do not output reasoning, explanations, markdown fences, or legacy wrappers."
+                content = $"DIALOGUE_PROTOCOL_VIOLATION={reasonTag ?? "invalid_dialogue_contract"}. "
+                    + $"你的上一条回复格式不符合协议要求。请严格输出一个 JSON 对象，首字符 {{ 末字符 }}，不要附加任何自然语言。"
+                    + $"将你的发言文本放入 visible_dialogue 字段。示例：{example} 若需动作则在同一 JSON 内追加 actions 数组。"
+                    + $" "
+                    + $"Your last response violated the dialogue protocol. Output exactly one JSON object — first char {{, last char }}. {hint} "
+                    + $"Example: {example}. If actions are needed, add them inside the same JSON object. "
+                    + $"No text, markdown, or explanations outside the JSON object."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }
@@ -1539,13 +1548,28 @@ namespace RimChat.AI
             List<ChatMessageData> updated = CloneMessages(messages);
             string reasonTag = ImmersionOutputGuard.BuildViolationTag(guardResult?.ViolationReason ?? ImmersionViolationReason.None);
             string snippet = guardResult?.ViolationSnippet ?? string.Empty;
+            string problem = reasonTag switch
+            {
+                "reasoning_leakage" => "暴露了推理过程",
+                "mechanic_keyword" => "提到了游戏机制关键词",
+                "parenthetical_metadata" => "用括号备注了系统状态",
+                "status_panel_numeric" => "暴露了数值型系统状态",
+                _ => "包含了不符合沉浸感的内容"
+            };
             string hint = usageChannel == DialogueUsageChannel.Rpg
-                ? "Rewrite only visible NPC dialogue. Keep roleplay immersion."
-                : "Rewrite only visible faction dialogue. Keep in-character immersion.";
+                ? "只写角色的一句自然对白。"
+                : "只写1-2句角色的自然外交发言。";
             updated.Add(new ChatMessageData
             {
                 role = "user",
-                content = $"IMMERSION_VIOLATION={reasonTag}; snippet={snippet}. {hint} Output exactly one JSON object only. Put visible in-character dialogue inside visible_dialogue. Keep actions inside the same top-level JSON object when needed. Do not prepend explanations, notes, or parenthetical metadata. Do not expose system state or numeric status panel lines."
+                content = $"IMMERSION_VIOLATION={reasonTag}; snippet={snippet}. "
+                    + $"你的上一条回复{problem}（违规片段：{snippet}）。请重新输出一个纯 JSON 对象，"
+                    + $"首字符 {{ 末字符 }}。{hint}"
+                    + $"将所有可见文本放入 visible_dialogue。禁止在正文中包含系统状态、数值面板、推理过程或括号备注。"
+                    + $" "
+                    + $"IMMERSION_VIOLATION={reasonTag}. Your last reply {problem}. "
+                    + $"Rewrite as exactly one JSON object, first char {{ last char }}. {hint} "
+                    + $"No system-state numbers, reasoning, or parenthetical notes in the visible text."
             });
             return NormalizeRequestMessagesForProvider(updated, usageChannel);
         }

@@ -1,3 +1,21 @@
+0.9.1040
+- [Improve] Airdrop error messages fully migrated to semantic language keys with actionable guidance. Added 25 keys (RimChat_AirdropError_<failureCode>) covering Payment/Beacon/Parameter/Map/Negotiator/Need categories. Each error now includes actionable suggestions (e.g. "Clear a 3x3 outdoor area near your orbital trade beacon"). Fallback: missing keys automatically degrade to generic [{0}] {1} format.
+- [New] BuildAirdropFailurePlayerMessage helper: dynamically resolves failure-code-specific translations, falling back gracefully.
+
+0.9.1039
+- [Improve] Airdrop confirmation cancel button now opens the full trade card menu, pre-filled with the current item, quantity, and payment. Player can adjust parameters and re-submit.
+- [Fix] TryExtractAirdropRequestedCount now recognizes Chinese measure words (个/把/份/组/箱/件 and 20+ others). Patterns like "5个emp" correctly extract count=5, bypassing the old maxValue>5 guard.
+
+0.9.1038
+- [Fix] Fixed the same immersion fallback message appearing three times consecutively when LLM returns plain text (non-JSON). Root cause: HandleSuccess re-parsed async service's raw passthrough with strict JSON parser, discarding valid dialogue text. Fix: HandleSuccess falls back to legacy text extraction after structured parse failure; activated lastAssistantMessageWasImmersionFallback to suppress consecutive duplicate fallbacks.
+- [Refactor] Removed redundant Immersion Guard check in AddAIResponseToSession — the async service already validates every response with full guard + retry.
+- [Improve] Envelope/Immersion retry instructions now bilingual with concrete JSON examples for better LLM compliance.
+- [Fix] Fixed airdrop need parameter being polluted with C# type names. Root cause: TryReadStringByAliases called ToString() on non-string objects producing type names; NormalizeAirdropBarterParameters ran before validation, bypassing the requireString check. Fix: TryReadStringByAliases now strictly accepts only string types; added ExtractNeedTextFromDictionary to handle AI outputting need as a JSON object.
+- [Improve] Counteroffer extraction regex: added Chinese colloquial pricing keywords (收你, 算你, 一共, 合计); added simple-price fallback rule for patterns like "收你220银币"; count is inferred from session context when not present.
+- [Improve] Airdrop failure system messages now include full error details (e.g. required=10950, available=5550), enabling the AI to learn and correct pricing errors in subsequent turns.
+- [Fix] Fixed airdrop action being dropped when payment_items lacks count field. NormalizeAirdropPaymentItem now recognizes count aliases (amount/quantity/price/value/silver/qty); added TryInferSilverCountFromDialogue to scan AI's visible text for quoted prices; threaded visibleDialogue through validation chain.
+- [Improve] Prompt hardening: StrictJsonFormatPreamble now shows two examples (no-action / with full airdrop+payment_items); first rule upgraded to highest-priority mandatory JSON; added payment_items format example line with inline sample; SystemPromptConfig request_item_airdrop parameter and requirement descriptions now include explicit count-mandatory warning with example.
+
 0.9.1037
 - [Perf] Prompt Workbench major performance improvement: Side Panel preview content now skips rendering during Layout events; Body reduced from ~8ms to ~0.3ms (97% reduction).
 - [Perf] Workbench converted from popup window to inline rendering (matching RimTalk architecture), eliminating dual-window GUI context overhead.

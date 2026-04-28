@@ -93,7 +93,7 @@ namespace RimChat.AI
                     StrategySuggestions = new List<StrategySuggestion>()
                 };
 
-                List<AIAction> parsedActions = CollectActionsFromJson(envelope.ActionsJson);
+                List<AIAction> parsedActions = CollectActionsFromJson(envelope.ActionsJson, envelope.VisibleDialogue);
                 if (parsedActions.Count > 0)
                 {
                     result.Actions.AddRange(parsedActions);
@@ -192,7 +192,7 @@ namespace RimChat.AI
                 StrategySuggestions = json.StrategySuggestions ?? new List<StrategySuggestion>()
             };
 
-            var parsedActions = CollectActions(json);
+            var parsedActions = CollectActions(json, narrativeFallback);
             if (parsedActions.Count == 0)
             {
                 return result;
@@ -569,12 +569,12 @@ namespace RimChat.AI
             }
         }
 
-        private static List<AIAction> CollectActions(JsonResponse json)
+        private static List<AIAction> CollectActions(JsonResponse json, string visibleDialogue = null)
         {
-            return CollectActionsFromJson(json?.RawJson);
+            return CollectActionsFromJson(json?.RawJson, visibleDialogue);
         }
 
-        private static List<AIAction> CollectActionsFromJson(string json)
+        private static List<AIAction> CollectActionsFromJson(string json, string visibleDialogue = null)
         {
             var actions = new List<AIAction>();
             var keptRansomTargetIds = new List<int>();
@@ -628,7 +628,8 @@ namespace RimChat.AI
                     reason,
                     keptRansomTargetIds,
                     droppedDuplicateRansomTargetIds,
-                    ref keptRansomWithoutTargetCount);
+                    ref keptRansomWithoutTargetCount,
+                    visibleDialogue);
             }
 
             LogRansomParseSummary(keptRansomTargetIds, droppedDuplicateRansomTargetIds, keptRansomWithoutTargetCount);
@@ -977,7 +978,8 @@ namespace RimChat.AI
             string reason,
             List<int> keptRansomTargetIds,
             List<int> droppedDuplicateRansomTargetIds,
-            ref int keptRansomWithoutTargetCount)
+            ref int keptRansomWithoutTargetCount,
+            string visibleDialogue = null)
         {
             string normalizedAction = NormalizeActionName(actionType);
             if (string.IsNullOrEmpty(normalizedAction) || normalizedAction == "none")
@@ -997,7 +999,7 @@ namespace RimChat.AI
             }
 
             if (string.Equals(normalizedAction, AIActionNames.RequestItemAirdrop, StringComparison.Ordinal) &&
-                !HasValidAirdropBarterParameters(parameters))
+                !HasValidAirdropBarterParameters(parameters, visibleDialogue))
             {
                 bool needPresent = HasNonEmptyText(parameters, "need", requireString: true);
                 string paymentItemsType = DescribeAirdropParameterType(parameters, "payment_items");
@@ -1135,9 +1137,9 @@ namespace RimChat.AI
                 $"dropped_duplicate_targets={droppedTargets}, kept_without_target={Math.Max(0, keptRansomWithoutTargetCount)}.");
         }
 
-        private static bool HasValidAirdropBarterParameters(Dictionary<string, object> parameters)
+        private static bool HasValidAirdropBarterParameters(Dictionary<string, object> parameters, string visibleDialogue = null)
         {
-            NormalizeAirdropBarterParameters(parameters);
+            NormalizeAirdropBarterParameters(parameters, visibleDialogue);
 
             if (!HasNonEmptyText(parameters, "need", requireString: true))
             {
@@ -1168,13 +1170,14 @@ namespace RimChat.AI
             return hasAny;
         }
 
-        private static void NormalizeAirdropBarterParameters(Dictionary<string, object> parameters)
+        private static void NormalizeAirdropBarterParameters(Dictionary<string, object> parameters, string visibleDialogue = null)
         {
             if (parameters == null || parameters.Count == 0)
             {
                 return;
             }
 
+            // Try to read need as a plain string first.
             if (TryReadStringByAliases(
                     parameters,
                     out string need,
@@ -1192,6 +1195,16 @@ namespace RimChat.AI
                     parameters["__airdrop_explicit_need_count"] = explicitNeedCount;
                 }
             }
+            else if (TryReadParameterByAliases(parameters, out object rawNeed, "need") &&
+                     rawNeed is Dictionary<string, object> needDict)
+            {
+                // AI sent need as a JSON object — try to salvage a text description.
+                string extracted = ExtractNeedTextFromDictionary(needDict);
+                if (!string.IsNullOrWhiteSpace(extracted))
+                {
+                    SetCanonicalParameter(parameters, "need", extracted);
+                }
+            }
 
             if (!TryReadParameterByAliases(parameters, out object rawPaymentItems, "payment_items") ||
                 !(rawPaymentItems is IEnumerable<object> paymentItems))
@@ -1205,6 +1218,16 @@ namespace RimChat.AI
                 if (row is Dictionary<string, object> item)
                 {
                     NormalizeAirdropPaymentItem(item);
+                    // If count is still missing, try to infer from visible_dialogue.
+                    if (!item.ContainsKey("count") && !string.IsNullOrWhiteSpace(visibleDialogue))
+                    {
+                        int inferred = TryInferSilverCountFromDialogue(visibleDialogue);
+                        if (inferred > 0)
+                        {
+                            SetCanonicalParameter(item, "count", inferred);
+                            Log.Message($"[RimChat] Inferred airdrop payment count={inferred} from visible_dialogue.");
+                        }
+                    }
                     normalizedItems.Add(item);
                     continue;
                 }
@@ -1244,6 +1267,56 @@ namespace RimChat.AI
             {
                 SetCanonicalParameter(item, "item", value.Trim());
             }
+
+            // Normalise count from common aliases the AI may use.
+            if (TryReadParameterByAliases(item, out object rawCount, "count", "amount", "quantity", "qty", "price", "value", "silver"))
+            {
+                if (TryReadLoosePositiveInteger(rawCount, out int count))
+                {
+                    SetCanonicalParameter(item, "count", count);
+                }
+            }
+        }
+
+        private static int TryInferSilverCountFromDialogue(string visibleDialogue)
+        {
+            if (string.IsNullOrWhiteSpace(visibleDialogue))
+            {
+                return 0;
+            }
+
+            // Match patterns like "收你220银币", "220银", "一共370银币".
+            // Take the last match — it's typically the final quoted price.
+            var matches = System.Text.RegularExpressions.Regex.Matches(
+                visibleDialogue,
+                @"(?:(?:收你|算你|收|仅收|只需|只要|一共|合计|总计|总共|抹零|折后|实付|应付|给你|作价|报价|要价|开价)\s*)?(\d{1,9})\s*(?:银|银币|块)");
+            if (matches.Count == 0)
+            {
+                return 0;
+            }
+
+            Match last = matches[matches.Count - 1];
+            return int.TryParse(last.Groups[1].Value, out int silver) ? silver : 0;
+        }
+
+        private static string ExtractNeedTextFromDictionary(Dictionary<string, object> needDict)
+        {
+            if (needDict == null || needDict.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            // Try keys in priority order — first match wins.
+            string[] textKeys = { "text", "name", "item", "item_name", "label", "defName", "def_name", "description" };
+            for (int i = 0; i < textKeys.Length; i++)
+            {
+                if (needDict.TryGetValue(textKeys[i], out object raw) && raw is string s && !string.IsNullOrWhiteSpace(s))
+                {
+                    return s.Trim();
+                }
+            }
+
+            return string.Empty;
         }
 
         private static string DescribeAirdropParameterType(Dictionary<string, object> parameters, string key)
@@ -1498,8 +1571,15 @@ namespace RimChat.AI
                 return false;
             }
 
-            text = raw.ToString() ?? string.Empty;
-            return !string.IsNullOrWhiteSpace(text);
+            if (raw is string str)
+            {
+                text = str;
+                return !string.IsNullOrWhiteSpace(text);
+            }
+
+            // Reject complex objects — calling ToString() on a Dictionary or List
+            // produces a useless type name that pollutes downstream tokenization.
+            return false;
         }
 
         private static bool TryReadParameterByAliases(

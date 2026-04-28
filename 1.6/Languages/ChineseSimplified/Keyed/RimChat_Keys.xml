@@ -2,6 +2,7 @@
 <LanguageData>
     <!-- Mod 设置分类 -->
     <RimChat_SettingsCategory>RimChat</RimChat_SettingsCategory>
+    <RimChat_ReturnToSettings>← 返回设置</RimChat_ReturnToSettings>
 
     <!-- 设置 -->
     <RimChat_APISettings>API 设置</RimChat_APISettings>
@@ -852,19 +853,47 @@
     <RimChat_ItemAirdropFailedTitle>物资空投失败</RimChat_ItemAirdropFailedTitle>
     <RimChat_ItemAirdropFailedBody>[{0}] {1}</RimChat_ItemAirdropFailedBody>
     <RimChat_ItemAirdropFailedOrbitalSystem>当前位于轨道基地，无法接收物资空投。请返回地面殖民地后再试。</RimChat_ItemAirdropFailedOrbitalSystem>
+
+    <!-- Airdrop error messages (semantic keys) -->
+    <RimChat_AirdropError_beacon_source_unavailable>当前地图上没有供电的轨道贸易信标。请在库存附近放置信标并接通电源。</RimChat_AirdropError_beacon_source_unavailable>
+    <RimChat_AirdropError_payment_item_insufficient>信标范围内 '{0}' 库存不足。需要 {1}，可用 {2}。</RimChat_AirdropError_payment_item_insufficient>
+    <RimChat_AirdropError_payment_item_no_beacon_stock>信标范围内未找到可交易的 '{0}'。请将物品放入信标覆盖区域。</RimChat_AirdropError_payment_item_no_beacon_stock>
+    <RimChat_AirdropError_payment_plan_insufficient>计划支付堆叠不足。需要 {0}，可用 {1}。</RimChat_AirdropError_payment_plan_insufficient>
+    <RimChat_AirdropError_payment_plan_missing>计划支付物品缺失或已移出信标范围。</RimChat_AirdropError_payment_plan_missing>
+    <RimChat_AirdropError_beacon_stock_unavailable>信标范围内没有可交易物品。请在供电的轨道贸易信标附近放置可交易物资。</RimChat_AirdropError_beacon_stock_unavailable>
+    <RimChat_AirdropError_budget_invalid>支付总额必须为正数。当前预算：{0:F1} 银。请调整支付数量或添加更高价值物品。</RimChat_AirdropError_budget_invalid>
+    <RimChat_AirdropError_trade_limit_exceeded>报价总额 {0} 超过了当前贸易限额 {1} 银。请降低报价或提升派系关系以提高限额。</RimChat_AirdropError_trade_limit_exceeded>
+    <RimChat_AirdropError_payment_items_missing>request_item_airdrop 需要 payment_items 数组，至少包含一项。示例：[{"item":"Silver","count":200}]</RimChat_AirdropError_payment_items_missing>
+    <RimChat_AirdropError_payment_items_invalid>{0}</RimChat_AirdropError_payment_items_invalid>
+    <RimChat_AirdropError_payment_items_not_array>payment_items 必须是 JSON 数组。示例：[{"item":"Silver","count":200}]</RimChat_AirdropError_payment_items_not_array>
+    <RimChat_AirdropError_payment_items_entry_not_object>payment_items[{0}] 必须是包含 item 和 count 字段的对象。</RimChat_AirdropError_payment_items_entry_not_object>
+    <RimChat_AirdropError_payment_items_entry_missing_item>payment_items[{0}] 需要非空的 item 字段，指定支付物品（如 Silver）。</RimChat_AirdropError_payment_items_entry_missing_item>
+    <RimChat_AirdropError_payment_items_entry_missing_count>payment_items[{0}] 需要正整数 count 字段指定支付数量。</RimChat_AirdropError_payment_items_entry_missing_count>
+    <RimChat_AirdropError_need_missing>request_item_airdrop 需要字符串参数 need 描述请求的物品（如 泵动霰弹枪）。</RimChat_AirdropError_need_missing>
+    <RimChat_AirdropError_need_type_invalid>request_item_airdrop 的 need 参数必须是纯文本字符串，不能是 JSON 对象。</RimChat_AirdropError_need_type_invalid>
+    <RimChat_AirdropError_player_negotiator_required>空投需要地图上有一个有效的谈判者。请为殖民者指派谈判角色。</RimChat_AirdropError_player_negotiator_required>
+    <RimChat_AirdropError_no_home_map>没有可用的玩家殖民地地图。请确认你有一个活跃的殖民地。</RimChat_AirdropError_no_home_map>
+    <RimChat_AirdropError_map_unavailable>空投目标地图不可用。殖民地可能已被放弃或地图已卸载。</RimChat_AirdropError_map_unavailable>
+    <RimChat_AirdropError_dropcell_not_found>殖民地中心附近没有合法的空投降落点。请在轨道贸易信标附近清理一片 3x3 的室外空地。</RimChat_AirdropError_dropcell_not_found>
+    <RimChat_AirdropError_stack_build_failed>无法为空投创建物品堆叠。请尝试减少请求数量。</RimChat_AirdropError_stack_build_failed>
+    <RimChat_AirdropError_delivery_quantity_mismatch>空投数量 ({0}) 超过堆叠交付上限 ({1})。请减少数量或拆分为多个订单。</RimChat_AirdropError_delivery_quantity_mismatch>
+    <RimChat_AirdropError_selection_invalid>空投物品选择结果无效。所选物品可能已从目录中移除。</RimChat_AirdropError_selection_invalid>
+    <RimChat_AirdropError_need_family_unknown>无法从 '{0}' 识别请求物品类型。请尝试添加更具体的关键词（如 武器、医疗、食物、服装、资源）。</RimChat_AirdropError_need_family_unknown>
+    <RimChat_AirdropError_no_candidates>没有找到匹配的物品。请尝试不同或更通用的需求关键词。</RimChat_AirdropError_no_candidates>
+    <RimChat_AirdropError_selected_def_unresolved>所选物品 '{0}' 在交付时无法解析。该物品可能已从游戏数据中移除。</RimChat_AirdropError_selected_def_unresolved>
     <RimChat_ItemAirdropMultipleInTurnDenied>同一轮对话中仅允许提交一条空投请求。</RimChat_ItemAirdropMultipleInTurnDenied>
     <RimChat_RequestInfoInvalidTypeSystem>request_info 当前仅支持 info_type=prisoner。</RimChat_RequestInfoInvalidTypeSystem>
     <RimChat_ItemAirdropAwaitingConfirmSystem>空投交易单已生成，等待玩家确认。</RimChat_ItemAirdropAwaitingConfirmSystem>
     <RimChat_ItemAirdropConfirmTitle>确认空投交易</RimChat_ItemAirdropConfirmTitle>
-    <RimChat_ItemAirdropConfirmBody>{0} 提议执行一次空投，请确认交易信息：\n\n收货：{1}\n付款：\n{2}\n运费：{6}\n\n最终报价：{3} 银\n最终支付：{4} 银\n超付：{5} 银</RimChat_ItemAirdropConfirmBody>
+    <RimChat_ItemAirdropConfirmMainLine>{0} x{1}  —  支付 {2} 银</RimChat_ItemAirdropConfirmMainLine>
+    <RimChat_ItemAirdropConfirmUnitPrice>@ {0} 银/件</RimChat_ItemAirdropConfirmUnitPrice>
+    <RimChat_ItemAirdropConfirmUnitPriceTagged>@ {0} 银/件（{1}）</RimChat_ItemAirdropConfirmUnitPriceTagged>
+    <RimChat_ItemAirdropConfirmShippingShort>运费：{0} 银（{1} 舱）</RimChat_ItemAirdropConfirmShippingShort>
+    <RimChat_ItemAirdropConfirmAdjusted>（请求 {0}，预算限制为 {1}）</RimChat_ItemAirdropConfirmAdjusted>
+    <RimChat_ItemAirdropConfirmAdjustedReason>（请求 {0}，限制为 {1}：{2}）</RimChat_ItemAirdropConfirmAdjustedReason>
     <RimChat_ItemAirdropConfirmAccept>确认并执行</RimChat_ItemAirdropConfirmAccept>
     <RimChat_ItemAirdropConfirmCancel>取消</RimChat_ItemAirdropConfirmCancel>
     <RimChat_ItemAirdropAlternativeLowVisibility>这不是我想要的物品</RimChat_ItemAirdropAlternativeLowVisibility>
-    <RimChat_ItemAirdropConfirmDeliveryLine>{0} x{1}</RimChat_ItemAirdropConfirmDeliveryLine>
-    <RimChat_ItemAirdropConfirmDeliveryUnitLine>{0}（单价 {1} 银，{2}）</RimChat_ItemAirdropConfirmDeliveryUnitLine>
-    <RimChat_ItemAirdropConfirmPaymentLine>{0} x{1}（货值 {2} 银）</RimChat_ItemAirdropConfirmPaymentLine>
-    <RimChat_ItemAirdropConfirmPaymentSemanticLine>{0}（{1}）</RimChat_ItemAirdropConfirmPaymentSemanticLine>
-    <RimChat_ItemAirdropConfirmShippingLine>{0} 个空投仓，{1} 银</RimChat_ItemAirdropConfirmShippingLine>
     <RimChat_ItemAirdropPriceSemanticBuy>买价</RimChat_ItemAirdropPriceSemanticBuy>
     <RimChat_ItemAirdropPriceSemanticMarket>市场价</RimChat_ItemAirdropPriceSemanticMarket>
     <RimChat_ItemAirdropPriceSemanticSell>卖价</RimChat_ItemAirdropPriceSemanticSell>

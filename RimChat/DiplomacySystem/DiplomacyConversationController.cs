@@ -216,7 +216,22 @@ namespace RimChat.DiplomacySystem
             session.pendingRequestLease = null;
             session.isWaitingForResponse = false;
             session.aiRequestProgress = 1f;
-            onSuccess?.Invoke(DialogueResponseEnvelopeParser.Parse(response, DialogueUsageChannel.Diplomacy));
+
+            DialogueResponseEnvelope envelope = DialogueResponseEnvelopeParser.Parse(
+                response, DialogueUsageChannel.Diplomacy);
+            if (!envelope.IsValid && !string.IsNullOrWhiteSpace(response))
+            {
+                // All retries exhausted upstream; raw passthrough arrived as plain text.
+                // The strict structured parser rejected it — fall back to legacy parsing
+                // so the player sees the LLM's actual words instead of a generic fallback.
+                DialogueResponseEnvelope legacyEnvelope = DialogueResponseEnvelopeParser.Parse(
+                    response, DialogueUsageChannel.Unknown);
+                if (legacyEnvelope.IsValid)
+                {
+                    envelope = legacyEnvelope;
+                }
+            }
+            onSuccess?.Invoke(envelope);
         }
 
         private static void HandleError(

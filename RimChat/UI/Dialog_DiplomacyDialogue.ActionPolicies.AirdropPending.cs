@@ -24,6 +24,9 @@ namespace RimChat.UI
         private static readonly Regex AirdropTradeCardNeedCountPattern = new Regex(
             @"(?:需求|need)\s+[^\r\n,，。]*?(?:x|×)\s*(?<count>\d{1,5})",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+        private static readonly Regex AirdropPendingChineseQuantifierCountPattern = new Regex(
+            @"(?<!\d)(?<count>\d{1,5})(?:\s*)(?:个|把|份|组|箱|件|支|只|条|张|台|套|双|打|单位|发|枚|颗|包|瓶|碗|盘|杯|桶|袋|盒|捆|叠)",
+            RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         private static bool TryMapAirdropPendingSelectionFollowup(
             ParsedResponse response,
@@ -220,6 +223,17 @@ namespace RimChat.UI
                 structuredNeedCount > 0)
             {
                 requestedCount = Math.Min(structuredNeedCount, 5000);
+                return true;
+            }
+
+            // Chinese quantifier pattern — a number followed by a measure word signals quantity intent.
+            // Bypass the maxValue > 5 guard because the quantifier confirms this is a count.
+            Match quantifierMatch = AirdropPendingChineseQuantifierCountPattern.Match(playerMessage);
+            if (quantifierMatch.Success &&
+                int.TryParse(quantifierMatch.Groups["count"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int quantifierCount) &&
+                quantifierCount > 0)
+            {
+                requestedCount = Math.Min(quantifierCount, 5000);
                 return true;
             }
 

@@ -116,9 +116,10 @@ namespace RimChat.Config
         public const string CriticalActionRulesReference =
             "所有协议与边界规则以上方“输出规范权威区”为准。";
         public const string NoActionResponseHint = "如果不需要动作，请仍输出一个 JSON 对象，只保留 visible_dialogue，不要附加 actions。";
-        public const string StrictJsonFormatHeader = "### 格式要求";
-        public const string StrictJsonFormatRequirement = "最终响应必须是 JSON，且符合这个格式：";
-        public const string StrictJsonFormatTemplate = "{\n  \"visible_dialogue\":\"响应文本\"\n}";
+        public const string StrictJsonFormatHeader = "### 格式要求（最高优先级，必须严格遵守）";
+        public const string StrictJsonFormatRequirement = "你的整条回复必须是一个 JSON 对象，首字符 { 末字符 }，不得在 JSON 外附加任何文本、解释或 Markdown。";
+        public const string StrictJsonFormatTemplate = "{\n  \"visible_dialogue\":\"外交发言文本\"\n}";
+        public const string StrictJsonFormatTemplateWithAction = "{\n  \"visible_dialogue\":\"外交发言文本\",\n  \"actions\":[\n    {\"action\":\"request_item_airdrop\",\"parameters\":{\"need\":\"需求关键词\",\"payment_items\":[{\"item\":\"Silver\",\"count\":220}]}}\n  ]\n}";
 
         public const string GoodwillPeacePolicyHeader = "动态和平策略（基于好感）：";
         public const string GoodwillPeacePolicyVeryLowLine1 =

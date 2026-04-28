@@ -688,6 +688,33 @@ namespace RimChat.DiplomacySystem
             return selectedRecord?.Def != null;
         }
 
+        private static string BuildAirdropFailurePlayerMessage(string failureCode, params object[] detailArgs)
+        {
+            string key = $"RimChat_AirdropError_{failureCode}";
+            string translated;
+            try
+            {
+                translated = detailArgs.Length > 0
+                    ? key.Translate(detailArgs).ToString()
+                    : key.Translate().ToString();
+            }
+            catch
+            {
+                translated = key;
+            }
+
+            // If translation resolved to the key itself, the key is missing — fall back to generic format.
+            if (string.Equals(translated, key, StringComparison.Ordinal))
+            {
+                string detail = detailArgs.Length > 0 ? string.Join(", ", detailArgs) : string.Empty;
+                translated = string.IsNullOrWhiteSpace(detail)
+                    ? "RimChat_ItemAirdropFailedBody".Translate(failureCode, "").ToString()
+                    : "RimChat_ItemAirdropFailedBody".Translate(failureCode, detail).ToString();
+            }
+
+            return translated;
+        }
+
         private APIResult FailFastAirdrop(
             string failureCode,
             string message,
@@ -708,7 +735,7 @@ namespace RimChat.DiplomacySystem
             RecordAPICall("RequestItemAirdrop", false, auditText, message);
 
             string playerTitle = "RimChat_ItemAirdropFailedTitle".Translate();
-            string playerBody = "RimChat_ItemAirdropFailedBody".Translate(failureCode, message);
+            string playerBody = BuildAirdropFailurePlayerMessage(failureCode, message);
             Find.LetterStack.ReceiveLetter(playerTitle, playerBody, LetterDefOf.NeutralEvent);
             return APIResult.FailureResult($"[{failureCode}] {message}");
         }

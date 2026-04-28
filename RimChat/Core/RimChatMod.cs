@@ -81,10 +81,21 @@ namespace RimChat.Core
 
             if (workbenchActive)
             {
+                // Escape hatch: a small "back to settings" button so the user is never trapped.
+                // selectedTab is a sticky instance field — without this, closing & reopening
+                // the dialog while on this tab leaves the user with no way to navigate away.
+                Rect backRect = new Rect(inRect.x, inRect.y, 140f, 24f);
+                if (Widgets.ButtonText(backRect, "RimChat_ReturnToSettings".Translate()))
+                {
+                    Settings.selectedTab = 0;
+                    return;
+                }
+
+                Rect contentRect = new Rect(inRect.x, inRect.y + 28f, inRect.width, inRect.height - 28f);
                 // Block GUI.changed from propagating to parent Dialog_ModSettings,
                 // which would otherwise trigger WriteSettings() → ExposeData() (80+ Scribe fields) every Repaint.
                 bool guiChanged = GUI.changed;
-                Settings.DrawTab_PromptSettingsDirect(inRect);
+                Settings.DrawTab_PromptSettingsDirect(contentRect);
                 GUI.changed = guiChanged;
             }
             else

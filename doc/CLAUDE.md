@@ -2,111 +2,92 @@
 
 1\. \*\*代码架构\*\*
 
-&nbsp;  - 模块化拆分UI为独立组件，分离UI表现与业务逻辑，降低单文件复杂度。
+   - 模块化拆分UI为独立组件，分离UI表现与业务逻辑，降低单文件复杂度。
 
-&nbsp;  - \*\*禁止“上帝类”\*\*：单文件超150KB、职责不清（混合UI/业务/数据/状态）、高耦合、大量静态字段存UI状态均不允许。
+   - \*\*禁止“上帝类”\*\*：单文件超150KB、职责不清（混合UI/业务/数据/状态）、高耦合、大量静态字段存UI状态均不允许。
 
-&nbsp;  - \*\*硬阈值\*\*：单文件<800行，单函数<30行，嵌套<3层，分支<3个。
+   - \*\*硬阈值\*\*：单文件<800行，单函数<30行，嵌套<3层，分支<3个。
 
-&nbsp;  - 确保power shell使用UTF-8编码格式
+   - 确保power shell使用UTF-8编码格式
 
-&nbsp;  - 使用英文注释
+   - 使用英文注释
 
-&nbsp;  - 提示词构建，做到可维护/可本地化：把文本移到配置或模板文件，再做占位符渲染。
+   - 提示词构建，做到可维护/可本地化：把文本移到配置或模板文件，再做占位符渲染。
 
-&nbsp;  - 努力争取全局最优而不是局部最优
-
-
-
-
+   - 努力争取全局最优而不是局部最优
 
 2\. \*\*工具与参考\*\*
 
-&nbsp;  - 文件检索可以使用 es 指令（everything）
+   - 以下文件夹内容仅作参考，不属于本项目。
 
-&nbsp;  - 涉及边缘世界底层机制/原生代码，优先用rim-search（精准理解Def和Class关系）。
+   - RimTalk-main
 
-&nbsp;  - 以下文件夹内容仅作参考，不属于本项目。
+   - FactionGearModification
 
-&nbsp;  - RimTalk-main
-
-&nbsp;  - FactionGearModification
-
-&nbsp;  - VanillaExpandedFramework-220226
-
-
+   - VanillaExpandedFramework-220226
 
 3\. \*\*文档维护\*\*
 
-&nbsp;  - \*\*README.md\*\*：检索优先权重，需清晰描述项目模块划分，生成全局地图、各模块成员清单与接口说明，每个文件头部声明依赖和职责；每次代码变更后强制回环检查文件头依 赖、更新模块文档。
+   - \*\*README.md\*\*：检索优先权重，需清晰描述项目模块划分，生成全局地图、各模块成员清单与接口说明，每个文件头部声明依赖和职责；每次代码变更后强制回环检查文件头依 赖、更新模块文档。
 
-&nbsp;  - \*\*Api.md\*\*：程序开发接口文档，开发者根据文档辅助编写代码。
+   - \*\*Api.md\*\*：程序开发接口文档，开发者根据文档辅助编写代码。
 
-&nbsp;  - \*\*config.md\*\*：外部配置说明文档，提供用户自定义设置选项。
+   - \*\*config.md\*\*：外部配置说明文档，提供用户自定义设置选项。
 
-&nbsp;  - \*\*VersionLog.txt\*\*：检索优先权重，每次版本更新时添加更新内容。
-
-
+   - \*\*VersionLog.txt\*\*：检索优先权重，每次版本更新时添加更新内容。
 
 4\. \*\*版本与适配\*\*
 
-&nbsp;  - 版本号格式为x.y.z（主/次/修订），每次build前必须升级。禁止删减旧版本号和内容。
+   - 版本号格式为x.y.z（主/次/修订），每次build前必须升级。禁止删减旧版本号和内容。
 
-&nbsp;  - 同步维护这两个版本日志: VersionLog\_en.txt, VersionLog.txt
+   - 同步维护这两个版本日志: VersionLog\_en.txt, VersionLog.txt
 
-&nbsp;  - 新功能涉及UI显示需做语言键适配！禁止硬编码UI文本！
+   - 新功能涉及UI显示需做语言键适配！禁止硬编码UI文本！
 
-&nbsp;  - 修改已有Def必须用PatchOperation。
+   - 修改已有Def必须用PatchOperation。
 
-&nbsp;  - Harmony Patch 需谨慎：在对基类（如 `Window`）进行 Patch 时，目标过滤逻辑必须极其严密。
-
-
+   - Harmony Patch 需谨慎：在对基类（如 `Window`）进行 Patch 时，目标过滤逻辑必须极其严密。
 
 5\. \*\*测试与环境\*\*
 
-&nbsp;  - 项目实际运行测试地址：E:\\SteamLibrary\\steamapps\\common\\RimWorld\\Mods\\RimDiplomacy
+   - 项目实际运行测试地址：E:\SteamLibrary\steamapps\common\RimWorld\Mods\RimDiplomacy
 
-&nbsp;  - build流程为运行build.ps1,直到修复报错
+   - build流程为运行build.ps1,直到修复报错
 
-&nbsp;  - 项目环境为Rimworld 1.6,.net4.8,注意Harmony Patch相关问题。
-
-
+   - 项目环境为Rimworld 1.6,.net4.8,注意Harmony Patch相关问题。
 
 6\. \*\*开发决策与限制\*\*
 
-&nbsp;  - 模糊/难实现的开发方向，优先向用户提问。
+   - 模糊/难实现的开发方向，优先向用户提问。
 
-&nbsp;  - 难修复的bug，禁止阉割功能，优先向用户提问。
+   - 难修复的bug，禁止阉割功能，优先向用户提问。
 
-&nbsp;  - \*\*禁止修改游戏本体\*\*：包括直接修改源文件、资源文件、配置文件。
+   - \*\*禁止修改游戏本体\*\*：包括直接修改源文件、资源文件、配置文件。
 
-&nbsp;  - mod兼容性高，不会导致游戏崩溃或数据丢失是底线。
+   - mod兼容性高，不会导致游戏崩溃或数据丢失是底线。
 
-&nbsp;  - xml语言文件注意转义字符问题!
+   - xml语言文件注意转义字符问题!
 
-&nbsp;  - 你是一名专业的边缘世界unity mod开发者。
+   - 你是一名专业的边缘世界unity mod开发者。
 
-&nbsp;  - 实时维护多语言系统
+   - 实时维护多语言系统
 
-&nbsp;  - 不考虑存档兼容
-
-
-
-
+   - 一定要考虑存档兼容
 
 7\. \*\*回答前置\*\* ​【非常重要】
 
-&nbsp;  - 请你在回答前，先向用户提出详细的差异化的问题。​
+   - 请你在回答前，先向用户提出详细的差异化的问题。​
 
-&nbsp;  - 要求:​
+   - 要求:​
 
-&nbsp;  - 根据我的回答，有必要则继续追问。​
+   - 根据我的回答，有必要则继续追问。​
 
-&nbsp;  - 直到你有90%的信心理解我的真实需求和目标。​
+   - 直到你有90%的信心理解我的真实需求和目标。​
 
-&nbsp;  - 然后才给出方案并实施。
+   - 然后才给出方案并实施。
 
 <!-- gitnexus:start -->
+
 # GitNexus — Code Intelligence
 
 This project is indexed by GitNexus as **RimChat** (5385 symbols, 14758 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
@@ -116,7 +97,7 @@ This project is indexed by GitNexus as **RimChat** (5385 symbols, 14758 relation
 ## Always Do
 
 - **MUST run impact analysis before editing any symbol.** Before modifying a function, class, or method, run `gitnexus_impact({target: "symbolName", direction: "upstream"})` and report the blast radius (direct callers, affected processes, risk level) to the user.
-- **MUST run `gitnexus_detect_changes()` before committing** to verify your changes only affect expected symbols and execution flows.
+- **MUST run** **`gitnexus_detect_changes()`** **before committing** to verify your changes only affect expected symbols and execution flows.
 - **MUST warn the user** if impact analysis returns HIGH or CRITICAL risk before proceeding with edits.
 - When exploring unfamiliar code, use `gitnexus_query({query: "concept"})` to find execution flows instead of grepping. It returns process-grouped results ranked by relevance.
 - When you need full context on a specific symbol — callers, callees, which execution flows it participates in — use `gitnexus_context({name: "symbolName"})`.
@@ -130,7 +111,7 @@ This project is indexed by GitNexus as **RimChat** (5385 symbols, 14758 relation
 
 ## When Refactoring
 
-- **Renaming**: MUST use `gitnexus_rename({symbol_name: "old", new_name: "new", dry_run: true})` first. Review the preview — graph edits are safe, text_search edits need manual review. Then run with `dry_run: false`.
+- **Renaming**: MUST use `gitnexus_rename({symbol_name: "old", new_name: "new", dry_run: true})` first. Review the preview — graph edits are safe, text\_search edits need manual review. Then run with `dry_run: false`.
 - **Extracting/Splitting**: MUST run `gitnexus_context({name: "target"})` to see all incoming/outgoing refs, then `gitnexus_impact({target: "target", direction: "upstream"})` to find all external callers before moving code.
 - After any refactor: run `gitnexus_detect_changes({scope: "all"})` to verify only expected files changed.
 
@@ -143,35 +124,36 @@ This project is indexed by GitNexus as **RimChat** (5385 symbols, 14758 relation
 
 ## Tools Quick Reference
 
-| Tool | When to use | Command |
-|------|-------------|---------|
-| `query` | Find code by concept | `gitnexus_query({query: "auth validation"})` |
-| `context` | 360-degree view of one symbol | `gitnexus_context({name: "validateUser"})` |
-| `impact` | Blast radius before editing | `gitnexus_impact({target: "X", direction: "upstream"})` |
-| `detect_changes` | Pre-commit scope check | `gitnexus_detect_changes({scope: "staged"})` |
-| `rename` | Safe multi-file rename | `gitnexus_rename({symbol_name: "old", new_name: "new", dry_run: true})` |
-| `cypher` | Custom graph queries | `gitnexus_cypher({query: "MATCH ..."})` |
+| Tool             | When to use                   | Command                                                                 |
+| ---------------- | ----------------------------- | ----------------------------------------------------------------------- |
+| `query`          | Find code by concept          | `gitnexus_query({query: "auth validation"})`                            |
+| `context`        | 360-degree view of one symbol | `gitnexus_context({name: "validateUser"})`                              |
+| `impact`         | Blast radius before editing   | `gitnexus_impact({target: "X", direction: "upstream"})`                 |
+| `detect_changes` | Pre-commit scope check        | `gitnexus_detect_changes({scope: "staged"})`                            |
+| `rename`         | Safe multi-file rename        | `gitnexus_rename({symbol_name: "old", new_name: "new", dry_run: true})` |
+| `cypher`         | Custom graph queries          | `gitnexus_cypher({query: "MATCH ..."})`                                 |
 
 ## Impact Risk Levels
 
-| Depth | Meaning | Action |
-|-------|---------|--------|
-| d=1 | WILL BREAK — direct callers/importers | MUST update these |
-| d=2 | LIKELY AFFECTED — indirect deps | Should test |
-| d=3 | MAY NEED TESTING — transitive | Test if critical path |
+| Depth | Meaning                               | Action                |
+| ----- | ------------------------------------- | --------------------- |
+| d=1   | WILL BREAK — direct callers/importers | MUST update these     |
+| d=2   | LIKELY AFFECTED — indirect deps       | Should test           |
+| d=3   | MAY NEED TESTING — transitive         | Test if critical path |
 
 ## Resources
 
-| Resource | Use for |
-|----------|---------|
-| `gitnexus://repo/RimChat/context` | Codebase overview, check index freshness |
-| `gitnexus://repo/RimChat/clusters` | All functional areas |
-| `gitnexus://repo/RimChat/processes` | All execution flows |
-| `gitnexus://repo/RimChat/process/{name}` | Step-by-step execution trace |
+| Resource                                 | Use for                                  |
+| ---------------------------------------- | ---------------------------------------- |
+| `gitnexus://repo/RimChat/context`        | Codebase overview, check index freshness |
+| `gitnexus://repo/RimChat/clusters`       | All functional areas                     |
+| `gitnexus://repo/RimChat/processes`      | All execution flows                      |
+| `gitnexus://repo/RimChat/process/{name}` | Step-by-step execution trace             |
 
 ## Self-Check Before Finishing
 
 Before completing any code modification task, verify:
+
 1. `gitnexus_impact` was run for all modified symbols
 2. No HIGH/CRITICAL risk warnings were ignored
 3. `gitnexus_detect_changes()` confirms changes match expected scope
@@ -191,7 +173,7 @@ If the index previously included embeddings, preserve them by adding `--embeddin
 npx gitnexus analyze --embeddings
 ```
 
-To check whether embeddings exist, inspect `.gitnexus/meta.json` — the `stats.embeddings` field shows the count (0 means no embeddings). **Running analyze without `--embeddings` will delete any previously generated embeddings.**
+To check whether embeddings exist, inspect `.gitnexus/meta.json` — the `stats.embeddings` field shows the count (0 means no embeddings). **Running analyze without** **`--embeddings`** **will delete any previously generated embeddings.**
 
 > Claude Code users: A PostToolUse hook handles this automatically after `git commit` and `git merge`.
 

@@ -402,7 +402,19 @@ namespace RimChat.UI
                 return;
             }
 
-            string body = BuildAirdropTradeConfirmationBody(state.Faction, state.PreparedTrade);
+            ItemAirdropPreparedTradeData trade = state.PreparedTrade;
+            string tradeLabel = string.IsNullOrWhiteSpace(trade?.ResolvedLabel)
+                ? (trade?.SelectedDefName ?? "")
+                : trade.ResolvedLabel;
+            int quantity = trade?.Quantity ?? 1;
+            int requestedQuantity = trade?.RequestedQuantity ?? quantity;
+            int paymentTotal = trade?.PaymentTotalSilver ?? 0;
+            float unitPrice = trade?.NeedQuotedUnitSilver ?? 0f;
+            string priceTag = BuildPriceSemanticTag(trade?.NeedPriceSemantic);
+            int shippingCost = Math.Max(0, trade?.ShippingCostSilver ?? 0);
+            int shippingPods = Math.Max(0, trade?.ShippingPodCount ?? 0);
+            string adjustmentReason = trade?.CountAdjustmentReason ?? string.Empty;
+
             List<PendingAirdropSelectionCandidate> availableCandidates = state.PendingCandidates?
                 .OrderBy(candidate => candidate.Index)
                 .Take(5)
@@ -410,10 +422,40 @@ namespace RimChat.UI
             bool hasManualAlternative = availableCandidates.Count > 1;
 
             var confirmationDialog = new Dialog_AirdropTradeConfirmWithAlternative(
-                body,
+                tradeLabel,
+                quantity,
+                requestedQuantity,
+                paymentTotal,
+                unitPrice,
+                priceTag,
+                shippingCost,
+                shippingPods,
+                adjustmentReason,
                 hasManualAlternative,
                 () => CommitConfirmedAirdropTrade(state.Session, state.Faction, state.PreparedTrade),
-                () => CancelConfirmedAirdropTrade(state.Session, state.Faction),
+                () =>
+                {
+                    // Pre-fill trade card from current prepared trade parameters.
+                    ItemAirdropPreparedTradeData trade = state.PreparedTrade;
+                    if (trade != null && state.Session != null &&
+                        !string.IsNullOrWhiteSpace(trade.SelectedDefName) && trade.Quantity > 0)
+                    {
+                        state.Session.CacheAirdropCounteroffer(
+                            trade.SelectedDefName,
+                            trade.Quantity,
+                            trade.PaymentTotalSilver,
+                            string.Empty);
+                    }
+
+                    CancelConfirmedAirdropTrade(state.Session, state.Faction, skipSystemMessage: true);
+                    if (state.Session != null && state.Faction != null)
+                    {
+                        Find.WindowStack.Add(new Dialog_ItemAirdropTradeCard(
+                            state.Session,
+                            state.Faction,
+                            OnAirdropTradeCardSubmitted));
+                    }
+                },
                 () => OpenAirdropAlternativeSelection(state.Session, state.Faction, state.BaseParameters, availableCandidates));
             Find.WindowStack.Add(confirmationDialog);
         }
@@ -445,10 +487,12 @@ namespace RimChat.UI
             Dictionary<string, object> baseParameters,
             List<PendingAirdropSelectionCandidate> availableCandidates)
         {
-            if (currentFaction == null || availableCandidates == null || availableCandidates.Count <= 1)
+            if (currentFaction == null || currentSession == null || availableCandidates == null || availableCandidates.Count <= 1)
             {
                 return;
             }
+
+            Dictionary<string, object> safeParams = baseParameters ?? new Dictionary<string, object>();
 
             var options = new List<FloatMenuOption>();
             foreach (PendingAirdropSelectionCandidate candidate in availableCandidates)
@@ -466,7 +510,7 @@ namespace RimChat.UI
                     Math.Max(0, candidate.MaxLegalCount)).ToString();
                 options.Add(new FloatMenuOption(optionText, () =>
                 {
-                    Dictionary<string, object> mappedParameters = CloneParameters(baseParameters);
+                    Dictionary<string, object> mappedParameters = CloneParameters(safeParams);
                     mappedParameters["selected_def"] = candidate.DefName;
                     var mappedAction = new AIAction
                     {
@@ -496,50 +540,122 @@ namespace RimChat.UI
 
         private sealed class Dialog_AirdropTradeConfirmWithAlternative : Window
         {
-            private readonly string body;
+            private readonly string tradeLabel;
+            private readonly int quantity;
+            private readonly int requestedQuantity;
+            private readonly int paymentTotal;
+            private readonly float unitPrice;
+            private readonly string priceTag;
+            private readonly int shippingCost;
+            private readonly int shippingPods;
+            private readonly string adjustmentReason;
             private readonly Action onConfirm;
             private readonly Action onCancel;
             private readonly Action onAlternative;
+            private readonly bool optionalAlternativeVisible;
 
-            public override Vector2 InitialSize => new Vector2(640f, 420f);
+            public override Vector2 InitialSize => new Vector2(500f, 320f);
 
             public Dialog_AirdropTradeConfirmWithAlternative(
-                string body,
+                string tradeLabel,
+                int quantity,
+                int requestedQuantity,
+                int paymentTotal,
+                float unitPrice,
+                string priceTag,
+                int shippingCost,
+                int shippingPods,
+                string adjustmentReason,
                 bool hasAlternative,
                 Action onConfirm,
                 Action onCancel,
                 Action onAlternative)
             {
-                this.body = body ?? string.Empty;
+                this.tradeLabel = tradeLabel ?? string.Empty;
+                this.quantity = Math.Max(1, quantity);
+                this.requestedQuantity = Math.Max(1, requestedQuantity);
+                this.paymentTotal = paymentTotal;
+                this.unitPrice = unitPrice;
+                this.priceTag = priceTag ?? string.Empty;
+                this.shippingCost = shippingCost;
+                this.shippingPods = shippingPods;
+                this.adjustmentReason = adjustmentReason ?? string.Empty;
                 this.onConfirm = onConfirm;
                 this.onCancel = onCancel;
                 this.onAlternative = onAlternative;
+                this.optionalAlternativeVisible = hasAlternative;
                 forcePause = true;
                 doCloseX = false;
                 absorbInputAroundWindow = true;
                 closeOnClickedOutside = false;
                 closeOnCancel = false;
                 closeOnAccept = false;
-                optionalAlternativeVisible = hasAlternative;
             }
-
-            private readonly bool optionalAlternativeVisible;
 
             public override void DoWindowContents(Rect inRect)
             {
+                float y = inRect.y;
+
+                // Title
                 Text.Font = GameFont.Medium;
-                Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 36f), "RimChat_ItemAirdropConfirmTitle".Translate());
+                string title = "RimChat_ItemAirdropConfirmTitle".Translate();
+                float titleHeight = Text.CalcHeight(title, inRect.width);
+                Widgets.Label(new Rect(inRect.x, y, inRect.width, titleHeight), title);
+                y += titleHeight + 12f;
 
-                Text.Font = GameFont.Small;
-                float contentTop = inRect.y + 40f;
-                float bottomButtonsHeight = 42f;
-                float lowVisibilityHeight = 22f;
-                Rect contentRect = new Rect(inRect.x, contentTop, inRect.width, inRect.height - contentTop - bottomButtonsHeight - lowVisibilityHeight - 10f);
-                Widgets.Label(contentRect, body);
+                // Key info — large
+                Text.Font = GameFont.Medium;
+                string mainLine = "RimChat_ItemAirdropConfirmMainLine".Translate(tradeLabel, quantity, paymentTotal);
+                float mainHeight = Text.CalcHeight(mainLine, inRect.width - 20f);
+                Widgets.Label(new Rect(inRect.x + 10f, y, inRect.width - 20f, mainHeight), mainLine);
+                y += mainHeight + 6f;
 
-                float buttonWidth = (inRect.width - 12f) / 2f;
-                Rect confirmRect = new Rect(inRect.x, inRect.yMax - bottomButtonsHeight, buttonWidth, 38f);
-                Rect cancelRect = new Rect(confirmRect.xMax + 12f, confirmRect.y, buttonWidth, 38f);
+                // Quantity adjustment note
+                Text.Font = GameFont.Tiny;
+                Color dimGray = new Color(0.55f, 0.55f, 0.55f);
+                Color prevColor = GUI.color;
+
+                if (quantity != requestedQuantity && requestedQuantity > 0)
+                {
+                    string adjStr = string.IsNullOrWhiteSpace(adjustmentReason)
+                        ? "RimChat_ItemAirdropConfirmAdjusted".Translate(requestedQuantity, quantity)
+                        : "RimChat_ItemAirdropConfirmAdjustedReason".Translate(requestedQuantity, quantity, adjustmentReason);
+                    GUI.color = new Color(0.9f, 0.6f, 0.2f); // amber warning
+                    float adjH = Text.CalcHeight(adjStr, inRect.width - 20f);
+                    Widgets.Label(new Rect(inRect.x + 10f, y, inRect.width - 20f, adjH), adjStr);
+                    y += adjH + 2f;
+                }
+
+                // Secondary details
+                if (unitPrice > 0f)
+                {
+                    string unitStr = string.IsNullOrWhiteSpace(priceTag)
+                        ? "RimChat_ItemAirdropConfirmUnitPrice".Translate(unitPrice.ToString("F1"))
+                        : "RimChat_ItemAirdropConfirmUnitPriceTagged".Translate(unitPrice.ToString("F1"), priceTag);
+                    GUI.color = dimGray;
+                    float unitH = Text.CalcHeight(unitStr, inRect.width - 20f);
+                    Widgets.Label(new Rect(inRect.x + 10f, y, inRect.width - 20f, unitH), unitStr);
+                    y += unitH + 2f;
+                }
+
+                if (shippingCost > 0)
+                {
+                    string shipStr = "RimChat_ItemAirdropConfirmShippingShort".Translate(shippingCost, shippingPods);
+                    GUI.color = dimGray;
+                    float shipH = Text.CalcHeight(shipStr, inRect.width - 20f);
+                    Widgets.Label(new Rect(inRect.x + 10f, y, inRect.width - 20f, shipH), shipStr);
+                    y += shipH + 2f;
+                }
+
+                GUI.color = prevColor;
+
+                // Buttons
+                float buttonTop = inRect.yMax - 48f;
+                float buttonWidth = (inRect.width - 20f) / 2f;
+                Rect confirmRect = new Rect(inRect.x + 5f, buttonTop, buttonWidth, 42f);
+                Rect cancelRect = new Rect(confirmRect.xMax + 10f, buttonTop, buttonWidth, 42f);
+
+                Text.Font = GameFont.Medium;
                 if (Widgets.ButtonText(confirmRect, "RimChat_ItemAirdropConfirmAccept".Translate()))
                 {
                     onConfirm?.Invoke();
@@ -559,58 +675,38 @@ namespace RimChat.UI
                     return;
                 }
 
-                Color originalColor = GUI.color;
-                GUI.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0.45f);
-                Rect alternativeRect = new Rect(inRect.x, cancelRect.y - lowVisibilityHeight - 4f, 240f, 20f);
+                // Low-visibility alternative link — simple label-based button, no Anchor manipulation
+                Text.Font = GameFont.Tiny;
+                GUI.color = new Color(0.45f, 0.45f, 0.45f);
+                float altY = cancelRect.y - 24f;
+                Rect alternativeRect = new Rect(inRect.x, altY, inRect.width, 20f);
                 if (Widgets.ButtonText(alternativeRect, "RimChat_ItemAirdropAlternativeLowVisibility".Translate()))
                 {
                     onAlternative?.Invoke();
                     Close();
                 }
-
-                GUI.color = originalColor;
+                GUI.color = prevColor;
             }
         }
 
-        private static string BuildAirdropTradeConfirmationBody(Faction faction, ItemAirdropPreparedTradeData preparedTrade)
+        private static string BuildPriceSemanticTag(string semantic)
         {
-            if (preparedTrade == null)
+            if (string.IsNullOrWhiteSpace(semantic))
             {
-                return "RimChat_Unknown".Translate().ToString();
+                return string.Empty;
             }
 
-            string deliveryLabel = string.IsNullOrWhiteSpace(preparedTrade.ResolvedLabel)
-                ? preparedTrade.SelectedDefName
-                : preparedTrade.ResolvedLabel;
-            string deliverySummary = "RimChat_ItemAirdropConfirmDeliveryLine".Translate(deliveryLabel, preparedTrade.Quantity).ToString();
+            string lower = semantic.ToLowerInvariant().Trim();
+            if (lower.StartsWith("special_item_discount"))
+                return "RimChat_ItemAirdropPriceSemanticDiscount".Translate().ToString();
+            if (lower.StartsWith("special_item_scarce"))
+                return "RimChat_ItemAirdropPriceSemanticScarce".Translate().ToString();
+            if (lower.StartsWith("market_value") || lower.StartsWith("market_value_x"))
+                return "RimChat_ItemAirdropPriceSemanticMarket".Translate().ToString();
+            if (lower.StartsWith("untradeable_x") || lower.StartsWith("black_market"))
+                return "RimChat_ItemAirdropPriceSemanticScarce".Translate().ToString();
 
-            List<string> paymentLines = new List<string>();
-            if (preparedTrade.PaymentLines != null)
-            {
-                paymentLines.AddRange(preparedTrade.PaymentLines.Select(line =>
-                {
-                    string lineLabel = string.IsNullOrWhiteSpace(line?.Label) ? (line?.DefName ?? "unknown") : line.Label;
-                    int subtotal = Mathf.RoundToInt(line?.SubtotalMarketValue ?? 0f);
-                    int count = Math.Max(0, line?.Count ?? 0);
-                    return "RimChat_ItemAirdropConfirmPaymentLine".Translate(lineLabel, count, subtotal).ToString();
-                }));
-            }
-
-            if (paymentLines.Count == 0)
-            {
-                paymentLines.Add("RimChat_Unknown".Translate().ToString());
-            }
-
-            string paymentSummary = string.Join("\n", paymentLines);
-            string factionName = faction?.Name ?? "RimChat_Unknown".Translate().ToString();
-            return "RimChat_ItemAirdropConfirmBody".Translate(
-                factionName,
-                deliverySummary,
-                paymentSummary,
-                preparedTrade.BudgetSilver,
-                preparedTrade.PaymentTotalSilver,
-                preparedTrade.PaymentOverpaySilver,
-                preparedTrade.ShippingCostSilver).ToString();
+            return string.Empty;
         }
 
         private void CommitConfirmedAirdropTrade(
@@ -730,17 +826,21 @@ namespace RimChat.UI
             return cleared;
         }
 
-        private void CancelConfirmedAirdropTrade(FactionDialogueSession currentSession, Faction currentFaction)
+        private void CancelConfirmedAirdropTrade(FactionDialogueSession currentSession, Faction currentFaction, bool skipSystemMessage = false)
         {
             bool clearedDelayedIntent = ClearAirdropDelayedIntentRuntime(currentSession);
             ResetAirdropConfirmationRuntime(currentSession, "commit_cancelled", true, true, true);
             TransitionAirdropExecutionStage(currentSession, AirdropExecutionStage.Idle, "player_cancelled_confirmation");
             Log.Message($"[RimChat] AirdropConfirmExplicitCancel: stage={currentSession?.airdropExecutionStage.ToString() ?? "null"},faction={currentFaction?.Name ?? "null"},clearedDelayedIntent={clearedDelayedIntent}");
-            currentSession?.AddMessage(
-                "System",
-                "RimChat_ItemAirdropCancelledSystem".Translate(),
-                false,
-                DialogueMessageType.System);
+
+            if (!skipSystemMessage)
+            {
+                currentSession?.AddMessage(
+                    "System",
+                    "RimChat_ItemAirdropCancelledSystem".Translate(),
+                    false,
+                    DialogueMessageType.System);
+            }
 
             SaveFactionMemory(currentSession, currentFaction);
         }

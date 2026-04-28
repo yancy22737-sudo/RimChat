@@ -3017,28 +3017,7 @@ namespace RimChat.UI
                 : new List<ActionExecutionOutcome>();
             RecordDelayedActionRuntimeState(actionOutcomes, currentSession);
 
-            // Getdialoguetext
             string dialogueText = parsedResponse.DialogueText;
-            bool immersionGuardFlagged = false;
-            ImmersionGuardResult guardResult = ImmersionOutputGuard.ValidateVisibleDialogueParts(
-                dialogueText,
-                envelope?.ActionsJson);
-            if (!guardResult.IsValid)
-            {
-                Log.Warning($"[RimChat] Immersion guard blocked diplomacy visible text at display stage: reason={ImmersionOutputGuard.BuildViolationTag(guardResult.ViolationReason)}, snippet={guardResult.ViolationSnippet}");
-                dialogueText = (dialogueText ?? string.Empty).Trim();
-                immersionGuardFlagged = true;
-            }
-            else
-            {
-                dialogueText = guardResult.VisibleDialogue;
-                if (!string.IsNullOrWhiteSpace(envelope?.ActionsJson) &&
-                    envelope.ProtocolKind == DialogueResponseProtocolKind.LegacyText)
-                {
-                    Log.Warning(
-                        $"[RimChat] Diplomacy UI consumed legacy dialogue bridge with detached actions JSON: protocol={envelope.ProtocolKind}, visible_len={dialogueText.Length}, actions_len={envelope.ActionsJson.Length}");
-                }
-            }
 
             // 如果没有dialoguetext但有成功 action, 生成默认回复
             if (string.IsNullOrWhiteSpace(dialogueText) && parsedResponse.Actions.Count > 0)
@@ -3064,11 +3043,19 @@ namespace RimChat.UI
                 StringComparison.Ordinal);
             TryCaptureAndCacheAirdropCounteroffer(dialogueText, currentSession);
 
-            // 添加dialoguemessage
             Pawn speakerPawn = ResolveFactionSpeakerPawn(currentSession, currentFaction);
             string senderName = ResolveFactionSenderName(currentFaction, speakerPawn);
-            currentSession.lastAssistantMessageWasImmersionFallback = isImmersionFallback;
             currentSession.lastAssistantVisibleText = dialogueText ?? string.Empty;
+
+            // Suppress consecutive identical fallbacks — the previous one already
+            // shows the retry button; stacking more adds no value and confuses the player.
+            if (isImmersionFallback && currentSession.lastAssistantMessageWasImmersionFallback)
+            {
+                Log.Warning($"[RimChat] Suppressed consecutive immersion fallback for faction={currentFaction?.Name ?? "null"}");
+                return;
+            }
+            currentSession.lastAssistantMessageWasImmersionFallback = isImmersionFallback;
+
             currentSession.AddMessage(senderName, dialogueText, false, DialogueMessageType.Normal, speakerPawn);
             if (currentSession.messages.Count > 0)
             {
@@ -3080,12 +3067,6 @@ namespace RimChat.UI
             }
             AppendSuccessfulActionSystemMessages(actionOutcomes, currentSession, currentFaction);
             AppendFailedActionSystemMessages(actionOutcomes, currentSession);
-            if (immersionGuardFlagged)
-            {
-                currentSession.AddMessage("System", "RimChat_ImmersionGuardWarning".Translate(), false, DialogueMessageType.System);
-            }
-
-            // 移除不必要的system音效播放以减少打断感 (现由打字音效替代)
 
 
             bool hasSuccessfulAction = actionOutcomes.Any(outcome => outcome.IsSuccess);
@@ -3166,9 +3147,12 @@ namespace RimChat.UI
                     ItemAirdropResultData payload = TryResolveItemAirdropResultData(outcome);
                     if (payload != null && !string.IsNullOrWhiteSpace(payload.FailureCode))
                     {
+                        // Include the detailed failure message so the AI can learn from
+                        // specific errors like "required=10950, available=5550" on next turn.
+                        string detail = outcome.Message ?? payload.FailureCode;
                         currentSession.AddMessage(
                             "System",
-                            BuildAirdropFailureSystemMessage(payload.FailureCode),
+                            BuildAirdropFailureSystemMessage(payload.FailureCode, detail),
                             false,
                             DialogueMessageType.System);
                     }
@@ -3309,13 +3293,15 @@ namespace RimChat.UI
             return "RimChat_ItemAirdropTriggeredSystem".Translate(label, quantity, budget);
         }
 
-        private static string BuildAirdropFailureSystemMessage(string failureCode)
+        private static string BuildAirdropFailureSystemMessage(string failureCode, string detail = null)
         {
             if (failureCode == "orbital_drop_unavailable")
             {
                 return "RimChat_ItemAirdropFailedOrbitalSystem".Translate();
             }
-            return "RimChat_ItemAirdropFailedBody".Translate(failureCode, string.Empty);
+
+            string detailSuffix = string.IsNullOrWhiteSpace(detail) ? string.Empty : $" ({detail})";
+            return "RimChat_ItemAirdropFailedBody".Translate(failureCode, string.Empty) + detailSuffix;
         }
 
         private static ItemAirdropResultData TryResolveItemAirdropResultData(ActionExecutionOutcome outcome)

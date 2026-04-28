@@ -5903,8 +5903,15 @@ namespace RimChat.Persistence
         {
             sb.AppendLine(PromptTextConstants.StrictJsonFormatHeader);
             sb.AppendLine(PromptTextConstants.StrictJsonFormatRequirement);
+            sb.AppendLine();
+            sb.AppendLine("No actions:");
             sb.AppendLine("```json");
             sb.AppendLine(PromptTextConstants.StrictJsonFormatTemplate);
+            sb.AppendLine("```");
+            sb.AppendLine();
+            sb.AppendLine("With airdrop action (note: payment_items entries MUST have both item and count):");
+            sb.AppendLine("```json");
+            sb.AppendLine(PromptTextConstants.StrictJsonFormatTemplateWithAction);
             sb.AppendLine("```");
             sb.AppendLine();
         }
@@ -5913,7 +5920,7 @@ namespace RimChat.Persistence
         {
             string[] lines =
             {
-                "- 对话轮必须返回且只返回一个顶层 JSON 对象。",
+                "- [Highest Priority] Your entire reply MUST be a single top-level JSON object. First char {, last char }. No text, explanation, reasoning, or Markdown outside the JSON object. Violation will cause the reply to be discarded.",
                 "- 必填键：visible_dialogue。",
                 "- 可选键：actions、meta、debug。",
                 "- 若存在 actions，则必填键为 actions[].action；actions[].parameters 可选。",
@@ -5925,6 +5932,7 @@ namespace RimChat.Persistence
                 "- request_caravan/request_visitor/request_aid/request_raid/request_item_airdrop/request_info/pay_prisoner_ransom/create_quest/trigger_incident 属于延迟或系统调度动作；表述应是意图或安排，不是已到达/已完成结果。",
                 "- 物资交换/发送常识：能且只能通过 request_item_airdrop 实现即时物资交换；request_caravan 属于延时交易。",
                 "- 空投交易硬约束：单次 request_item_airdrop 只能一种换一种（一个 need 对应一组 payment_items）；空投可以围绕该物资做定价与选品。",
+                "- payment_items 格式：数组，每项必须同时含 item（string）和 count（正整数）。示例：[{\"item\":\"Silver\",\"count\":220}]。缺失 item 或 count 将导致动作执行失败。",
                 "- 若玩家准确命中你掌握的交易事实（库存、价格区间、需求），可在不违背成本底线时考虑让步并打折。",
                 "- 商队常识：你无法控制商队最终携带的物资种类与数量，也无法让商队实现即时交付。",
                 "- 轨道商硬约束：轨道商不具备地面定居点履约能力，禁止承诺“带着指定物资进入我们的据点/定居点完成订单”。若玩家提出这类需求，只能解释限制并引导改走 request_item_airdrop。",

@@ -1,3 +1,26 @@
+0.9.1041
+- [优化] 空投确认对话框重构：启用已有但未使用的 ConfirmDeliveryUnitLine（显示单价+定价标签）和 ConfirmPaymentSemanticLine（显示支付定价策略）。新增 BuildPriceSemanticTag 将内部定价标记转为可读标签（市场价/折扣/稀缺品）。
+- [优化] ConfirmBody 模板重新设计：旧格式混淆 Budget/Final quote/Payment 概念，新格式明确区分"需求/需求价值/可用预算/总支付/超付"，标签更直观。
+- [优化] 运费行从模板参数中分离，仅当 shipping>0 时显示。
+
+0.9.1040
+- [优化] 空投报错文本全面语言键化 + 文案优化。新增 25 个语义化语言键（RimChat_AirdropError_<failureCode>），覆盖 Payment/Beacon/参数校验/Map/Negotiator/Need 六大类错误。每个错误现在包含可操作建议（如"在信标附近清理一片 3x3 的室外空地"）。Fallback：缺键时自动回退到泛用 [{0}] {1} 格式。
+- [新增] BuildAirdropFailurePlayerMessage 辅助方法：根据 failureCode 动态查找语义化键，失败时自动降级。
+
+0.9.1039
+- [优化] 空投确认对话框的"这不是我想要的"按钮现在弹出空投交易卡菜单，预填当前物品、数量、支付金额，用户可调整参数后重新提交。
+- [修复] TryExtractAirdropRequestedCount 新增中文量词识别（个/把/份/组/箱/件等 25+ 量词），如"5个emp"→count=5，绕过原来的 maxValue>5 限制。
+
+0.9.1038
+- [修复] 修复 LLM 返回纯文本时对话界面连续显示三条相同的 immersion fallback 文案（"我们会以更专注、更体面的方式继续这次会谈。"）的问题。根因：HandleSuccess 对 async service 的 raw passthrough 二次执行严格 JSON 解析导致文本丢失。修复：HandleSuccess 在结构化解析失败后回退 legacy 文本提取；激活 lastAssistantMessageWasImmersionFallback 拦截连续重复 fallback。
+- [重构] 移除 AddAIResponseToSession 中冗余的 Immersion Guard 二次检查——async service 已对每个响应执行完整 guard+重试。
+- [优化] Envelope/Immersion 重试指令双语化并加入具体 JSON 示例，提升 LLM 遵从率。
+- [修复] 修复空投 need 参数被污染为 C# 类型名的问题。根因：TryReadStringByAliases 对非字符串对象调用 .ToString() 产生类型名，NormalizeAirdropBarterParameters 先于校验执行导致污染值绕过 requireString 检查。修复：TryReadStringByAliases 严格限制只接受 string 类型；新增 ExtractNeedTextFromDictionary 处理 AI 输出 need 为 JSON 对象的情况。
+- [优化] counteroffer 提取正则：新增"收你""算你""一共""合计"等中文口语定价关键词；新增简化价格回退规则（"收你220银币"）；无 count 时从 session 上下文推断。
+- [优化] 空投失败系统消息现在携带完整错误细节（如 required=10950, available=5550），使 AI 在下一轮对话中能学习纠正定价错误。
+- [修复] 修复空投 action 的 payment_items 缺少 count 字段导致被丢弃的问题。NormalizeAirdropPaymentItem 新增 count 别名（amount/quantity/price/value/silver/qty）；新增 TryInferSilverCountFromDialogue 从 AI 口语文本中扫描定价（"收你220银币"→220）；visibleDialogue 穿入校验链。
+- [优化] 提示词端加强：StrictJsonFormatPreamble 现在展示两个示例（无动作/有空投动作+完整 payment_items）；第一条规则升级为最高优先级强制 JSON；新增 payment_items 格式示例行；SystemPromptConfig 中 request_item_airdrop 的参数描述和 requirement 加入 count 必须存在的警告和具体示例。
+
 0.9.1037
 - [优化] 提示词工作台性能大幅提升：Layout 事件中跳过 Side Panel 预览内容渲染，Body 从 ~8ms 降至 ~0.3ms（97% 降幅）。
 - [优化] 工作台从独立弹窗改为内联渲染（匹配 RimTalk 架构），消除双层 Window GUI 上下文开销。
