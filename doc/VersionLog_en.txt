@@ -1,3 +1,14 @@
+0.9.1043
+- [New] RPG dialogue: pawn name hover tooltip + click FloatMenu (Log/Gear/Social/Character/Needs/Health) to open vanilla inspect pane tabs. Name click area narrowed to exact text width.
+- [New] Inspect pane coexistence: when opened via pawn menu, hovering left screen above dialogue box fades target portrait to fully transparent; clicks in inspect pane area pass through without closing RPG dialogue; clicks inside dialogue box explicitly consume events to prevent game-world interaction leaks.
+- [Fix] RPG dialogue blank display after TryGainMemory actions (BriefJoy/DeepConnection etc.). Root cause: structured JSON parsing failure did not attempt legacy fallback path. Fixed by adding legacy extraction as fallback before reporting failure. Also added empty-chat-history guard to prevent cascading blank display across subsequent turns.
+
+0.9.1042
+- [New] Advanced API parameters panel overhaul: added Temperature slider (0.0–2.0, Conservative↔Random) + MaxTokens tier selector (Short 1024/Normal 2048/Detailed 4096) + Reset Defaults button. Warning text advises new players to keep defaults. All values persisted to save.
+- [Fix] DeepSeek: explicitly send thinking:{type:disabled} when thinking mode is off. DeepSeek enables thinking by default; without this parameter, temperature and other sampling params are ignored.
+- [Tweak] DeepSeek: skip temperature parameter when thinking is enabled — per official docs, temperature/top_p/presence_penalty/frequency_penalty are ignored in thinking mode.
+- [Improve] Advanced parameters UI redesign: checkbox moved from right (CheckboxLabeled default) to left of label; temperature slider split into two rows (value row + conservative/random scale row); reasoning effort uses ▸ tree indent as sub-item; sections separated by divider lines.
+
 0.9.1040
 - [Improve] Airdrop error messages fully migrated to semantic language keys with actionable guidance. Added 25 keys (RimChat_AirdropError_<failureCode>) covering Payment/Beacon/Parameter/Map/Negotiator/Need categories. Each error now includes actionable suggestions (e.g. "Clear a 3x3 outdoor area near your orbital trade beacon"). Fallback: missing keys automatically degrade to generic [{0}] {1} format.
 - [New] BuildAirdropFailurePlayerMessage helper: dynamically resolves failure-code-specific translations, falling back gracefully.

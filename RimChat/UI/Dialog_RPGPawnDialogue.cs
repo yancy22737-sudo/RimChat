@@ -215,7 +215,11 @@ namespace RimChat.UI
             isTyping = true;
             lastCharTime = Time.realtimeSinceStartup;
             ResetDialogueTextPaging();
-            chatHistory.Add(new ChatMessageData { role = "assistant", content = opening });
+            bool hasOpeningContent = !string.IsNullOrWhiteSpace(opening);
+            if (hasOpeningContent)
+            {
+                chatHistory.Add(new ChatMessageData { role = "assistant", content = opening });
+            }
             dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = opening });
             RecordSessionDialogueTurn(target.LabelShort, opening, false);
             RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, opening, dialogueSessionId);
@@ -267,7 +271,10 @@ namespace RimChat.UI
                     isSendingInitialMessage = false;
                     ResetDialogueTextPaging();
                     string visibleHistoryContent = NormalizeHistoryAssistantContent(envelope, currentDialogueText);
-                    chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
+                    if (!string.IsNullOrWhiteSpace(visibleHistoryContent))
+                    {
+                        chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
+                    }
                     dialogPages.Add(new DialoguePage { speakerName = target.LabelShort, text = currentDialogueText });
                     RecordSessionDialogueTurn(target.LabelShort, currentDialogueText, false);
                     RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, currentDialogueText, dialogueSessionId);
@@ -368,6 +375,16 @@ namespace RimChat.UI
                 initiatorFadeAlpha = Mathf.Clamp01(initiatorFadeAlpha + deltaTime * FadeSpeed);
             }
 
+            // Inspect pane: let events fall through to the pane below when it was opened via our menu
+            bool inspectPaneShowing = IsInspectPaneShowing();
+            absorbInputAroundWindow = !inspectPaneShowing;
+
+            // Smooth portrait transparency when mouse hovers over the inspect-pane overlap zone
+            Rect inspectPaneOverlapRect = inspectPaneShowing ? GetInspectPaneOverlapRect() : Rect.zero;
+            bool mouseOverInspectPane = inspectPaneShowing && Mouse.IsOver(inspectPaneOverlapRect);
+            float targetInspectAlpha = mouseOverInspectPane ? 0f : 1f;
+            inspectPaneAlpha = Mathf.Lerp(inspectPaneAlpha, targetInspectAlpha, deltaTime * InspectPaneAlphaSpeed);
+
             // Draw Portraits first (Portraits use their own alpha inside the methods)
             DrawPortraits(inRect);
 
@@ -386,9 +403,17 @@ namespace RimChat.UI
                 }
 
                 Rect dialogueBoxRect = new Rect(0, inRect.height - DialogueBoxHeight, inRect.width, DialogueBoxHeight);
-                
-                // Click outside dialogue box to close window
-                if (!dialogueBoxRect.Contains(Event.current.mousePosition))
+                bool insideDialogueBox = dialogueBoxRect.Contains(Event.current.mousePosition);
+
+                // When the inspect pane was opened through our menu, never close on outside clicks.
+                // Let the event fall through to the inspect pane below (absorbInputAroundWindow is false).
+                if (!insideDialogueBox && inspectPaneShowing)
+                {
+                    return;
+                }
+
+                // Click outside dialogue box → close window (normal exit)
+                if (!insideDialogueBox)
                 {
                     Close();
                     Event.current.Use();
@@ -399,23 +424,22 @@ namespace RimChat.UI
                     visibleChars = currentDialogueText.Length;
                     displayedText = currentDialogueText;
                     isTyping = false;
-                    
+
                     if (isShowingUserText)
                     {
                         isWaitingForDelayAfterUser = true;
                         timeUserTextFinished = Time.realtimeSinceStartup;
                     }
-                    
+
                     Event.current.Use();
                 }
                 else
                 {
                     // Click inside dialogue box but not in input area -> clear focus
                     float inputHeight = 45f;
-                    // Re-calculate the exact bottom area used for input
                     float dialogueBoxY = inRect.height - DialogueBoxHeight;
                     Rect bottomArea = new Rect(35f, dialogueBoxY + DialogueBoxHeight - 35f - inputHeight, inRect.width - 70f, inputHeight);
-                    
+
                     if (!bottomArea.Contains(Event.current.mousePosition))
                     {
                         if (GUI.GetNameOfFocusedControl() == UserReplyInputControlName)
@@ -423,6 +447,7 @@ namespace RimChat.UI
                             GUI.FocusControl(null);
                         }
                     }
+                    Event.current.Use();
                 }
             }
         }
@@ -559,19 +584,13 @@ namespace RimChat.UI
             string renderSpeaker = drawLive ? currentSpeakerName : dialogPages[historyViewIndex].speakerName;
             string renderText = drawLive ? currentDialogueText : dialogPages[historyViewIndex].text;
 
-            // Speaker Name Header (Huge Tag using Rich Text)
-            if (renderSpeaker == initiator.LabelShort)
-            {
-                Text.Anchor = TextAnchor.UpperRight;
-                Rect nameRectRight = new Rect(contentRect.xMax - 600f, contentRect.y - 35f, 600f, 55f);
-                Widgets.Label(nameRectRight, $"<size=44><b><color=#e0e0e0>{renderSpeaker}</color></b></size>");
-                Text.Anchor = TextAnchor.UpperLeft;
-            }
-            else
-            {
-                Rect nameRectLeft = new Rect(contentRect.x, contentRect.y - 35f, 600f, 55f);
-                Widgets.Label(nameRectLeft, $"<size=44><b><color=#e0e0e0>{renderSpeaker}</color></b></size>");
-            }
+            // Speaker Name Header (interactive: hover tooltip + click FloatMenu)
+            Pawn speakerPawn = renderSpeaker == initiator.LabelShort ? initiator : target;
+            bool speakerRightAligned = renderSpeaker == initiator.LabelShort;
+            Rect nameRect = speakerRightAligned
+                ? new Rect(contentRect.xMax - 600f, contentRect.y - 35f, 600f, 55f)
+                : new Rect(contentRect.x, contentRect.y - 35f, 600f, 55f);
+            DrawPawnNameWithMenu(nameRect, speakerPawn, renderSpeaker, speakerRightAligned);
 
             // Text Label Box
             Rect textArea = new Rect(contentRect.x, contentRect.y + 20f, contentRect.width, contentRect.height - 70f);
@@ -815,7 +834,10 @@ namespace RimChat.UI
                         aiResponseText = envelope.DialogueText ?? string.Empty;
                         aiResponseReady = true;
                         string visibleHistoryContent = NormalizeHistoryAssistantContent(envelope, aiResponseText);
-                        chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
+                        if (!string.IsNullOrWhiteSpace(visibleHistoryContent))
+                        {
+                            chatHistory.Add(new ChatMessageData { role = "assistant", content = visibleHistoryContent });
+                        }
                         RpgDialogueTraceTracker.RegisterTurn(initiator, target, false, aiResponseText, dialogueSessionId);
                     },
                     onError: error =>

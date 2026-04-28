@@ -14,7 +14,7 @@ namespace RimChat.UI
         private void DrawPortraits(Rect inRect)
         {
             Rect targetPortraitRect = GetTargetPortraitRect(inRect);
-            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha * targetFadeAlpha);
+            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha * targetFadeAlpha * inspectPaneAlpha);
             DrawPawnPortrait(targetPortraitRect, target, false);
 
             Rect initiatorPortraitRect = GetInitiatorPortraitRect(inRect);

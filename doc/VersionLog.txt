@@ -1,3 +1,14 @@
+0.9.1043
+- [新增] RPG对话界面：鼠标悬浮人名显示交互提示（金色高亮+提示文字），点击弹出浮动菜单（日志/装备/社交/角色/需求/健康），调用原版检视面板对应标签页。名字点击范围精确测量文字宽度。
+- [新增] 检视面板与RPG对话共存交互：通过菜单打开检视面板后，鼠标悬停左侧屏幕（对话框上方）时目标pawn画像渐变到完全透明；检视面板区域点击不关闭RPG对话、事件穿透到底层检视面板；对话栏内点击显式消耗事件防止误触游戏世界。
+- [修复] RPG对话含TryGainMemory（短暂欣喜/深度连接等）动作时，响应解析失败导致对话内容空白不显示。根因为结构化JSON解析失败后未尝试legacy兜底路径，修复后先尝试legacy提取。同时阻断空assistant消息污染chatHistory引发的后续对话连锁空白。
+
+0.9.1042
+- [新增] 高级 API 参数面板重构：新增 Temperature 随机度滑块（0.0~2.0，保守↔随机）+ MaxTokens 最大输出长度三档选择器（简短1024/正常2048/详细4096）+ 恢复默认按钮。添加警告提示"不建议新手修改"。所有参数持久化存档。
+- [修复] DeepSeek 模型关闭推理时显式传入 thinking:{type:disabled}。DeepSeek 推理默认开启，不传则 temperature 等采样参数不生效。
+- [调整] DeepSeek 推理开启时跳过 temperature 参数——官方文档明确推理模式下 temperature/top_p/presence_penalty/frequency_penalty 被忽略。
+- [优化] 高级参数 UI 重设计：勾选框从右侧（CheckboxLabeled 默认行为）移至左侧标签前；温度滑动条拆为两行（数值行+保守/随机标尺行）；推理强度使用 ▸ 树形缩进作为子项；分区用分隔线而非堆积。
+
 0.9.1041
 - [优化] 空投确认对话框重构：启用已有但未使用的 ConfirmDeliveryUnitLine（显示单价+定价标签）和 ConfirmPaymentSemanticLine（显示支付定价策略）。新增 BuildPriceSemanticTag 将内部定价标记转为可读标签（市场价/折扣/稀缺品）。
 - [优化] ConfirmBody 模板重新设计：旧格式混淆 Budget/Final quote/Payment 概念，新格式明确区分"需求/需求价值/可用预算/总支付/超付"，标签更直观。

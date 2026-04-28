@@ -2502,4 +2502,25 @@ ID：{5}
     <RimChat_ReasoningEffortMedium>中</RimChat_ReasoningEffortMedium>
     <RimChat_ReasoningEffortHigh>高</RimChat_ReasoningEffortHigh>
     <RimChat_ReasoningEffortXHigh>超高</RimChat_ReasoningEffortXHigh>
+    <RimChat_AdvancedApiWarning>以下为高级参数，修改前请确认了解每个选项。不建议新手修改</RimChat_AdvancedApiWarning>
+    <RimChat_Temperature>随机度</RimChat_Temperature>
+    <RimChat_TemperatureTooltip>控制模型输出的随机性。值越低输出越确定和保守，值越高输出越有创造性和随机。</RimChat_TemperatureTooltip>
+    <RimChat_TemperatureConservative>保守</RimChat_TemperatureConservative>
+    <RimChat_TemperatureRandom>随机</RimChat_TemperatureRandom>
+    <RimChat_MaxTokens>最大输出长度</RimChat_MaxTokens>
+    <RimChat_MaxTokensTooltip>限制模型单次回复的最大 token 数。过短可能导致回复被截断，过长会增加延迟和费用。</RimChat_MaxTokensTooltip>
+    <RimChat_MaxTokensShort>简短</RimChat_MaxTokensShort>
+    <RimChat_MaxTokensNormal>正常</RimChat_MaxTokensNormal>
+    <RimChat_MaxTokensDetailed>详细</RimChat_MaxTokensDetailed>
+    <RimChat_ResetDefaults>恢复默认</RimChat_ResetDefaults>
+    <RimChat_ResetDefaultsTooltip>将所有高级参数重置为默认值。</RimChat_ResetDefaultsTooltip>
+
+    <!-- Pawn Name Menu (RPG dialogue) -->
+    <RimChat_PawnMenu_HoverTooltip>点击查看角色菜单</RimChat_PawnMenu_HoverTooltip>
+    <RimChat_PawnMenu_Log>日志</RimChat_PawnMenu_Log>
+    <RimChat_PawnMenu_Gear>装备</RimChat_PawnMenu_Gear>
+    <RimChat_PawnMenu_Social>社交</RimChat_PawnMenu_Social>
+    <RimChat_PawnMenu_Character>角色</RimChat_PawnMenu_Character>
+    <RimChat_PawnMenu_Needs>需求</RimChat_PawnMenu_Needs>
+    <RimChat_PawnMenu_Health>健康</RimChat_PawnMenu_Health>
 </LanguageData>

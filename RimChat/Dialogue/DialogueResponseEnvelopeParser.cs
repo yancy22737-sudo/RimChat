@@ -36,16 +36,22 @@ namespace RimChat.Dialogue
                 return structuredEnvelope;
             }
 
-            // Structured channels require JSON — plain text means the model misbehaved (e.g. raw reasoning leak).
-            // Return failure so the caller's retry logic sends a corrective message instead of accepting garbage.
+            // Structured channels prefer JSON. If structured parsing failed, try legacy extraction
+            // as a fallback before reporting failure. The retry mechanism in the caller still
+            // fires when both structured AND legacy paths fail.
             if (usageChannel == DialogueUsageChannel.Diplomacy || usageChannel == DialogueUsageChannel.Rpg)
             {
+                if (TryParseLegacyEnvelope(raw, sanitized, usageChannel, out DialogueResponseEnvelope legacyEnvelope))
+                {
+                    return legacyEnvelope;
+                }
+
                 return BuildFailure(raw, "no_structured_envelope");
             }
 
-            if (TryParseLegacyEnvelope(raw, sanitized, usageChannel, out DialogueResponseEnvelope legacyEnvelope))
+            if (TryParseLegacyEnvelope(raw, sanitized, usageChannel, out DialogueResponseEnvelope fallbackEnvelope))
             {
-                return legacyEnvelope;
+                return fallbackEnvelope;
             }
 
             return BuildFailure(raw, "unsupported_dialogue_contract");

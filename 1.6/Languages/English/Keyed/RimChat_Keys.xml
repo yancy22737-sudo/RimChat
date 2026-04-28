@@ -2410,4 +2410,25 @@ Selected prisoners: {1}
     <RimChat_ReasoningEffortMedium>Medium</RimChat_ReasoningEffortMedium>
     <RimChat_ReasoningEffortHigh>High</RimChat_ReasoningEffortHigh>
     <RimChat_ReasoningEffortXHigh>X-High</RimChat_ReasoningEffortXHigh>
+    <RimChat_AdvancedApiWarning>These are advanced API parameters. Change them only if you understand what each option does. New players should keep the defaults.</RimChat_AdvancedApiWarning>
+    <RimChat_Temperature>Temperature</RimChat_Temperature>
+    <RimChat_TemperatureTooltip>Controls randomness of model output. Lower values produce more deterministic and conservative responses; higher values produce more creative and varied results.</RimChat_TemperatureTooltip>
+    <RimChat_TemperatureConservative>Conservative</RimChat_TemperatureConservative>
+    <RimChat_TemperatureRandom>Random</RimChat_TemperatureRandom>
+    <RimChat_MaxTokens>Max Output Length</RimChat_MaxTokens>
+    <RimChat_MaxTokensTooltip>Limits the maximum tokens per response. Too few may cause truncated replies; too many increases latency and cost.</RimChat_MaxTokensTooltip>
+    <RimChat_MaxTokensShort>Short</RimChat_MaxTokensShort>
+    <RimChat_MaxTokensNormal>Normal</RimChat_MaxTokensNormal>
+    <RimChat_MaxTokensDetailed>Detailed</RimChat_MaxTokensDetailed>
+    <RimChat_ResetDefaults>Reset Defaults</RimChat_ResetDefaults>
+    <RimChat_ResetDefaultsTooltip>Reset all advanced parameters to their default values.</RimChat_ResetDefaultsTooltip>
+
+    <!-- Pawn Name Menu (RPG dialogue) -->
+    <RimChat_PawnMenu_HoverTooltip>Click to open character menu</RimChat_PawnMenu_HoverTooltip>
+    <RimChat_PawnMenu_Log>Log</RimChat_PawnMenu_Log>
+    <RimChat_PawnMenu_Gear>Gear</RimChat_PawnMenu_Gear>
+    <RimChat_PawnMenu_Social>Social</RimChat_PawnMenu_Social>
+    <RimChat_PawnMenu_Character>Character</RimChat_PawnMenu_Character>
+    <RimChat_PawnMenu_Needs>Needs</RimChat_PawnMenu_Needs>
+    <RimChat_PawnMenu_Health>Health</RimChat_PawnMenu_Health>
 </LanguageData>
