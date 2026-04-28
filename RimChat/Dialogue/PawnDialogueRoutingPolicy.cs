@@ -79,32 +79,7 @@ namespace RimChat.Dialogue
                 return false;
             }
 
-            if (IsTradeCaravanPawn(target))
-            {
-                reason = "target_trade_caravan";
-                return false;
-            }
-
             return true;
-        }
-
-        internal static bool IsTradeCaravanPawn(Pawn pawn)
-        {
-            if (pawn == null || pawn.Dead)
-            {
-                return false;
-            }
-
-            Lord lord = pawn.GetLord();
-            string lordJobName = lord?.LordJob?.GetType().Name ?? string.Empty;
-            if (lordJobName.IndexOf("TradeWithColony", System.StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                return true;
-            }
-
-            string dutyName = pawn.mindState?.duty?.def?.defName ?? string.Empty;
-            return dutyName.IndexOf("TradeWithColony", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-                   dutyName.IndexOf("Trader", System.StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         /// <summary>

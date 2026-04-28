@@ -2431,4 +2431,17 @@ Selected prisoners: {1}
     <RimChat_PawnMenu_Character>Character</RimChat_PawnMenu_Character>
     <RimChat_PawnMenu_Needs>Needs</RimChat_PawnMenu_Needs>
     <RimChat_PawnMenu_Health>Health</RimChat_PawnMenu_Health>
+
+    <!-- Portrait drag collision menu (RPG dialogue) -->
+    <RimChat_DragMenu_Romance>Force Romance</RimChat_DragMenu_Romance>
+    <RimChat_DragMenu_Marry>Force Marriage</RimChat_DragMenu_Marry>
+    <RimChat_DragMenu_Breakup>Force Breakup</RimChat_DragMenu_Breakup>
+    <RimChat_DragMenu_Divorce>Force Divorce</RimChat_DragMenu_Divorce>
+    <RimChat_DragMenu_Date>Force Date</RimChat_DragMenu_Date>
+    <RimChat_DragMenu_Gift>Give Gift</RimChat_DragMenu_Gift>
+    <RimChat_DragMenu_ReduceResist>Reduce Resistance</RimChat_DragMenu_ReduceResist>
+    <RimChat_DragMenu_ReduceWill>Reduce Will</RimChat_DragMenu_ReduceWill>
+    <RimChat_DragMenu_Recruit>Recruit</RimChat_DragMenu_Recruit>
+    <RimChat_DragMenu_Inspiration>Grant Inspiration</RimChat_DragMenu_Inspiration>
+    <RimChat_DragMenu_Incident>Trigger Incident</RimChat_DragMenu_Incident>
 </LanguageData>

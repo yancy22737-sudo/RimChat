@@ -81,14 +81,24 @@ namespace RimChat.UI
         private bool isViewingHistory = false;
         private int historyViewIndex = 0;
         
-        private static readonly Color DialogueBoxColor = new Color(0.1f, 0.1f, 0.12f, 0.9f);
         private const float DialogueBoxHeight = 260f;
         private const float PortraitWidth = 400f;
         private const float PortraitHeight = 500f;
-        
+
         private float globalFadeAlpha = 0f;
         private float initiatorFadeAlpha = 0f;
         private float targetFadeAlpha = 0f;
+
+        // Dynamic dialogue box background color
+        private Color dialogueBoxCurrentColor = new Color(0.1f, 0.1f, 0.12f, 0.9f);
+        private Color dialogueBoxTargetColor = new Color(0.1f, 0.1f, 0.12f, 0.9f);
+        private const float DialogueBoxColorBlendSpeed = 2.5f;
+
+        private static readonly Color DialogueBoxDefaultColor = new Color(0.1f, 0.1f, 0.12f, 0.9f);
+        private static readonly Color DialogueBoxRomanceColor = new Color(0.50f, 0.44f, 0.45f, 0.9f);
+        private static readonly Color DialogueBoxNeutralColor  = new Color(0.13f, 0.17f, 0.24f, 0.9f);
+        private static readonly Color DialogueBoxPrisonerColor = new Color(0.22f, 0.13f, 0.07f, 0.9f);
+        private static readonly Color DialogueBoxHostileColor  = new Color(0.40f, 0.15f, 0.16f, 0.9f);
         private bool firstTargetSentenceDone = false;
         private const float FadeSpeed = 1.5f; // Real-time per second speed
         private const string UserReplyInputControlName = "UserReplyInput";
@@ -375,6 +385,13 @@ namespace RimChat.UI
                 initiatorFadeAlpha = Mathf.Clamp01(initiatorFadeAlpha + deltaTime * FadeSpeed);
             }
 
+            // Update portrait drag physics (spring follow, spring-back, collision)
+            UpdatePortraitDrag(inRect, deltaTime);
+
+            // Dynamic dialogue box background color based on target pawn status
+            dialogueBoxTargetColor = ResolveDialogueBoxTargetColor();
+            dialogueBoxCurrentColor = Color.Lerp(dialogueBoxCurrentColor, dialogueBoxTargetColor, deltaTime * DialogueBoxColorBlendSpeed);
+
             // Inspect pane: let events fall through to the pane below when it was opened via our menu
             bool inspectPaneShowing = IsInspectPaneShowing();
             absorbInputAroundWindow = !inspectPaneShowing;
@@ -397,6 +414,12 @@ namespace RimChat.UI
 
             if (Event.current.type == EventType.MouseDown)
             {
+                // Drag the initiator portrait
+                if (TryStartInitiatorDrag(inRect))
+                {
+                    return;
+                }
+
                 if (TryHandleHistoryPanelMouseDown(Event.current))
                 {
                     return;
@@ -573,7 +596,7 @@ namespace RimChat.UI
 
             Rect boxRect = new Rect(0, inRect.height - DialogueBoxHeight, inRect.width, DialogueBoxHeight);
             
-            Widgets.DrawBoxSolid(boxRect, DialogueBoxColor);
+            Widgets.DrawBoxSolid(boxRect, dialogueBoxCurrentColor);
             GUI.color = new Color(0.3f, 0.3f, 0.35f, 1f);
             Widgets.DrawBox(boxRect, 2);
             GUI.color = Color.white;
@@ -922,6 +945,35 @@ namespace RimChat.UI
         private static string BuildRpgOpponentThinkingText(string dots)
         {
             return "RimChat_RPGOpponentThinking".Translate(dots);
+        }
+
+        private Color ResolveDialogueBoxTargetColor()
+        {
+            if (target == null)
+                return DialogueBoxDefaultColor;
+
+            // 1. Romantic relationship → pink
+            if (target.relations?.DirectRelationExists(PawnRelationDefOf.Lover, initiator) == true
+                || target.relations?.DirectRelationExists(PawnRelationDefOf.Fiance, initiator) == true
+                || target.relations?.DirectRelationExists(PawnRelationDefOf.Spouse, initiator) == true)
+            {
+                return DialogueBoxRomanceColor;
+            }
+
+            // Colony pawn → default
+            if (target.Faction == Faction.OfPlayer)
+                return DialogueBoxDefaultColor;
+
+            // 2. Prisoner or slave → yellow
+            if (target.IsPrisoner || target.IsSlave)
+                return DialogueBoxPrisonerColor;
+
+            // 3. Hostile non-colony pawn (not prisoner/slave) → red
+            if (target.Faction?.HostileTo(Faction.OfPlayer) == true)
+                return DialogueBoxHostileColor;
+
+            // 4. Non-colony, neutral/friendly → blue
+            return DialogueBoxNeutralColor;
         }
 
         private void UpdateTyping()

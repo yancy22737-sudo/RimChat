@@ -2523,4 +2523,17 @@ ID：{5}
     <RimChat_PawnMenu_Character>角色</RimChat_PawnMenu_Character>
     <RimChat_PawnMenu_Needs>需求</RimChat_PawnMenu_Needs>
     <RimChat_PawnMenu_Health>健康</RimChat_PawnMenu_Health>
+
+    <!-- Portrait drag collision menu (RPG dialogue) -->
+    <RimChat_DragMenu_Romance>强制恋爱</RimChat_DragMenu_Romance>
+    <RimChat_DragMenu_Marry>强制结婚</RimChat_DragMenu_Marry>
+    <RimChat_DragMenu_Breakup>强制分手</RimChat_DragMenu_Breakup>
+    <RimChat_DragMenu_Divorce>强制离婚</RimChat_DragMenu_Divorce>
+    <RimChat_DragMenu_Date>强制约会</RimChat_DragMenu_Date>
+    <RimChat_DragMenu_Gift>赠送礼物</RimChat_DragMenu_Gift>
+    <RimChat_DragMenu_ReduceResist>降低抵抗度</RimChat_DragMenu_ReduceResist>
+    <RimChat_DragMenu_ReduceWill>降低意志</RimChat_DragMenu_ReduceWill>
+    <RimChat_DragMenu_Recruit>招募</RimChat_DragMenu_Recruit>
+    <RimChat_DragMenu_Inspiration>赋予灵感</RimChat_DragMenu_Inspiration>
+    <RimChat_DragMenu_Incident>触发事件</RimChat_DragMenu_Incident>
 </LanguageData>

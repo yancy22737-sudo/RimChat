@@ -17,9 +17,7 @@ namespace RimChat.UI
             GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha * targetFadeAlpha * inspectPaneAlpha);
             DrawPawnPortrait(targetPortraitRect, target, false);
 
-            Rect initiatorPortraitRect = GetInitiatorPortraitRect(inRect);
-            GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha * initiatorFadeAlpha);
-            DrawPawnPortrait(initiatorPortraitRect, initiator, true);
+            DrawInitiatorPortraitWithDrag(inRect);
 
             GUI.color = new Color(1f, 1f, 1f, globalFadeAlpha);
         }
