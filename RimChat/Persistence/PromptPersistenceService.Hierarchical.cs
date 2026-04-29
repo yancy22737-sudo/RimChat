@@ -91,7 +91,7 @@ namespace RimChat.Persistence
                 config,
                 scenarioContext,
                 config?.EnvironmentPrompt));
-            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore, true);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
 
             var instruction = root.AddChild("instruction_stack");
@@ -139,7 +139,7 @@ namespace RimChat.Persistence
                 RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
                 scenarioContext,
                 config?.EnvironmentPrompt));
-            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore, true);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
 
             var instruction = root.AddChild("instruction_stack");
@@ -205,7 +205,7 @@ namespace RimChat.Persistence
                 config,
                 scenarioContext,
                 config?.EnvironmentPrompt));
-            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore, true);
+            ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainBefore);
             ApplyResolvedNodePlacements(root, placements, PromptUnifiedNodeSlot.MainChainAfter);
 
             var roleStack = root.AddChild("role_stack");
@@ -318,8 +318,7 @@ namespace RimChat.Persistence
         private void ApplyResolvedNodePlacements(
             PromptHierarchyNode root,
             IEnumerable<ResolvedPromptNodePlacement> placements,
-            PromptUnifiedNodeSlot slot,
-            bool renderAfterSectionAggregate = false)
+            PromptUnifiedNodeSlot slot)
         {
             if (root == null || placements == null)
             {
@@ -329,17 +328,6 @@ namespace RimChat.Persistence
             foreach (ResolvedPromptNodePlacement placement in placements)
             {
                 if (placement == null || placement.Slot != slot || !placement.Enabled)
-                {
-                    continue;
-                }
-
-                if (IsThoughtChainPlacement(placement) &&
-                    RimChatMod.Settings?.IsThoughtChainEnabledForPromptChannel(placement.PromptChannel) != true)
-                {
-                    continue;
-                }
-
-                if (IsThoughtChainPlacement(placement) != renderAfterSectionAggregate)
                 {
                     continue;
                 }
@@ -503,10 +491,7 @@ namespace RimChat.Persistence
                             promptChannel,
                             questGuidanceBody);
                         break;
-                    case "thought_chain_node_template":
-                        placement.OutputTag = "thought_chain";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
-                        break;
+
                     case "response_contract_node_template":
                         placement.OutputTag = "response_contract";
                         placement.Content = RenderPromptNodeTemplate(
@@ -619,10 +604,7 @@ namespace RimChat.Persistence
                             "response_contract_body",
                             BuildRpgApiContractText(settings, config, context, preferCompactApiContract));
                         break;
-                    case "thought_chain_node_template":
-                        placement.OutputTag = "thought_chain";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
-                        break;
+
                     default:
                         placement.Content = string.Empty;
                         break;
@@ -712,10 +694,7 @@ namespace RimChat.Persistence
                             strategyContext?.ScenarioDossierText,
                             context);
                         break;
-                    case "thought_chain_node_template":
-                        placement.OutputTag = "thought_chain";
-                        placement.Content = ResolveUnifiedNodeTemplate(promptChannel, "thought_chain_node_template", string.Empty);
-                        break;
+
                     default:
                         placement.Content = string.Empty;
                         break;

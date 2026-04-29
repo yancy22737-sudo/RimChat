@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using RimChat.Persistence;
 using UnityEngine;
 using Verse;
@@ -11,12 +10,6 @@ namespace RimChat.Config
 {
     internal sealed partial class PromptPresetService : IPromptPresetService
     {
-        [Serializable]
-        private sealed class JsonStringWrapper
-        {
-            public string value = string.Empty;
-        }
-
         [Serializable]
         private sealed class LegacyPromptPresetStoreConfig
         {
@@ -1276,14 +1269,12 @@ namespace RimChat.Config
         {
             PromptUnifiedCatalog loaded = null;
             string defaultPath = PromptDomainFileCatalog.GetDefaultPath(PromptDomainFileCatalog.PromptUnifiedDefaultFileName);
-            string thoughtChainText = string.Empty;
             if (!string.IsNullOrWhiteSpace(defaultPath) && File.Exists(defaultPath))
             {
                 try
                 {
                     string rawJson = File.ReadAllText(defaultPath);
                     loaded = JsonUtility.FromJson<PromptUnifiedCatalog>(rawJson);
-                    thoughtChainText = TryExtractNodeContentFromRawJson(rawJson, "thought_chain_node_template");
                 }
                 catch (Exception ex)
                 {
@@ -1294,34 +1285,8 @@ namespace RimChat.Config
             loaded ??= PromptUnifiedCatalog.CreateFallback();
             loaded.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
             loaded.LegacyMigrated = true;
-            if (!string.IsNullOrWhiteSpace(thoughtChainText) &&
-                string.IsNullOrWhiteSpace(loaded.ResolveNode(RimTalkPromptEntryChannelCatalog.Any, "thought_chain_node_template")))
-            {
-                loaded.SetNode(RimTalkPromptEntryChannelCatalog.Any, "thought_chain_node_template", thoughtChainText);
-            }
 
             return loaded;
-        }
-
-        private static string TryExtractNodeContentFromRawJson(string rawJson, string nodeId)
-        {
-            if (string.IsNullOrWhiteSpace(rawJson) || string.IsNullOrWhiteSpace(nodeId))
-            {
-                return string.Empty;
-            }
-
-            string escapedNodeId = Regex.Escape(nodeId.Trim());
-            string pattern = $"\"NodeId\"\\s*:\\s*\"{escapedNodeId}\"\\s*,\\s*\"Content\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"";
-            Match match = Regex.Match(rawJson, pattern, RegexOptions.Singleline);
-            if (!match.Success || match.Groups.Count < 2)
-            {
-                return string.Empty;
-            }
-
-            string escapedContent = match.Groups[1].Value ?? string.Empty;
-            string wrapperJson = "{\"value\":\"" + escapedContent + "\"}";
-            JsonStringWrapper wrapper = JsonUtility.FromJson<JsonStringWrapper>(wrapperJson);
-            return wrapper?.value ?? string.Empty;
         }
 
         private static bool ArePayloadsEquivalent(PromptPresetChannelPayloads left, PromptPresetChannelPayloads right)

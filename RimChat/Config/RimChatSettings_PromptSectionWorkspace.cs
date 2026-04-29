@@ -351,7 +351,10 @@ namespace RimChat.Config
             consumed += presetListHeight + 8f;
 
             Rect moduleHeaderRect = listing.GetRect(22f);
-            Widgets.Label(moduleHeaderRect, "RimChat_PromptWorkspaceModuleHeader".Translate());
+            float labelWidth = moduleHeaderRect.width - 150f;
+            Widgets.Label(new Rect(moduleHeaderRect.x, moduleHeaderRect.y, labelWidth, moduleHeaderRect.height),
+                "RimChat_PromptWorkspaceModuleHeader".Translate());
+            DrawPromptWorkspaceModuleHeaderActions(new Rect(moduleHeaderRect.x + labelWidth, moduleHeaderRect.y, 150f, moduleHeaderRect.height));
             listing.Gap(2f);
             consumed += 24f;
 
@@ -1149,23 +1152,7 @@ namespace RimChat.Config
 
         private string GetPromptWorkspaceNodeText(string promptChannel, string nodeId)
         {
-            string text = ResolvePromptNodeText(promptChannel, nodeId);
-            if (!string.Equals(nodeId, "thought_chain_node_template", StringComparison.OrdinalIgnoreCase) ||
-                !string.IsNullOrWhiteSpace(text))
-            {
-                return text;
-            }
-
-            // Self-heal: if thought-chain node is unexpectedly empty, restore from default merged catalog.
-            PromptUnifiedCatalog merged = PromptUnifiedCatalogProvider.LoadMerged();
-            string recovered = merged?.ResolveNode(promptChannel, nodeId) ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(recovered))
-            {
-                return text;
-            }
-
-            SetPromptNodeText(promptChannel, nodeId, recovered, persistToFiles: false);
-            return recovered;
+            return ResolvePromptNodeText(promptChannel, nodeId);
         }
 
         private void SetPromptWorkspaceCurrentEditorText(string text)

@@ -5,7 +5,6 @@ using System.Text;
 using RimChat.Config;
 using RimChat.Core;
 using RimChat.Prompting;
-using Verse;
 
 namespace RimChat.Persistence
 {
@@ -183,17 +182,11 @@ namespace RimChat.Persistence
         private static void AddPromptWorkspaceNodeBlocks(
             ICollection<PromptWorkspacePreviewBlock> blocks,
             IEnumerable<ResolvedPromptNodePlacement> placements,
-            PromptUnifiedNodeSlot slot,
-            bool includeThoughtChain = false)
+            PromptUnifiedNodeSlot slot)
         {
             foreach (ResolvedPromptNodePlacement placement in placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
             {
                 if (placement == null || placement.Slot != slot || !placement.Enabled)
-                {
-                    continue;
-                }
-
-                if (IsThoughtChainPlacement(placement) != includeThoughtChain)
                 {
                     continue;
                 }
@@ -264,48 +257,12 @@ namespace RimChat.Persistence
             return string.Join("\n", content.Split('\n').Select(line => indent + line.TrimEnd()));
         }
 
-        private static void AddPromptWorkspaceThoughtChainBlocks(
-            ICollection<PromptWorkspacePreviewBlock> blocks,
-            IEnumerable<ResolvedPromptNodePlacement> placements)
-        {
-            foreach (ResolvedPromptNodePlacement placement in (placements ?? Enumerable.Empty<ResolvedPromptNodePlacement>())
-                         .Where(item => item != null && item.Enabled && IsThoughtChainPlacement(item))
-                         .OrderBy(item => item.Slot)
-                         .ThenBy(item => item.Order)
-                         .ThenBy(item => item.NodeId, StringComparer.OrdinalIgnoreCase))
-            {
-                if (RimChatMod.Settings?.IsThoughtChainEnabledForPromptChannel(placement.PromptChannel) != true)
-                {
-                    continue;
-                }
-
-                string nodeContent = placement.Content?.Trim() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(nodeContent))
-                {
-                    continue;
-                }
-
-                string nodeId = placement.NodeId ?? "thought_chain";
-                string wrappedContent = WrapNodeContentWithXml(nodeId, nodeContent);
-                blocks.Add(new PromptWorkspacePreviewBlock
-                {
-                    Kind = PromptWorkspacePreviewBlockKind.Node,
-                    PromptChannel = placement.PromptChannel,
-                    NodeId = placement.NodeId,
-                    Slot = placement.Slot,
-                    Order = placement.Order,
-                    Content = wrappedContent
-                });
-            }
-        }
-
         private static List<PromptWorkspacePreviewBlock> ReorderWorkspacePreviewBlocks(
             IEnumerable<PromptWorkspacePreviewBlock> blocks)
         {
             var contexts = new List<PromptWorkspacePreviewBlock>();
             var others = new List<PromptWorkspacePreviewBlock>();
             var bodies = new List<PromptWorkspacePreviewBlock>();
-            var thoughtChains = new List<PromptWorkspacePreviewBlock>();
             var footers = new List<PromptWorkspacePreviewBlock>();
 
             foreach (PromptWorkspacePreviewBlock block in blocks ?? Enumerable.Empty<PromptWorkspacePreviewBlock>())
@@ -333,46 +290,16 @@ namespace RimChat.Persistence
                     continue;
                 }
 
-                if (IsThoughtChainPreviewBlock(block))
-                {
-                    thoughtChains.Add(block);
-                    continue;
-                }
-
                 others.Add(block);
             }
 
             var ordered = new List<PromptWorkspacePreviewBlock>(
-                contexts.Count + others.Count + bodies.Count + thoughtChains.Count + footers.Count);
+                contexts.Count + others.Count + bodies.Count + footers.Count);
             ordered.AddRange(contexts);
             ordered.AddRange(others);
             ordered.AddRange(bodies);
-            ordered.AddRange(thoughtChains);
             ordered.AddRange(footers);
             return ordered;
-        }
-
-        private static bool IsThoughtChainPreviewBlock(PromptWorkspacePreviewBlock block)
-        {
-            if (block == null || block.Kind != PromptWorkspacePreviewBlockKind.Node)
-            {
-                return false;
-            }
-
-            string nodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(block.NodeId);
-            return string.Equals(nodeId, "thought_chain_node_template", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static bool IsThoughtChainPlacement(ResolvedPromptNodePlacement placement)
-        {
-            if (placement == null)
-            {
-                return false;
-            }
-
-            string nodeId = PromptUnifiedNodeSchemaCatalog.NormalizeId(placement.NodeId);
-            return string.Equals(nodeId, "thought_chain_node_template", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(placement.OutputTag ?? string.Empty, "thought_chain", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string BuildPreviewSignature(

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimChat.Persistence;
 using Verse;
 
 namespace RimChat.Config
@@ -11,6 +12,9 @@ namespace RimChat.Config
     /// </summary>
     internal static class PromptUnifiedNodeSchemaCatalog
     {
+        private static readonly Dictionary<string, string> CustomNodeLabels =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
         private static readonly PromptUnifiedNodeSchemaItem[] NodeItems =
         {
             new PromptUnifiedNodeSchemaItem("fact_grounding", "RimChat_PromptNode_FactGrounding", "Fact Grounding"),
@@ -34,7 +38,6 @@ namespace RimChat.Config
             new PromptUnifiedNodeSchemaItem("rpg_role_setting_fallback", "RimChat_PromptNode_RpgRoleFallback", "RPG Role Fallback"),
             new PromptUnifiedNodeSchemaItem("rpg_relationship_profile", "RimChat_PromptNode_RpgRelationshipProfile", "RPG Relationship Profile"),
             new PromptUnifiedNodeSchemaItem("rpg_kinship_boundary", "RimChat_PromptNode_RpgKinshipBoundary", "RPG Kinship Boundary"),
-            new PromptUnifiedNodeSchemaItem("thought_chain_node_template", "RimChat_PromptNode_ThoughtChainNode", "Thought Chain Node"),
             new PromptUnifiedNodeSchemaItem("diplomacy_state_override", "RimChat_PromptNode_DiplomacyStateOverride", "Diplomacy State Override"),
             new PromptUnifiedNodeSchemaItem("diplomacy_alive_feeling", "RimChat_PromptNode_DiplomacyAliveFeeling", "Diplomacy Alive Feeling"),
             new PromptUnifiedNodeSchemaItem("rpg_body_emotion_override", "RimChat_PromptNode_RpgBodyEmotionOverride", "RPG Body Emotion Override"),
@@ -59,7 +62,7 @@ namespace RimChat.Config
                     "api_limits_node_template",
                     "quest_guidance_node_template",
                     "response_contract_node_template",
-                    "thought_chain_node_template",
+
                     "diplomacy_state_override",
                     "diplomacy_alive_feeling"
                 },
@@ -75,7 +78,7 @@ namespace RimChat.Config
                     "api_limits_node_template",
                     "quest_guidance_node_template",
                     "response_contract_node_template",
-                    "thought_chain_node_template",
+
                     "diplomacy_state_override",
                     "diplomacy_alive_feeling"
                 },
@@ -91,7 +94,7 @@ namespace RimChat.Config
                     "rpg_relationship_profile",
                     "rpg_kinship_boundary",
                     "response_contract_node_template",
-                    "thought_chain_node_template",
+
                     "rpg_body_emotion_override",
                     "rpg_state_anchor",
                     "rpg_survival_instinct",
@@ -109,7 +112,7 @@ namespace RimChat.Config
                     "rpg_relationship_profile",
                     "rpg_kinship_boundary",
                     "response_contract_node_template",
-                    "thought_chain_node_template",
+
                     "rpg_body_emotion_override",
                     "rpg_state_anchor",
                     "rpg_survival_instinct",
@@ -124,8 +127,7 @@ namespace RimChat.Config
                     "strategy_output_contract",
                     "strategy_player_negotiator_context_template",
                     "strategy_fact_pack_template",
-                    "strategy_scenario_dossier_template",
-                    "thought_chain_node_template"
+                    "strategy_scenario_dossier_template"
                 },
                 [RimTalkPromptEntryChannelCatalog.SocialCirclePost] = new[]
                 {
@@ -137,8 +139,7 @@ namespace RimChat.Config
                     "social_circle_action_rule",
                     "social_news_style",
                     "social_news_json_contract",
-                    "social_news_fact",
-                    "thought_chain_node_template"
+                    "social_news_fact"
                 },
                 [RimTalkPromptEntryChannelCatalog.PersonaBootstrap] = Array.Empty<string>(),
                 [RimTalkPromptEntryChannelCatalog.SummaryGeneration] = Array.Empty<string>(),
@@ -151,11 +152,76 @@ namespace RimChat.Config
             return NodeItems;
         }
 
+        internal static void RegisterCustomNode(string nodeId, string displayName)
+        {
+            string normalized = NormalizeId(nodeId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return;
+            }
+
+            CustomNodeLabels[normalized] = displayName ?? normalized;
+        }
+
+        internal static void UnregisterCustomNode(string nodeId)
+        {
+            string normalized = NormalizeId(nodeId);
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                CustomNodeLabels.Remove(normalized);
+            }
+        }
+
+        internal static bool IsCustomNode(string nodeId)
+        {
+            string normalized = NormalizeId(nodeId);
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return false;
+            }
+
+            bool isBuiltIn = NodeItems.Any(i => string.Equals(i.Id, normalized, StringComparison.OrdinalIgnoreCase));
+            return !isBuiltIn && CustomNodeLabels.ContainsKey(normalized);
+        }
+
+        internal static void ClearCustomNodes()
+        {
+            CustomNodeLabels.Clear();
+        }
+
+        internal static void RestoreCustomNodes(IEnumerable<PromptUnifiedNodeRegistration> registrations)
+        {
+            ClearCustomNodes();
+            if (registrations == null)
+            {
+                return;
+            }
+
+            foreach (PromptUnifiedNodeRegistration reg in registrations)
+            {
+                if (reg != null && !string.IsNullOrWhiteSpace(reg.NodeId))
+                {
+                    RegisterCustomNode(reg.NodeId, reg.DisplayName);
+                }
+            }
+        }
+
         internal static bool TryGet(string nodeId, out PromptUnifiedNodeSchemaItem item)
         {
             string normalized = NormalizeId(nodeId);
             item = NodeItems.FirstOrDefault(i => string.Equals(i.Id, normalized, StringComparison.OrdinalIgnoreCase));
-            return !string.IsNullOrWhiteSpace(item.Id);
+            if (!string.IsNullOrWhiteSpace(item.Id))
+            {
+                return true;
+            }
+
+            if (CustomNodeLabels.TryGetValue(normalized, out string displayName))
+            {
+                item = new PromptUnifiedNodeSchemaItem(normalized, string.Empty, displayName);
+                return true;
+            }
+
+            return false;
         }
 
         internal static IReadOnlyList<PromptUnifiedNodeSchemaItem> GetAllowedNodes(string promptChannel)
@@ -166,7 +232,9 @@ namespace RimChat.Config
                 allowedNodeIds = AllowedNodesByChannel[RimTalkPromptEntryChannelCatalog.Any];
             }
 
-            return BuildAllowedNodes(allowedNodeIds);
+            List<PromptUnifiedNodeSchemaItem> results = BuildAllowedNodes(allowedNodeIds);
+            AppendCustomNodes(results);
+            return results;
         }
 
         internal static IReadOnlyList<PromptUnifiedNodeSchemaItem> GetAllowedNodesStrict(string promptChannel)
@@ -178,7 +246,9 @@ namespace RimChat.Config
                     $"[RimChat] Unknown prompt channel '{promptChannel ?? string.Empty}' in strict node schema lookup.");
             }
 
-            return BuildAllowedNodes(allowedNodeIds);
+            List<PromptUnifiedNodeSchemaItem> results = BuildAllowedNodes(allowedNodeIds);
+            AppendCustomNodes(results);
+            return results;
         }
 
         internal static string NormalizeStrictChannelOrThrow(string promptChannel)
@@ -251,11 +321,11 @@ namespace RimChat.Config
             return item.DefaultLabel;
         }
 
-        private static IReadOnlyList<PromptUnifiedNodeSchemaItem> BuildAllowedNodes(string[] allowedNodeIds)
+        private static List<PromptUnifiedNodeSchemaItem> BuildAllowedNodes(string[] allowedNodeIds)
         {
             if (allowedNodeIds == null || allowedNodeIds.Length == 0)
             {
-                return Array.Empty<PromptUnifiedNodeSchemaItem>();
+                return new List<PromptUnifiedNodeSchemaItem>();
             }
 
             var results = new List<PromptUnifiedNodeSchemaItem>(allowedNodeIds.Length);
@@ -268,6 +338,17 @@ namespace RimChat.Config
             }
 
             return results;
+        }
+
+        private static void AppendCustomNodes(List<PromptUnifiedNodeSchemaItem> results)
+        {
+            foreach (KeyValuePair<string, string> kv in CustomNodeLabels)
+            {
+                if (!results.Any(item => string.Equals(item.Id, kv.Key, StringComparison.OrdinalIgnoreCase)))
+                {
+                    results.Add(new PromptUnifiedNodeSchemaItem(kv.Key, string.Empty, kv.Value));
+                }
+            }
         }
     }
 

@@ -1,3 +1,15 @@
+0.9.1048
+- [New] Module list header: New/Import/Export buttons next to module title
+- [New] New custom module dialog (ID/name/slot selection)
+- [New] Multi-module export: checkbox selection dialog exports multiple modules into a single JSON file
+- [New] Multi-module import: file preview with checkbox selection, backward-compatible with bundle and single-module formats
+- [New] Delete custom/imported modules (red × button in toolbar, visible only for custom nodes)
+- [New] Custom node registry: PromptUnifiedNodeSchemaCatalog extended with runtime dynamic registration
+- [New] PromptUnifiedCatalog: CustomNodes field persists custom node metadata
+- [Remove] Thought Chain feature fully removed: node definition, channel allowlists, default content, UI toggles, preview logic, assembly logic
+- [Retained] EnableThoughtChainNode/ThoughtChainByChannel legacy fields marked Obsolete + Scribe persistence (save compatibility)
+- [Retained] ImmersionOutputGuard.ReasoningLeakage detection (independent output quality guard)
+
 0.9.1047
 - [Improve] Scriban renderer lenient mode: unknown vars return empty string, case-insensitive resolution, magic property shortcuts
 - [Improve] PromptRenderContext case-insensitive namespace lookup (ctx/pawn/world/dialogue/system)

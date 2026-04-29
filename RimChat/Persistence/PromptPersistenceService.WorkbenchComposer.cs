@@ -293,11 +293,6 @@ namespace RimChat.Persistence
                 preview.Blocks.Add(BuildSectionAggregateBlock(normalizedChannel, sectionPreview, aggregate));
             }
 
-            if (effectiveIncludeNodes)
-            {
-                AddPromptWorkspaceThoughtChainBlocks(preview.Blocks, placements);
-            }
-
             preview.Blocks.Add(new PromptWorkspacePreviewBlock
             {
                 Kind = PromptWorkspacePreviewBlockKind.Footer,

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RimChat.Persistence;
 using Verse;
 
 namespace RimChat.Config
@@ -579,6 +580,7 @@ namespace RimChat.Config
         public List<PromptUnifiedNodeLayoutConfig> NodeLayout = new List<PromptUnifiedNodeLayoutConfig>();
         public List<PromptSectionLayoutConfig> SectionLayout = new List<PromptSectionLayoutConfig>();
         public List<PromptUnifiedTemplateAliasConfig> TemplateAliases = new List<PromptUnifiedTemplateAliasConfig>();
+        public List<PromptUnifiedNodeRegistration> CustomNodes = new List<PromptUnifiedNodeRegistration>();
 
         public void ExposeData()
         {
@@ -588,12 +590,14 @@ namespace RimChat.Config
             Scribe_Collections.Look(ref NodeLayout, "nodeLayout", LookMode.Deep);
             Scribe_Collections.Look(ref SectionLayout, "sectionLayout", LookMode.Deep);
             Scribe_Collections.Look(ref TemplateAliases, "templateAliases", LookMode.Deep);
+            Scribe_Collections.Look(ref CustomNodes, "customNodes", LookMode.Deep);
             PromptChannel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(PromptChannel);
             Sections ??= new List<PromptUnifiedSectionContent>();
             Nodes ??= new List<PromptUnifiedNodeContent>();
             NodeLayout ??= new List<PromptUnifiedNodeLayoutConfig>();
             SectionLayout ??= new List<PromptSectionLayoutConfig>();
             TemplateAliases ??= new List<PromptUnifiedTemplateAliasConfig>();
+            CustomNodes ??= new List<PromptUnifiedNodeRegistration>();
         }
 
         public PromptUnifiedChannelConfig Clone()
@@ -604,7 +608,8 @@ namespace RimChat.Config
                 Sections = Sections?.Where(s => s != null).Select(s => s.Clone()).ToList() ?? new List<PromptUnifiedSectionContent>(),
                 Nodes = Nodes?.Where(n => n != null).Select(n => n.Clone()).ToList() ?? new List<PromptUnifiedNodeContent>(),
                 NodeLayout = NodeLayout?.Where(n => n != null).Select(n => n.Clone()).ToList() ?? new List<PromptUnifiedNodeLayoutConfig>(),
-                TemplateAliases = TemplateAliases?.Where(a => a != null).Select(a => a.Clone()).ToList() ?? new List<PromptUnifiedTemplateAliasConfig>()
+                TemplateAliases = TemplateAliases?.Where(a => a != null).Select(a => a.Clone()).ToList() ?? new List<PromptUnifiedTemplateAliasConfig>(),
+                CustomNodes = CustomNodes?.Where(c => c != null).Select(c => c.Clone()).ToList() ?? new List<PromptUnifiedNodeRegistration>()
             };
         }
 
@@ -921,6 +926,19 @@ namespace RimChat.Config
                 }
 
                 SetTemplateAlias(alias.TemplateId, alias.Name, alias.Description, alias.Content, alias.Enabled);
+            }
+
+            foreach (PromptUnifiedNodeRegistration customNode in source.CustomNodes ?? new List<PromptUnifiedNodeRegistration>())
+            {
+                if (customNode == null || string.IsNullOrWhiteSpace(customNode.NodeId))
+                {
+                    continue;
+                }
+
+                if (!CustomNodes.Any(c => c != null && string.Equals(c.NodeId, customNode.NodeId, StringComparison.OrdinalIgnoreCase)))
+                {
+                    CustomNodes.Add(customNode.Clone());
+                }
             }
         }
 
@@ -1370,7 +1388,6 @@ namespace RimChat.Config
                 case "rpg_survival_instinct": return 237;
                 case "diplomacy_alive_feeling": return 236;
                 case "rpg_alive_feeling": return 238;
-                case "thought_chain_node_template": return 9999;
                 case "strategy_output_contract": return 240;
                 case "strategy_player_negotiator_context_template": return 250;
                 case "strategy_fact_pack_template": return 260;

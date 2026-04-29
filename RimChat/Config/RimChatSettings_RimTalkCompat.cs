@@ -791,17 +791,6 @@ You may reference RimTalk variables/plugins directly in this section.";
                 RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue
             };
 
-            string[] allChannelsSupportingNodes =
-            {
-                RimTalkPromptEntryChannelCatalog.Any,
-                RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
-                RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue,
-                RimTalkPromptEntryChannelCatalog.RpgDialogue,
-                RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue,
-                RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
-                RimTalkPromptEntryChannelCatalog.SocialCirclePost
-            };
-
             foreach (string channel in diplomacyChannels)
             {
                 changed |= SetNodeIfDifferent(
@@ -819,15 +808,6 @@ You may reference RimTalk variables/plugins directly in this section.";
                     channel,
                     "response_contract_node_template",
                     PromptTextConstants.ResponseContractNodeLiteralDefault);
-            }
-
-            foreach (string channel in allChannelsSupportingNodes)
-            {
-                changed |= SetNodeIfDifferent(
-                    catalog,
-                    channel,
-                    "thought_chain_node_template",
-                    PromptTextConstants.ThoughtChainNodeLiteralDefault);
             }
 
             return changed;

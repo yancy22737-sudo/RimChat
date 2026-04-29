@@ -2359,7 +2359,7 @@ Selected prisoners: {1}
     <RimChat_PromptNode_SocialActionRule>Social Action Rule</RimChat_PromptNode_SocialActionRule>
     <RimChat_PromptNode_ApiLimitsNode>API Limits</RimChat_PromptNode_ApiLimitsNode>
     <RimChat_PromptNode_QuestGuidanceNode>Quest Rules</RimChat_PromptNode_QuestGuidanceNode>
-    <RimChat_PromptNode_ThoughtChainNode>Thought Chain</RimChat_PromptNode_ThoughtChainNode>
+
     <RimChat_PromptNode_ResponseContractNode>Response Contract</RimChat_PromptNode_ResponseContractNode>
     <RimChat_PromptNode_StrategyOutputContract>Strategy Output Contract</RimChat_PromptNode_StrategyOutputContract>
     <RimChat_PromptNode_StrategyNegotiatorContext>Strategy Negotiator Context</RimChat_PromptNode_StrategyNegotiatorContext>
@@ -2383,10 +2383,6 @@ Selected prisoners: {1}
     <RimChat_DiplomacyActionPartialFailure>I attempted your request, but part of it failed: {0}</RimChat_DiplomacyActionPartialFailure>
     <RimChat_DiplomacyActionAllFailed>I could not complete that request: {0}</RimChat_DiplomacyActionAllFailed>
     <RimChat_DiplomacyAirdropAmountMapped>I applied your amount: budget={0} silver, payment={1} silver. I will submit the airdrop request now.</RimChat_DiplomacyAirdropAmountMapped>
-    <RimChat_EnableThoughtChainNode>Enable Chain of Thought</RimChat_EnableThoughtChainNode>
-    <RimChat_EnableThoughtChainNodeDesc>Reduces hallucinations but increases response time</RimChat_EnableThoughtChainNodeDesc>
-    <RimChat_ThoughtChainByChannelTitle>Thought Chain by Channel</RimChat_ThoughtChainByChannelTitle>
-    <RimChat_ThoughtChainChannelToggleLabel>{0}</RimChat_ThoughtChainChannelToggleLabel>
 
     <!-- Special Items (Discount/Scarce) for Hover Card -->
     <RimChat_HoverCardDiscountItem>Discount Item</RimChat_HoverCardDiscountItem>
@@ -2452,4 +2448,38 @@ Selected prisoners: {1}
     <RimChat_DragMenu_Inspiration>Grant Inspiration</RimChat_DragMenu_Inspiration>
     <RimChat_DragMenu_Incident>Trigger Incident</RimChat_DragMenu_Incident>
     <RimChat_DragMenu_HoverHint>Hold and drag to force actions</RimChat_DragMenu_HoverHint>
+
+    <!-- Module Transfer -->
+    <RimChat_ModuleCreateTitle>New Module</RimChat_ModuleCreateTitle>
+    <RimChat_ModuleCreateIdLabel>Module ID</RimChat_ModuleCreateIdLabel>
+    <RimChat_ModuleCreateNameLabel>Display Name</RimChat_ModuleCreateNameLabel>
+    <RimChat_ModuleCreateSlotLabel>Slot</RimChat_ModuleCreateSlotLabel>
+    <RimChat_ModuleCreateIdHint>lowercase letters, digits, underscores</RimChat_ModuleCreateIdHint>
+    <RimChat_ModuleCreateIdEmpty>Module ID cannot be empty</RimChat_ModuleCreateIdEmpty>
+    <RimChat_ModuleCreateIdInvalid>Only lowercase letters, digits and underscores allowed</RimChat_ModuleCreateIdInvalid>
+    <RimChat_ModuleCreateIdCollision>This ID already exists</RimChat_ModuleCreateIdCollision>
+    <RimChat_ModuleCreateNameEmpty>Display name cannot be empty</RimChat_ModuleCreateNameEmpty>
+    <RimChat_ModuleCreateSuccess>Module "{0}" created</RimChat_ModuleCreateSuccess>
+    <RimChat_ModuleCreateFailed>Failed to create module</RimChat_ModuleCreateFailed>
+    <RimChat_ModuleExportBtn>Export</RimChat_ModuleExportBtn>
+    <RimChat_ModuleImportBtn>Import</RimChat_ModuleImportBtn>
+    <RimChat_ModuleExportNoSelection>Select a node module first</RimChat_ModuleExportNoSelection>
+    <RimChat_ModuleExportSuccess>Module exported to: {0}</RimChat_ModuleExportSuccess>
+    <RimChat_ModuleImportPreviewTitle>Import Module Preview</RimChat_ModuleImportPreviewTitle>
+    <RimChat_ModuleImportSuccess>Module "{0}" imported</RimChat_ModuleImportSuccess>
+    <RimChat_ModuleImportFailed>Failed to import module</RimChat_ModuleImportFailed>
+    <RimChat_ModuleImportInvalidFile>Invalid module file format</RimChat_ModuleImportInvalidFile>
+    <RimChat_ModuleImportIdLabel>Module ID: {0}</RimChat_ModuleImportIdLabel>
+    <RimChat_ModuleImportNameLabel>Display Name: {0}</RimChat_ModuleImportNameLabel>
+    <RimChat_ModuleImportSlotLabel>Slot: {0}</RimChat_ModuleImportSlotLabel>
+    <RimChat_ModuleImportOrderLabel>Order: {0}</RimChat_ModuleImportOrderLabel>
+    <RimChat_ModuleImportContentPreview>Content Preview</RimChat_ModuleImportContentPreview>
+    <RimChat_CreateButton>Create</RimChat_CreateButton>
+    <RimChat_ModuleDeleteTip>Delete this custom module</RimChat_ModuleDeleteTip>
+    <RimChat_ModuleDeleteSuccess>Module "{0}" deleted</RimChat_ModuleDeleteSuccess>
+    <RimChat_ModuleMultiExportTitle>Export Modules</RimChat_ModuleMultiExportTitle>
+    <RimChat_ModuleSelectAll>Select All</RimChat_ModuleSelectAll>
+    <RimChat_ModuleSelectNone>Select None</RimChat_ModuleSelectNone>
+    <RimChat_ModuleImportCount>{0} module(s) found in file</RimChat_ModuleImportCount>
+    <RimChat_ModuleImportMultiSuccess>{0} module(s) imported</RimChat_ModuleImportMultiSuccess>
 </LanguageData>

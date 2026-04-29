@@ -2451,7 +2451,6 @@ ID：{5}
     <RimChat_PromptNode_SocialActionRule>社交圈动作规则</RimChat_PromptNode_SocialActionRule>
     <RimChat_PromptNode_ApiLimitsNode>接口限制</RimChat_PromptNode_ApiLimitsNode>
     <RimChat_PromptNode_QuestGuidanceNode>任务规则</RimChat_PromptNode_QuestGuidanceNode>
-    <RimChat_PromptNode_ThoughtChainNode>思维链</RimChat_PromptNode_ThoughtChainNode>
     <RimChat_PromptNode_ResponseContractNode>响应契约</RimChat_PromptNode_ResponseContractNode>
     <RimChat_PromptNode_StrategyOutputContract>策略输出契约</RimChat_PromptNode_StrategyOutputContract>
     <RimChat_PromptNode_StrategyNegotiatorContext>策略谈判者上下文</RimChat_PromptNode_StrategyNegotiatorContext>
@@ -2475,10 +2474,6 @@ ID：{5}
     <RimChat_DiplomacyActionPartialFailure>我尝试处理你的请求，但其中一部分未成功：{0}</RimChat_DiplomacyActionPartialFailure>
     <RimChat_DiplomacyActionAllFailed>我无法完成这次请求：{0}</RimChat_DiplomacyActionAllFailed>
     <RimChat_DiplomacyAirdropAmountMapped>已按你提供的金额处理：预算={0}银，支付={1}银。我现在提交空投请求。</RimChat_DiplomacyAirdropAmountMapped>
-    <RimChat_EnableThoughtChainNode>开启思维链</RimChat_EnableThoughtChainNode>
-    <RimChat_EnableThoughtChainNodeDesc>减少幻觉，但会延长响应时间</RimChat_EnableThoughtChainNodeDesc>
-    <RimChat_ThoughtChainByChannelTitle>按通道启用思维链</RimChat_ThoughtChainByChannelTitle>
-    <RimChat_ThoughtChainChannelToggleLabel>{0}</RimChat_ThoughtChainChannelToggleLabel>
 
     <!-- 悬停卡特殊商品（折扣/稀缺） -->
     <RimChat_HoverCardDiscountItem>折扣商品</RimChat_HoverCardDiscountItem>
@@ -2544,4 +2539,38 @@ ID：{5}
     <RimChat_DragMenu_Inspiration>赋予灵感</RimChat_DragMenu_Inspiration>
     <RimChat_DragMenu_Incident>触发事件</RimChat_DragMenu_Incident>
     <RimChat_DragMenu_HoverHint>按住拖拽以触发强制行为</RimChat_DragMenu_HoverHint>
+
+    <!-- Module Transfer -->
+    <RimChat_ModuleCreateTitle>新建模块</RimChat_ModuleCreateTitle>
+    <RimChat_ModuleCreateIdLabel>模块 ID</RimChat_ModuleCreateIdLabel>
+    <RimChat_ModuleCreateNameLabel>显示名称</RimChat_ModuleCreateNameLabel>
+    <RimChat_ModuleCreateSlotLabel>插槽</RimChat_ModuleCreateSlotLabel>
+    <RimChat_ModuleCreateIdHint>小写字母、数字、下划线</RimChat_ModuleCreateIdHint>
+    <RimChat_ModuleCreateIdEmpty>模块 ID 不能为空</RimChat_ModuleCreateIdEmpty>
+    <RimChat_ModuleCreateIdInvalid>仅允许小写字母、数字和下划线</RimChat_ModuleCreateIdInvalid>
+    <RimChat_ModuleCreateIdCollision>此 ID 已存在</RimChat_ModuleCreateIdCollision>
+    <RimChat_ModuleCreateNameEmpty>显示名称不能为空</RimChat_ModuleCreateNameEmpty>
+    <RimChat_ModuleCreateSuccess>模块 "{0}" 已创建</RimChat_ModuleCreateSuccess>
+    <RimChat_ModuleCreateFailed>创建模块失败</RimChat_ModuleCreateFailed>
+    <RimChat_ModuleExportBtn>导出</RimChat_ModuleExportBtn>
+    <RimChat_ModuleImportBtn>导入</RimChat_ModuleImportBtn>
+    <RimChat_ModuleExportNoSelection>请先选择一个节点模块</RimChat_ModuleExportNoSelection>
+    <RimChat_ModuleExportSuccess>模块已导出到: {0}</RimChat_ModuleExportSuccess>
+    <RimChat_ModuleImportPreviewTitle>导入模块预览</RimChat_ModuleImportPreviewTitle>
+    <RimChat_ModuleImportSuccess>模块 "{0}" 已导入</RimChat_ModuleImportSuccess>
+    <RimChat_ModuleImportFailed>导入模块失败</RimChat_ModuleImportFailed>
+    <RimChat_ModuleImportInvalidFile>无效的模块文件格式</RimChat_ModuleImportInvalidFile>
+    <RimChat_ModuleImportIdLabel>模块 ID: {0}</RimChat_ModuleImportIdLabel>
+    <RimChat_ModuleImportNameLabel>显示名称: {0}</RimChat_ModuleImportNameLabel>
+    <RimChat_ModuleImportSlotLabel>插槽: {0}</RimChat_ModuleImportSlotLabel>
+    <RimChat_ModuleImportOrderLabel>顺序: {0}</RimChat_ModuleImportOrderLabel>
+    <RimChat_ModuleImportContentPreview>内容预览</RimChat_ModuleImportContentPreview>
+    <RimChat_CreateButton>创建</RimChat_CreateButton>
+    <RimChat_ModuleDeleteTip>删除此自定义模块</RimChat_ModuleDeleteTip>
+    <RimChat_ModuleDeleteSuccess>模块 "{0}" 已删除</RimChat_ModuleDeleteSuccess>
+    <RimChat_ModuleMultiExportTitle>导出模块</RimChat_ModuleMultiExportTitle>
+    <RimChat_ModuleSelectAll>全选</RimChat_ModuleSelectAll>
+    <RimChat_ModuleSelectNone>全不选</RimChat_ModuleSelectNone>
+    <RimChat_ModuleImportCount>文件中发现 {0} 个模块</RimChat_ModuleImportCount>
+    <RimChat_ModuleImportMultiSuccess>已导入 {0} 个模块</RimChat_ModuleImportMultiSuccess>
 </LanguageData>

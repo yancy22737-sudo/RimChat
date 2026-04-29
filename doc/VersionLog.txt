@@ -1,3 +1,15 @@
+0.9.1048
+- [新增] 模块列表标题旁添加新建/导入/导出三个按钮
+- [新增] 新建自定义模块对话框（ID/名称/插槽选择）
+- [新增] 多模块导出：点击导出弹出多选对话框，可勾选多个模块导出为单个 JSON 文件
+- [新增] 多模块导入：选择文件后弹出多选预览，支持 bundle 和单模块两种格式向后兼容
+- [新增] 自定义/导入模块的删除功能（工具栏红色 × 按钮，仅对自定义节点显示）
+- [新增] 自定义节点注册表：扩展 PromptUnifiedNodeSchemaCatalog 支持运行时动态注册
+- [新增] PromptUnifiedCatalog 新增 CustomNodes 字段持久化自定义节点元数据
+- [移除] 思维链（Thought Chain）功能全面移除：节点定义、通道允许列表、默认内容、UI 开关、预览逻辑、组装逻辑
+- [保留] EnableThoughtChainNode/ThoughtChainByChannel 旧字段标记 Obsolete + Scribe 读写（旧存档兼容）
+- [保留] ImmersionOutputGuard.ReasoningLeakage 检测（独立输出质量守卫）
+
 0.9.1047
 - [优化] Scriban 渲染引擎新增宽松模式：未知变量返回空字符串不再报错，大小写不敏感解析，magic property 快捷访问
 - [优化] PromptRenderContext 改为大小写不敏感的命名空间查找（ctx/pawn/world/dialogue/system）

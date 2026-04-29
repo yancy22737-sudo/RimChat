@@ -611,8 +611,27 @@ namespace RimChat.Config
 
             float btnW = 22f;
             float btnH = 22f;
-            float x = rowRect.xMax - btnW * 2f - 8f;
+            PromptWorkbenchModuleItem selected = modules[selectedIndex];
+            bool isCustom = selected.Kind == ModuleKind.Node &&
+                PromptUnifiedNodeSchemaCatalog.IsCustomNode(selected.Id);
+            float deleteW = isCustom ? btnW + 4f : 0f;
+            float x = rowRect.xMax - btnW * 2f - deleteW - 8f;
             float y = rowRect.y + 2f;
+
+            // Delete button for custom/imported nodes
+            if (isCustom)
+            {
+                Rect deleteRect = new Rect(rowRect.xMax - btnW - 4f, y, btnW, btnH);
+                GUI.color = new Color(0.9f, 0.4f, 0.4f);
+                if (Widgets.ButtonText(deleteRect, "×"))
+                {
+                    DeleteCustomModule(selected.Id);
+                    return;
+                }
+                GUI.color = Color.white;
+                TooltipHandler.TipRegion(deleteRect, "RimChat_ModuleDeleteTip".Translate());
+            }
+
             Rect upRect = new Rect(x, y, btnW, btnH);
             Rect downRect = new Rect(x + btnW + 4f, y, btnW, btnH);
 

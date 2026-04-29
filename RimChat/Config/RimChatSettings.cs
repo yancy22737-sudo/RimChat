@@ -199,8 +199,9 @@ namespace RimChat.Config
 
         // Comms Console Settings
         public bool ReplaceCommsConsole = false;
-        [Obsolete("Use ThoughtChainByChannel instead")]
+        [Obsolete("Thought chain feature removed")]
         public bool EnableThoughtChainNode = true;
+        [Obsolete("Thought chain feature removed")]
         public List<PromptChannelToggleConfig> ThoughtChainByChannel = new List<PromptChannelToggleConfig>();
 
         // Presence Settings
@@ -441,14 +442,14 @@ namespace RimChat.Config
 
             // Comms Console Settings
             Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", false);
+#pragma warning disable CS0618 // Obsolete fields retained for save compatibility
             Scribe_Collections.Look(ref ThoughtChainByChannel, "ThoughtChainByChannel", LookMode.Deep);
             if (Scribe.mode == LoadSaveMode.LoadingVars)
             {
                 bool legacyEnableThoughtChainNode = true;
                 Scribe_Values.Look(ref legacyEnableThoughtChainNode, "EnableThoughtChainNode", true);
-                MigrateLegacyThoughtChainToggleOnce(legacyEnableThoughtChainNode);
             }
-            EnsureThoughtChainChannelMapReady();
+#pragma warning restore CS0618
 
             // RPG Dialogue Settings
             Scribe_Values.Look(ref EnableRPGDialogue, "EnableRPGDialogue", true);
@@ -3586,152 +3587,6 @@ namespace RimChat.Config
             if (string.IsNullOrEmpty(text)) return 0;
             // 缁鏆愭导鎵暬閿涙矮鑵戦懟杈ㄦ瀮濞ｅ嘲鎮庣痪?鐎涙顑?Token
             return text.Length / 4;
-        }
-
-        internal bool IsThoughtChainEnabledForPromptChannel(string promptChannel)
-        {
-            EnsureThoughtChainChannelMapReady();
-            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            PromptChannelToggleConfig entry = ThoughtChainByChannel?.FirstOrDefault(item =>
-                item != null && string.Equals(item.PromptChannel, normalized, StringComparison.OrdinalIgnoreCase));
-            if (entry != null)
-            {
-                return entry.Enabled;
-            }
-
-            return GetThoughtChainDefaultForChannel(normalized);
-        }
-
-        internal void SetThoughtChainEnabledForPromptChannel(string promptChannel, bool enabled)
-        {
-            EnsureThoughtChainChannelMapReady();
-            string normalized = RimTalkPromptEntryChannelCatalog.NormalizeLoose(promptChannel);
-            PromptChannelToggleConfig entry = ThoughtChainByChannel?.FirstOrDefault(item =>
-                item != null && string.Equals(item.PromptChannel, normalized, StringComparison.OrdinalIgnoreCase));
-            if (entry == null)
-            {
-                ThoughtChainByChannel ??= new List<PromptChannelToggleConfig>();
-                ThoughtChainByChannel.Add(new PromptChannelToggleConfig
-                {
-                    PromptChannel = normalized,
-                    Enabled = enabled
-                });
-                return;
-            }
-
-            entry.Enabled = enabled;
-        }
-
-        internal void ResetThoughtChainChannelDefaults()
-        {
-            ThoughtChainByChannel = GetThoughtChainDefaultEntries();
-        }
-
-        internal List<PromptChannelToggleConfig> GetThoughtChainChannelTogglesSnapshot()
-        {
-            EnsureThoughtChainChannelMapReady();
-            return ThoughtChainByChannel
-                .Where(item => item != null)
-                .Select(item => item.Clone())
-                .OrderBy(item => item.PromptChannel, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
-        private void EnsureThoughtChainChannelMapReady()
-        {
-            ThoughtChainByChannel ??= new List<PromptChannelToggleConfig>();
-            if (ThoughtChainByChannel.Count == 0)
-            {
-                ThoughtChainByChannel = GetThoughtChainDefaultEntries();
-                return;
-            }
-
-            var merged = new Dictionary<string, PromptChannelToggleConfig>(StringComparer.OrdinalIgnoreCase);
-            foreach (PromptChannelToggleConfig item in ThoughtChainByChannel)
-            {
-                if (item == null)
-                {
-                    continue;
-                }
-
-                string channel = RimTalkPromptEntryChannelCatalog.NormalizeLoose(item.PromptChannel);
-                if (!merged.ContainsKey(channel))
-                {
-                    merged[channel] = new PromptChannelToggleConfig
-                    {
-                        PromptChannel = channel,
-                        Enabled = item.Enabled
-                    };
-                }
-            }
-
-            foreach (string channel in GetThoughtChainSupportedChannels())
-            {
-                if (!merged.ContainsKey(channel))
-                {
-                    merged[channel] = new PromptChannelToggleConfig
-                    {
-                        PromptChannel = channel,
-                        Enabled = GetThoughtChainDefaultForChannel(channel)
-                    };
-                }
-            }
-
-            ThoughtChainByChannel = merged.Values
-                .OrderBy(item => item.PromptChannel, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
-        private void MigrateLegacyThoughtChainToggleOnce(bool legacyEnableThoughtChainNode)
-        {
-            if (ThoughtChainByChannel != null && ThoughtChainByChannel.Count > 0)
-            {
-                return;
-            }
-
-            ThoughtChainByChannel = GetThoughtChainDefaultEntries();
-            if (!legacyEnableThoughtChainNode)
-            {
-                for (int i = 0; i < ThoughtChainByChannel.Count; i++)
-                {
-                    ThoughtChainByChannel[i].Enabled = false;
-                }
-            }
-        }
-
-        private static List<PromptChannelToggleConfig> GetThoughtChainDefaultEntries()
-        {
-            var entries = new List<PromptChannelToggleConfig>();
-            foreach (string channel in GetThoughtChainSupportedChannels())
-            {
-                entries.Add(new PromptChannelToggleConfig
-                {
-                    PromptChannel = channel,
-                    Enabled = GetThoughtChainDefaultForChannel(channel)
-                });
-            }
-
-            return entries;
-        }
-
-        private static IEnumerable<string> GetThoughtChainSupportedChannels()
-        {
-            yield return RimTalkPromptEntryChannelCatalog.Any;
-            yield return RimTalkPromptEntryChannelCatalog.DiplomacyDialogue;
-            yield return RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue;
-            yield return RimTalkPromptEntryChannelCatalog.RpgDialogue;
-            yield return RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue;
-            yield return RimTalkPromptEntryChannelCatalog.DiplomacyStrategy;
-            yield return RimTalkPromptEntryChannelCatalog.SocialCirclePost;
-            yield return RimTalkPromptEntryChannelCatalog.PersonaBootstrap;
-            yield return RimTalkPromptEntryChannelCatalog.SummaryGeneration;
-            yield return RimTalkPromptEntryChannelCatalog.RpgArchiveCompression;
-            yield return RimTalkPromptEntryChannelCatalog.ImageGeneration;
-        }
-
-        private static bool GetThoughtChainDefaultForChannel(string promptChannel)
-        {
-            return false;
         }
 
         #endregion

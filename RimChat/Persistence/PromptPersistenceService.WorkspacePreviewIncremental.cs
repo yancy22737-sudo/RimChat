@@ -287,15 +287,6 @@ namespace RimChat.Persistence
                 return null;
             }
 
-            bool thoughtChain = string.Equals(
-                PromptUnifiedNodeSchemaCatalog.NormalizeId(nodeId),
-                "thought_chain_node_template",
-                StringComparison.OrdinalIgnoreCase);
-            if (thoughtChain && RimChatMod.Settings?.IsThoughtChainEnabledForPromptChannel(promptChannel) != true)
-            {
-                return null;
-            }
-
             return new PromptWorkspacePreviewBlock
             {
                 Kind = PromptWorkspacePreviewBlockKind.Node,

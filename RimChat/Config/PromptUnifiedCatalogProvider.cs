@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using RimChat.Persistence;
 using UnityEngine;
@@ -34,12 +35,14 @@ namespace RimChat.Config
                     if (custom != null)
                     {
                         PromptUnifiedCatalog merged = custom.Clone();
+                        RestoreCustomNodeRegistrations(merged);
                         merged.NormalizeWith(result);
                         result = merged;
                     }
                 }
 
                 result ??= PromptUnifiedCatalog.CreateFallback();
+                RestoreCustomNodeRegistrations(result);
                 result.NormalizeWith(PromptUnifiedCatalog.CreateFallback());
                 cached = result.Clone();
                 cachedPath = customPath;
@@ -118,6 +121,34 @@ namespace RimChat.Config
             }
 
             return File.GetLastWriteTimeUtc(customPath) == cachedWriteTimeUtc;
+        }
+
+        private static void RestoreCustomNodeRegistrations(PromptUnifiedCatalog catalog)
+        {
+            if (catalog?.Channels == null)
+            {
+                return;
+            }
+
+            var allRegistrations = new List<PromptUnifiedNodeRegistration>();
+            foreach (PromptUnifiedChannelConfig channel in catalog.Channels)
+            {
+                if (channel?.CustomNodes == null)
+                {
+                    continue;
+                }
+
+                foreach (PromptUnifiedNodeRegistration reg in channel.CustomNodes)
+                {
+                    if (reg != null && !string.IsNullOrWhiteSpace(reg.NodeId) &&
+                        !allRegistrations.Any(r => string.Equals(r.NodeId, reg.NodeId, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        allRegistrations.Add(reg);
+                    }
+                }
+            }
+
+            PromptUnifiedNodeSchemaCatalog.RestoreCustomNodes(allRegistrations);
         }
     }
 }

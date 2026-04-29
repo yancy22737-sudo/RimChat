@@ -443,43 +443,6 @@ namespace RimChat.Config
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             listing.Gap(8f);
-
-            listing.Label("RimChat_ThoughtChainByChannelTitle".Translate());
-            DrawThoughtChainChannelToggles(listing);
-            Text.Font = GameFont.Tiny;
-            GUI.color = Color.gray;
-            Rect chainDescRect = listing.GetRect(Text.LineHeight * 2f);
-            Widgets.Label(chainDescRect, "RimChat_EnableThoughtChainNodeDesc".Translate());
-            GUI.color = Color.white;
-            Text.Font = GameFont.Small;
-            listing.Gap(8f);
-        }
-
-        private void DrawThoughtChainChannelToggles(Listing_Standard listing)
-        {
-            List<string> channels = new List<string>
-            {
-                RimTalkPromptEntryChannelCatalog.DiplomacyDialogue,
-                RimTalkPromptEntryChannelCatalog.ProactiveDiplomacyDialogue,
-                RimTalkPromptEntryChannelCatalog.RpgDialogue,
-                RimTalkPromptEntryChannelCatalog.ProactiveRpgDialogue,
-                RimTalkPromptEntryChannelCatalog.DiplomacyStrategy,
-                RimTalkPromptEntryChannelCatalog.SocialCirclePost,
-                RimTalkPromptEntryChannelCatalog.PersonaBootstrap,
-                RimTalkPromptEntryChannelCatalog.SummaryGeneration,
-                RimTalkPromptEntryChannelCatalog.RpgArchiveCompression,
-                RimTalkPromptEntryChannelCatalog.ImageGeneration
-            };
-
-            for (int i = 0; i < channels.Count; i++)
-            {
-                string channel = channels[i];
-                bool enabled = IsThoughtChainEnabledForPromptChannel(channel);
-                string label = "RimChat_ThoughtChainChannelToggleLabel"
-                    .Translate(RimTalkPromptEntryChannelCatalog.GetLabel(channel));
-                listing.CheckboxLabeled(label, ref enabled);
-                SetThoughtChainEnabledForPromptChannel(channel, enabled);
-            }
         }
 
         private void DrawPresenceSettings(Listing_Standard listing)
@@ -1252,7 +1215,6 @@ namespace RimChat.Config
             TypewriterSpeedMode = TypewriterSpeedMode.Standard;
             ReplaceCommsConsole = false;
             DialogueStyleMode = DialogueStyleMode.NaturalConcise;
-            ResetThoughtChainChannelDefaults();
         }
 
         /// <summary>/// 闂備浇顕栭崢褰掑垂瑜版崵鍥蓟閵夈儲宓嶉梺闈浤涢崘鈺冩瀮闂備胶绮…鍫ュ春閺嶎厼鐒垫い鎴炲缁佺増銇勯弮鈧ú婊呮閺冨牜鏁婇柡鍕箳椤︾増鎱ㄩ幒鎾垛姇妞ゎ厼鐗撻, 妯荤節濮橆剛锛? ///</summary>
