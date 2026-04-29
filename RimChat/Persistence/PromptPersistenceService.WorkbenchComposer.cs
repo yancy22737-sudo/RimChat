@@ -6,6 +6,8 @@ using RimChat.Config;
 using RimChat.Core;
 using RimChat.Memory;
 using RimChat.Prompting;
+using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace RimChat.Persistence
@@ -720,102 +722,21 @@ namespace RimChat.Persistence
                 return source.Trim();
             }
 
-            Dictionary<string, object> values;
-            if (deterministicPreview && cachedComposeValues != null)
-            {
-                values = cachedComposeValues;
-            }
-            else
-            {
-                values = deterministicPreview
-                    ? BuildDeterministicComposeValues(promptChannel, scenarioContext, additionalValues)
-                    : BuildRuntimeComposeValues(
-                        "prompt_sections." + (promptChannel ?? string.Empty) + ".mod_variables_raw",
-                        ResolveTemplateRenderChannel(promptChannel, rootChannel, scenarioContext),
-                        promptChannel,
-                        scenarioContext,
-                        environmentConfig,
-                        additionalValues);
-            }
-            string rendered = TemplateVariableRegex.Replace(source, match =>
-            {
-                string normalized = NormalizeTemplateVariableName(match.Groups[1].Value);
-                if (normalized.Length == 0)
-                {
-                    return match.Value;
-                }
+            // Preprocess RimTalk native tokens and then delegate to lenient Scriban rendering.
+            // The lenient engine handles case-insensitive lookup and returns empty string for unknowns.
+            string preprocessed = PreprocessDiplomacyNativeVariables(source);
 
-                if (TryResolveRimTalkNativeToken(normalized, out string rawToken))
-                {
-                    if (!string.IsNullOrWhiteSpace(rawToken) && rawToken.StartsWith("{{", StringComparison.Ordinal))
-                    {
-                        if (values.TryGetValue(normalized, out object directValue))
-                        {
-                            string text = ConvertRawModVariableValueToText(directValue);
-                            if (!string.IsNullOrWhiteSpace(text))
-                            {
-                                return text;
-                            }
-                        }
-
-                        string innerToken = rawToken.Substring(2, rawToken.Length - 4).Trim();
-                        if (innerToken.IndexOf(".", StringComparison.Ordinal) < 0)
-                        {
-                            string legacyMapped = PromptRuntimeVariableRegistry.ResolveLegacyToken(innerToken);
-                            if (!string.IsNullOrWhiteSpace(legacyMapped) &&
-                                values.TryGetValue(legacyMapped, out object legacyValue))
-                            {
-                                string text = ConvertRawModVariableValueToText(legacyValue);
-                                if (!string.IsNullOrWhiteSpace(text))
-                                {
-                                    return text;
-                                }
-                            }
-                        }
-                    }
-                    return rawToken;
-                }
-
-                if (values != null && values.TryGetValue(normalized, out object value))
-                {
-                    string text = ConvertRawModVariableValueToText(value);
-                    if (!string.IsNullOrWhiteSpace(text))
-                    {
-                        return text;
-                    }
-                }
-
-                string mappedPath = PromptRuntimeVariableRegistry.ResolveLegacyToken(normalized);
-                if (!string.IsNullOrWhiteSpace(mappedPath) &&
-                    values != null &&
-                    values.TryGetValue(mappedPath, out object mappedValue))
-                {
-                    string mappedText = ConvertRawModVariableValueToText(mappedValue);
-                    if (!string.IsNullOrWhiteSpace(mappedText))
-                    {
-                        return mappedText;
-                    }
-                }
-
-                object fallback = ResolveTemplateVariableValue(normalized, scenarioContext, environmentConfig);
-                string fallbackText = ConvertRawModVariableValueToText(fallback);
-                if (!string.IsNullOrWhiteSpace(fallbackText))
-                {
-                    return fallbackText;
-                }
-
-                if (!string.IsNullOrWhiteSpace(normalized) && normalized.IndexOf(".", StringComparison.Ordinal) > 0)
-                {
-                    string token = TryBuildRawVariableToken(normalized);
-                    if (!string.IsNullOrWhiteSpace(token))
-                    {
-                        return token;
-                    }
-                }
-
-                return match.Value;
-            });
-            return rendered.Trim();
+            string templateId = "prompt_sections." + (promptChannel ?? string.Empty) + ".mod_variables_raw";
+            return RenderUnifiedTemplateLenient(
+                templateId,
+                promptChannel,
+                preprocessed,
+                rootChannel,
+                deterministicPreview,
+                scenarioContext,
+                environmentConfig,
+                additionalValues,
+                cachedComposeValues);
         }
 
         private static string TryBuildRawVariableToken(string normalizedToken)
@@ -1180,6 +1101,46 @@ namespace RimChat.Persistence
             return PromptTemplateRenderer.RenderOrThrow(templateId, renderChannel, template, renderContext).Trim();
         }
 
+        private string RenderUnifiedTemplateLenient(
+            string templateId,
+            string promptChannel,
+            string templateText,
+            RimTalkPromptChannel rootChannel,
+            bool deterministicPreview,
+            DialogueScenarioContext scenarioContext,
+            EnvironmentPromptConfig environmentConfig,
+            IReadOnlyDictionary<string, object> additionalValues,
+            Dictionary<string, object> cachedComposeValues = null)
+        {
+            string template = templateText?.Trim() ?? string.Empty;
+            if (template.Length == 0)
+            {
+                return string.Empty;
+            }
+
+            if (IsDiplomacyNativeVariablePassthroughSection(rootChannel, promptChannel, templateId))
+            {
+                template = PreprocessDiplomacyNativeVariables(template);
+            }
+
+            string renderChannel = ResolveTemplateRenderChannel(promptChannel, rootChannel, scenarioContext);
+            Dictionary<string, object> values;
+            if (deterministicPreview && cachedComposeValues != null)
+            {
+                values = cachedComposeValues;
+            }
+            else
+            {
+                values = deterministicPreview
+                    ? BuildDeterministicComposeValues(promptChannel, scenarioContext, additionalValues)
+                    : BuildRuntimeComposeValues(templateId, renderChannel, promptChannel, scenarioContext, environmentConfig, additionalValues);
+            }
+
+            PromptRenderContext renderContext = PromptRenderContext.Create(templateId, renderChannel);
+            renderContext.SetValues(values);
+            return PromptTemplateRenderer.RenderLenient(templateId, renderChannel, template, renderContext).Trim();
+        }
+
         private static string PreprocessDiplomacyNativeVariables(string template)
         {
             if (string.IsNullOrWhiteSpace(template) || template.IndexOf("{{", StringComparison.Ordinal) < 0)
@@ -1538,15 +1499,47 @@ namespace RimChat.Persistence
             values = CreatePromptVariableSeed();
             values["ctx.channel"] = promptChannel ?? string.Empty;
             values["ctx.mode"] = ResolvePromptModeForCompose(scenarioContext, promptChannel);
-            values["system.target_language"] = "English";
-            values["system.game_language"] = "English";
-            values["world.faction.name"] = "PreviewFaction";
-            values["world.faction.description"] = "preview_faction_description";
-            values["pawn.initiator.name"] = "PreviewInitiator";
-            values["pawn.target.name"] = "PreviewTarget";
-            values["world.faction"] = CreatePreviewFactionPlaceholder("PreviewFaction");
-            values["pawn.initiator"] = CreatePreviewPawnPlaceholder("PreviewInitiator");
-            values["pawn.target"] = CreatePreviewPawnPlaceholder("PreviewTarget");
+
+            // Use live game state for preview when available, fall back to placeholders
+            Map currentMap = Find.CurrentMap;
+            values["system.target_language"] = RimChatMod.Settings?.GetEffectivePromptLanguage() ?? "English";
+            values["system.game_language"] = LanguageDatabase.activeLanguage?.FriendlyNameNative ?? "English";
+
+            if (currentMap != null)
+            {
+                // Use live game state for environment variables
+                values["world.weather"] = currentMap.weatherManager?.curWeather?.label ?? "Clear";
+                values["world.temperature"] = Mathf.RoundToInt(currentMap.mapTemperature?.OutdoorTemp ?? 21f).ToString() + "°C";
+                values["world.time.season"] = GenLocalDate.Season(currentMap).Label();
+            }
+            else
+            {
+                values["world.time.hour"] = "12";
+                values["world.time.day"] = "1";
+                values["world.time.quadrum"] = "Aprimay";
+                values["world.time.year"] = "5500";
+                values["world.time.season"] = "Spring";
+                values["world.time.date"] = "5500-04-01";
+                values["world.weather"] = "Clear";
+                values["world.temperature"] = "21°C";
+            }
+
+            // Use scenario context for faction/pawn data when available
+            values["world.faction.name"] = scenarioContext?.Faction?.Name ?? "PreviewFaction";
+            values["world.faction.description"] = scenarioContext?.Faction != null
+                ? FactionPromptManager.Instance.GetPrompt(scenarioContext.Faction)
+                : "preview_faction_description";
+            values["pawn.initiator.name"] = scenarioContext?.Initiator?.LabelShort ?? "PreviewInitiator";
+            values["pawn.target.name"] = scenarioContext?.Target?.LabelShort ?? "PreviewTarget";
+            values["world.faction"] = scenarioContext?.Faction != null
+                ? PromptRenderProjection.Project(scenarioContext.Faction)
+                : CreatePreviewFactionPlaceholder("PreviewFaction");
+            values["pawn.initiator"] = scenarioContext?.Initiator != null
+                ? PromptRenderProjection.Project(scenarioContext.Initiator)
+                : CreatePreviewPawnPlaceholder("PreviewInitiator");
+            values["pawn.target"] = scenarioContext?.Target != null
+                ? PromptRenderProjection.Project(scenarioContext.Target)
+                : CreatePreviewPawnPlaceholder("PreviewTarget");
             values["world.scene_tags"] = "scene:preview";
             values["world.environment_params"] = "preview_environment";
             values["world.recent_world_events"] = "preview_events";

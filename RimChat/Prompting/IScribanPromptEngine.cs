@@ -14,6 +14,12 @@ namespace RimChat.Prompting
             string templateText,
             PromptRenderContext context);
 
+        string RenderLenient(
+            string templateId,
+            string channel,
+            string templateText,
+            PromptRenderContext context);
+
         void ValidateOrThrow(
             string templateId,
             string channel,

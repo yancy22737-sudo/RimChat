@@ -130,6 +130,7 @@ namespace RimChat.PawnRpgPush
             TaggedString title = GetLetterTitle(context, npcPawn, playerPawn);
             LetterDef letterDef = GetLetterDef(context);
             var letter = new ChoiceLetter_PawnRpgInitiatedDialogue();
+            letter.AssignLoadID();
             letter.Setup(npcPawn, playerPawn, title, text, letterDef);
             Find.LetterStack.ReceiveLetter(letter, string.Empty, 0, true);
 

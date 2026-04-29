@@ -115,5 +115,103 @@ namespace RimChat.Prompting
         {
             return "{{ " + (variableName ?? string.Empty) + " }}";
         }
+
+        public static IReadOnlyList<string> GetClosestSuggestions(string partialPath, int maxResults = 3)
+        {
+            if (string.IsNullOrWhiteSpace(partialPath))
+            {
+                return Array.Empty<string>();
+            }
+
+            string normalized = partialPath.Trim().ToLowerInvariant();
+            IReadOnlyCollection<string> allPaths = GetAll();
+            if (allPaths.Count == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            // Prefer same-namespace matches, then fall back to global distance
+            var scored = new List<(string path, int score)>();
+            int dotIndex = normalized.LastIndexOf('.');
+            string prefix = dotIndex > 0 ? normalized.Substring(0, dotIndex + 1) : string.Empty;
+
+            foreach (string candidate in allPaths)
+            {
+                if (string.IsNullOrWhiteSpace(candidate))
+                {
+                    continue;
+                }
+
+                string candidateLower = candidate.ToLowerInvariant();
+                if (candidateLower == normalized)
+                {
+                    continue; // exact match, not a suggestion
+                }
+
+                int score = ComputeSuggestionScore(normalized, candidateLower, prefix);
+                if (score >= 0)
+                {
+                    scored.Add((candidate, score));
+                }
+            }
+
+            return scored
+                .OrderBy(item => item.score)
+                .ThenBy(item => item.path, StringComparer.OrdinalIgnoreCase)
+                .Take(maxResults)
+                .Select(item => item.path)
+                .ToList();
+        }
+
+        private static int ComputeSuggestionScore(string query, string candidate, string prefix)
+        {
+            // Namespace prefix bonus: paths with same prefix are much closer
+            int score = 0;
+            if (prefix.Length > 0 && candidate.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                score -= 100;
+            }
+            else if (prefix.Length > 0)
+            {
+                score += 50; // penalty for different namespace
+            }
+
+            // Edit distance (simple Levenshtein-like)
+            int distance = ComputeEditDistance(query, candidate);
+            score += distance;
+
+            return score;
+        }
+
+        private static int ComputeEditDistance(string a, string b)
+        {
+            int n = a.Length;
+            int m = b.Length;
+            if (n == 0) return m;
+            if (m == 0) return n;
+
+            var prev = new int[m + 1];
+            var curr = new int[m + 1];
+            for (int j = 0; j <= m; j++)
+            {
+                prev[j] = j;
+            }
+
+            for (int i = 1; i <= n; i++)
+            {
+                curr[0] = i;
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                    curr[j] = Math.Min(Math.Min(curr[j - 1] + 1, prev[j] + 1), prev[j - 1] + cost);
+                }
+
+                var tmp = prev;
+                prev = curr;
+                curr = tmp;
+            }
+
+            return prev[m];
+        }
     }
 }

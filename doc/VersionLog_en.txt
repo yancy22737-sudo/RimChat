@@ -1,3 +1,20 @@
+0.9.1047
+- [Improve] Scriban renderer lenient mode: unknown vars return empty string, case-insensitive resolution, magic property shortcuts
+- [Improve] PromptRenderContext case-insensitive namespace lookup (ctx/pawn/world/dialogue/system)
+- [Improve] ResolveTemplateVariableValue returns empty string for unknown vars + 5 new variables (faction.relation_band/ideology_summary/tech_level, target.traits_summary, social.diplomacy_stance)
+- [Improve] PromptVariableCatalog: similar variable suggestions (edit distance algorithm)
+- [Improve] Preview uses live light/temperature/season data instead of placeholders; FactionPromptEditor preview renders via Scriban
+- [Improve] Preview renders via direct IMGUI (removed RenderTexture cache layer) fixing full preview scroll failure
+- [Improve] Preview build runs synchronously when cache empty to fix blank preview
+- [Fix] Module list crash: shared scroll variable caused virtual scrolling out-of-bounds → dedicated _promptWorkspaceModuleScroll + removed virtual scrolling
+- [Fix] Module selection no visual feedback → blue highlight background added
+- [Fix] Checkbox click errors (GUI stack corruption cascade)
+- [Fix] Module reorder silently fails on cross-kind → scan for nearest same-kind neighbor + invalidate caches
+- [Fix] Full preview "no previewable content" → synchronous build + direct IMGUI rendering
+- [Remove] Module row × delete button + DeletePromptWorkspaceModule/DuplicatePromptWorkspaceModule dead code
+- [Deprecated] FactionPromptConfig marked Obsolete (recommends PromptTemplatePreset)
+- [New] PromptTemplateEntry / PromptTemplatePreset / PromptEntryMigrationService models
+
 0.9.1046
 - [New] Draggable initiator portrait: spring physics follow + spring-back, collision detection (30% overlap), shake+flash animation, dynamic relationship FloatMenu (romance/marry/breakup/divorce/date/gift/recruit/reduce resistance/will/inspiration/incident)
 - [New] Hover pendulum swing animation on top 2/3 of initiator portrait (28° damped rotation, top-center pivot), tooltip "Hold and drag to force actions"

@@ -414,34 +414,67 @@ namespace RimChat.Config
 
             const float rowHeight = 25f;
             const float rowStep = 26f;
-            const float buttonSize = 22f;
+            const float toolbarH = 22f;
+
+            // Toolbar above the scroll view — reorder buttons for selected module
+            if (modules.Count > 0)
+            {
+                int selIdx = -1;
+                for (int i = 0; i < modules.Count; i++)
+                {
+                    bool s = modules[i].Kind == ModuleKind.Section
+                        ? (!_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedSectionId, modules[i].Id, StringComparison.OrdinalIgnoreCase))
+                        : (_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedNodeId, modules[i].Id, StringComparison.OrdinalIgnoreCase));
+                    if (s) { selIdx = i; break; }
+                }
+
+                Rect toolbarRect = new Rect(inner.x, inner.y, inner.width, toolbarH);
+                DrawPromptWorkspaceModuleReorderButtons(toolbarRect, selIdx, modules, sectionLayouts, nodeLayouts);
+            }
+
+            // Scroll view — render all modules (no virtual scrolling; avoids index math bugs)
             float totalHeight = modules.Count * rowStep;
-            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(inner.height, totalHeight));
-            Widgets.BeginScrollView(inner, ref _promptWorkspaceSectionScroll, viewRect);
-            int firstVisible = Mathf.Max(0, Mathf.FloorToInt(_promptWorkspaceSectionScroll.y / rowStep) - 1);
-            int lastVisible = Mathf.Min(modules.Count - 1, Mathf.CeilToInt((_promptWorkspaceSectionScroll.y + inner.height) / rowStep) + 1);
+            Rect scrollRect = new Rect(inner.x, inner.y + toolbarH + 2f, inner.width, Mathf.Max(1f, inner.height - toolbarH - 2f));
+            Rect viewRect = new Rect(0f, 0f, inner.width - 16f, Mathf.Max(scrollRect.height, totalHeight));
+            Widgets.BeginScrollView(scrollRect, ref _promptWorkspaceModuleScroll, viewRect);
 
             string sectionTag = "RimChat_PromptWorkspaceKind_Section".Translate().ToString();
             string nodeTag = "RimChat_PromptWorkspaceKind_Node".Translate().ToString();
-            int selectedIndex = -1;
 
-            for (int i = firstVisible; i <= lastVisible; i++)
+            for (int i = 0; i < modules.Count; i++)
             {
                 PromptWorkbenchModuleItem module = modules[i];
                 float rowY = i * rowStep;
                 float rowWidth = viewRect.width;
-                Rect rowRect = new Rect(0f, rowY, rowWidth, rowHeight);
 
                 bool selected = module.Kind == ModuleKind.Section
                     ? (!_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedSectionId, module.Id, StringComparison.OrdinalIgnoreCase))
                     : (_promptWorkspaceEditNodeMode && string.Equals(_promptWorkspaceSelectedNodeId, module.Id, StringComparison.OrdinalIgnoreCase));
 
-                if (selected) selectedIndex = i;
+                // Selection highlight
+                if (selected)
+                {
+                    Widgets.DrawBoxSolid(new Rect(0f, rowY, rowWidth, rowHeight), RowSelectedBg);
+                }
 
-                // Minimal row: Label only (ButtonText combines label + click, like RimTalk)
+                // Row layout: [checkbox] [label]
+                float checkW = 24f;
+                float gap = 3f;
+                float labelW = rowWidth - checkW - gap;
+                Rect checkRect = new Rect(0f, rowY + 2f, checkW, checkW);
+                Rect labelRect = new Rect(checkRect.xMax + gap, rowY, labelW, rowHeight);
+
+                // Enable checkbox
+                bool enabled = module.Enabled;
+                Widgets.Checkbox(checkRect.position, ref enabled);
+                if (enabled != module.Enabled)
+                {
+                    TogglePromptWorkspaceModuleEnabled(module, enabled, sectionLayouts, nodeLayouts);
+                }
+
                 string kindTag = module.Kind == ModuleKind.Section ? sectionTag : nodeTag;
                 string displayText = $"{module.Label} [{kindTag}]";
-                if (Widgets.ButtonText(rowRect, displayText.Truncate(rowRect.width), false))
+                if (Widgets.ButtonText(labelRect, displayText.Truncate(labelRect.width), false))
                 {
                     if (module.Kind == ModuleKind.Section)
                         SchedulePromptWorkspaceNavigation(() => SelectPromptWorkspaceSection(module.Id));
@@ -455,9 +488,8 @@ namespace RimChat.Config
                             InvalidatePromptWorkspacePreviewCache();
                         });
                 }
-
-                // bottom of list
             }
+
             Widgets.EndScrollView();
         }
 
@@ -474,34 +506,143 @@ namespace RimChat.Config
             }
 
             PromptWorkbenchModuleItem current = modules[selectedIndex];
-            PromptWorkbenchModuleItem target = modules[selectedIndex + direction];
 
-            // Only allow swapping within the same Kind or same Slot
-            if (current.Kind == ModuleKind.Section && target.Kind == ModuleKind.Section)
+            // Scan for the nearest same-kind neighbor in the desired direction
+            int targetIdx = selectedIndex + direction;
+            while (targetIdx >= 0 && targetIdx < modules.Count)
             {
-                MovePromptSectionLayout(sectionLayouts, current.Id, direction);
+                PromptWorkbenchModuleItem neighbor = modules[targetIdx];
+                if (current.Kind == ModuleKind.Section && neighbor.Kind == ModuleKind.Section)
+                {
+                    // Swap section orders
+                    SwapSectionOrder(sectionLayouts, current.Id, neighbor.Id);
+                    return;
+                }
+                if (current.Kind == ModuleKind.Node && neighbor.Kind == ModuleKind.Node)
+                {
+                    // Swap node orders
+                    SwapNodeOrder(nodeLayouts, current.Id, neighbor.Id, current.Slot == neighbor.Slot);
+                    return;
+                }
+                targetIdx += direction;
             }
-            else if (current.Kind == ModuleKind.Node && target.Kind == ModuleKind.Node)
+            // No same-kind neighbor in that direction — nothing to do
+        }
+
+        private void SwapSectionOrder(List<PromptSectionLayoutConfig> layouts, string idA, string idB)
+        {
+            var a = layouts.FirstOrDefault(s => string.Equals(s.SectionId, idA, StringComparison.OrdinalIgnoreCase));
+            var b = layouts.FirstOrDefault(s => string.Equals(s.SectionId, idB, StringComparison.OrdinalIgnoreCase));
+            if (a == null || b == null) return;
+            int tmp = a.Order;
+            a.Order = b.Order;
+            b.Order = tmp;
+            SavePromptWorkspaceSectionLayouts(layouts);
+            InvalidatePromptWorkspaceNodeUiCaches();
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
+        private void SwapNodeOrder(List<PromptUnifiedNodeLayoutConfig> layouts, string idA, string idB, bool sameSlot)
+        {
+            var a = layouts.FirstOrDefault(n => string.Equals(n.NodeId, idA, StringComparison.OrdinalIgnoreCase));
+            var b = layouts.FirstOrDefault(n => string.Equals(n.NodeId, idB, StringComparison.OrdinalIgnoreCase));
+            if (a == null || b == null) return;
+
+            if (sameSlot)
             {
-                // Same slot swap
-                if (current.Slot == target.Slot)
-                {
-                    MovePromptNodeLayout(nodeLayouts, current.Id, direction);
-                }
-                else
-                {
-                    // Cross-slot: move to target slot
-                    PromptUnifiedNodeLayoutConfig layout = nodeLayouts.FirstOrDefault(item =>
-                        string.Equals(item.NodeId, current.Id, StringComparison.OrdinalIgnoreCase));
-                    if (layout != null)
-                    {
-                        layout.Slot = target.Slot.ToSerializedValue();
-                        layout.Order = target.DisplayOrder;
-                        SavePromptWorkspaceNodeLayouts(nodeLayouts);
-                    }
-                }
+                int tmp = a.Order;
+                a.Order = b.Order;
+                b.Order = tmp;
             }
-            // Cross-kind swaps are not allowed (Section and Node belong to different conceptual groups)
+            else
+            {
+                string tmpSlot = a.Slot;
+                a.Slot = b.Slot;
+                b.Slot = tmpSlot;
+                int tmpOrder = a.Order;
+                a.Order = b.Order;
+                b.Order = tmpOrder;
+            }
+            SavePromptWorkspaceNodeLayouts(layouts);
+            InvalidatePromptWorkspaceNodeUiCaches();
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
+        private void TogglePromptWorkspaceModuleEnabled(
+            PromptWorkbenchModuleItem module,
+            bool enabled,
+            List<PromptSectionLayoutConfig> sectionLayouts,
+            List<PromptUnifiedNodeLayoutConfig> nodeLayouts)
+        {
+            if (!EnsurePromptWorkspaceEditablePresetForMutation("workspace.module_toggle"))
+            {
+                return;
+            }
+
+            if (module.Kind == ModuleKind.Section)
+            {
+                PromptSectionLayoutConfig target = sectionLayouts.FirstOrDefault(s =>
+                    string.Equals(s.SectionId, module.Id, StringComparison.OrdinalIgnoreCase));
+                if (target == null) return;
+                target.Enabled = enabled;
+                SavePromptWorkspaceSectionLayouts(sectionLayouts);
+            }
+            else
+            {
+                PromptUnifiedNodeLayoutConfig target = nodeLayouts.FirstOrDefault(n =>
+                    string.Equals(n.NodeId, module.Id, StringComparison.OrdinalIgnoreCase));
+                if (target == null) return;
+                target.Enabled = enabled;
+                SavePromptWorkspaceNodeLayouts(nodeLayouts);
+            }
+
+            InvalidateWorkbenchEditingChannelConfig();
+            InvalidatePromptWorkspacePreviewCache();
+        }
+
+        private void DrawPromptWorkspaceModuleReorderButtons(
+            Rect rowRect,
+            int selectedIndex,
+            List<PromptWorkbenchModuleItem> modules,
+            List<PromptSectionLayoutConfig> sectionLayouts,
+            List<PromptUnifiedNodeLayoutConfig> nodeLayouts)
+        {
+            if (selectedIndex < 0 || selectedIndex >= modules.Count) return;
+
+            float btnW = 22f;
+            float btnH = 22f;
+            float x = rowRect.xMax - btnW * 2f - 8f;
+            float y = rowRect.y + 2f;
+            Rect upRect = new Rect(x, y, btnW, btnH);
+            Rect downRect = new Rect(x + btnW + 4f, y, btnW, btnH);
+
+            // Label hint
+            GUI.color = Color.gray;
+            Text.Font = GameFont.Tiny;
+            Widgets.Label(new Rect(rowRect.x + 4f, rowRect.y + 4f, x - rowRect.x - 12f, rowRect.height - 4f),
+                "RimChat_PromptWorkspace_ModuleReorderHint".Translate());
+            Text.Font = GameFont.Small;
+            GUI.color = Color.white;
+
+            bool canMoveUp = selectedIndex > 0;
+            bool canMoveDown = selectedIndex < modules.Count - 1;
+
+            if (!canMoveUp) GUI.enabled = false;
+            if (Widgets.ButtonText(upRect, "▲"))
+            {
+                MovePromptWorkspaceModule(modules, selectedIndex, -1, sectionLayouts, nodeLayouts);
+            }
+            GUI.enabled = true;
+
+            if (!canMoveDown) GUI.enabled = false;
+            if (Widgets.ButtonText(downRect, "▼"))
+            {
+                MovePromptWorkspaceModule(modules, selectedIndex, 1, sectionLayouts, nodeLayouts);
+            }
+            GUI.enabled = true;
+
+            TooltipHandler.TipRegion(upRect, "RimChat_PromptWorkspace_ModuleReorderUpTip".Translate());
+            TooltipHandler.TipRegion(downRect, "RimChat_PromptWorkspace_ModuleReorderDownTip".Translate());
         }
 
         private List<PromptSectionLayoutConfig> GetPromptWorkspaceSectionLayouts()

@@ -330,8 +330,19 @@ namespace RimChat.Persistence
                     return ResolveRpgRelationSnapshot(context).SocialSummary;
                 case "dialogue.guidance":
                     return ResolveRpgRelationSnapshot(context).Guidance;
+                case "world.faction.relation_band":
+                    return BuildFactionRelationBandVariableValue(context);
+                case "pawn.target.traits_summary":
+                    return BuildPawnTraitsSummaryVariableValue(context);
+                case "world.faction.ideology_summary":
+                    return BuildFactionIdeologySummaryVariableValue(context);
+                case "world.faction.tech_level":
+                    return BuildFactionTechLevelVariableValue(context);
+                case "world.social.diplomacy_stance":
+                    return BuildSocialDiplomacyStanceVariableValue(context);
                 default:
-                    return null;
+                    Log.Warning($"[RimChat] Unknown template variable: '{variableName}' in ResolveTemplateVariableValue. Returning empty string.");
+                    return string.Empty;
             }
         }
 
@@ -719,6 +730,75 @@ namespace RimChat.Persistence
             Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
             string text = BuildFactionSettlementSummaryForPrompt(faction);
             return string.IsNullOrWhiteSpace(text) ? "No settlement context." : text;
+        }
+
+        private static string BuildFactionRelationBandVariableValue(DialogueScenarioContext context)
+        {
+            Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            if (faction == null || faction == Faction.OfPlayer)
+            {
+                return "PlayerFaction";
+            }
+
+            return faction.PlayerRelationKind.ToString();
+        }
+
+        private string BuildPawnTraitsSummaryVariableValue(DialogueScenarioContext context)
+        {
+            Pawn target = context?.Target;
+            if (target?.story?.traits == null)
+            {
+                return "No traits context.";
+            }
+
+            var traitStrings = new List<string>();
+            foreach (Trait trait in target.story.traits.allTraits)
+            {
+                if (trait == null)
+                {
+                    continue;
+                }
+
+                string label = trait.Label ?? string.Empty;
+                if (label.Length > 0)
+                {
+                    traitStrings.Add(label);
+                }
+            }
+
+            return traitStrings.Count > 0 ? string.Join(", ", traitStrings) : "No traits.";
+        }
+
+        private static string BuildFactionIdeologySummaryVariableValue(DialogueScenarioContext context)
+        {
+            Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            Ideo ideo = faction?.ideos?.PrimaryIdeo;
+            if (ideo == null)
+            {
+                return "No ideology.";
+            }
+
+            return ideo.name ?? "Unknown ideology";
+        }
+
+        private static string BuildFactionTechLevelVariableValue(DialogueScenarioContext context)
+        {
+            Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            TechLevel techLevel = faction?.def?.techLevel ?? TechLevel.Undefined;
+            return techLevel.ToString();
+        }
+
+        private static string BuildSocialDiplomacyStanceVariableValue(DialogueScenarioContext context)
+        {
+            Faction faction = context?.Faction ?? context?.Target?.Faction ?? context?.Initiator?.Faction;
+            if (faction == null || faction == Faction.OfPlayer)
+            {
+                return "Self";
+            }
+
+            FactionRelationKind relationKind = faction.PlayerRelationKind;
+            int goodwill = faction.PlayerGoodwill;
+            return $"{relationKind} (Goodwill: {goodwill})";
         }
     }
 }

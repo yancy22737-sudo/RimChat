@@ -194,6 +194,8 @@ namespace RimChat.Config
         // Advanced API Parameters
         public bool ThinkingEnabled = false;
         public string ReasoningEffort = "medium";
+        public float Temperature = 0.7f;
+        public int MaxTokens = 2048;
 
         // Comms Console Settings
         public bool ReplaceCommsConsole = false;
@@ -434,6 +436,8 @@ namespace RimChat.Config
             Scribe_Values.Look(ref EnableDiplomacyStrategyToggle, "EnableDiplomacyStrategyToggle", true);
             Scribe_Values.Look(ref ThinkingEnabled, "ThinkingEnabled", false);
             Scribe_Values.Look(ref ReasoningEffort, "ReasoningEffort", "medium");
+            Scribe_Values.Look(ref Temperature, "Temperature", 0.7f);
+            Scribe_Values.Look(ref MaxTokens, "MaxTokens", 2048);
 
             // Comms Console Settings
             Scribe_Values.Look(ref ReplaceCommsConsole, "ReplaceCommsConsole", false);
@@ -1832,6 +1836,17 @@ namespace RimChat.Config
                 case "high": return "RimChat_ReasoningEffortHigh".Translate();
                 case "xhigh": return "RimChat_ReasoningEffortXHigh".Translate();
                 default: return "RimChat_ReasoningEffortMedium".Translate();
+            }
+        }
+
+        internal static string GetMaxTokensLabel(int value)
+        {
+            switch (value)
+            {
+                case 1024: return "RimChat_MaxTokensShort".Translate();
+                case 2048: return "RimChat_MaxTokensNormal".Translate();
+                case 4096: return "RimChat_MaxTokensDetailed".Translate();
+                default: return value.ToString();
             }
         }
 

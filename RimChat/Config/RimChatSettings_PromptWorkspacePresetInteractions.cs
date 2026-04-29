@@ -24,7 +24,11 @@ namespace RimChat.Config
         private void DrawPromptWorkspacePresetActions(Rect rect)
         {
             float w = (rect.width - 6f) * 0.5f;
-            if (Widgets.ButtonText(new Rect(rect.x, rect.y, w, rect.height), "RimChat_PromptPreset_Create".Translate()))
+
+            Rect createRect = new Rect(rect.x, rect.y, w, rect.height);
+            Rect dupRect = new Rect(rect.x + w + 6f, rect.y, w, rect.height);
+
+            if (Widgets.ButtonText(createRect, "+"))
             {
                 try
                 {
@@ -34,7 +38,6 @@ namespace RimChat.Config
                     _selectedPromptPresetId = created.Id;
                     _presetRenameBuffer = created.Name;
                     CancelPromptWorkspaceInlineRename();
-                    Log.Message($"[RimChat][PresetDiag] Workspace create clicked. add_id={created.Id}, count={_promptPresetStore.Presets.Count}");
                     if (!TryActivatePresetById(created.Id, showSuccessMessage: false))
                     {
                         _promptPresetService.SaveAll(_promptPresetStore);
@@ -48,9 +51,10 @@ namespace RimChat.Config
                 }
             }
 
+            TooltipHandler.TipRegion(createRect, "RimChat_PromptPreset_CreateTip".Translate());
+
             PromptPresetConfig selected = GetSelectedPreset();
-            if (selected != null &&
-                Widgets.ButtonText(new Rect(rect.x + w + 6f, rect.y, w, rect.height), "RimChat_PromptPreset_Duplicate".Translate()))
+            if (selected != null && Widgets.ButtonText(dupRect, "D"))
             {
                 try
                 {
@@ -60,7 +64,6 @@ namespace RimChat.Config
                     _selectedPromptPresetId = duplicated.Id;
                     _presetRenameBuffer = duplicated.Name;
                     CancelPromptWorkspaceInlineRename();
-                    Log.Message($"[RimChat][PresetDiag] Workspace duplicate clicked. add_id={duplicated.Id}, count={_promptPresetStore.Presets.Count}");
                     if (!TryActivatePresetById(duplicated.Id, showSuccessMessage: false))
                     {
                         _promptPresetService.SaveAll(_promptPresetStore);
@@ -73,6 +76,8 @@ namespace RimChat.Config
                     Messages.Message("RimChat_PromptPreset_ActivateFailed".Translate(ex.Message), MessageTypeDefOf.RejectInput, false);
                 }
             }
+
+            TooltipHandler.TipRegion(dupRect, "RimChat_PromptPreset_DuplicateTip".Translate());
         }
 
         private void DrawPromptWorkspacePresetList(Rect rect)

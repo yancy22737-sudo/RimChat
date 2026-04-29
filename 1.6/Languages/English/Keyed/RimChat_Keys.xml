@@ -2341,6 +2341,13 @@ Selected prisoners: {1}
     <RimChat_PromptNodeSlot_MainChainAfter>After Main Chain</RimChat_PromptNodeSlot_MainChainAfter>
     <RimChat_PromptNodeSlot_DynamicDataAfter>After Dynamic Data</RimChat_PromptNodeSlot_DynamicDataAfter>
     <RimChat_PromptNodeSlot_ContractBeforeEnd>Before Contract End</RimChat_PromptNodeSlot_ContractBeforeEnd>
+
+    <!-- Workbench module list -->
+    <RimChat_PromptWorkspace_DeleteModuleBlocked>Cannot delete the last item.</RimChat_PromptWorkspace_DeleteModuleBlocked>
+    <RimChat_PromptWorkspace_DeleteModuleTip>Remove this item from the preset.</RimChat_PromptWorkspace_DeleteModuleTip>
+    <RimChat_PromptWorkspace_ModuleReorderHint>Select a module above, then use ▲▼ to reorder (same kind only).</RimChat_PromptWorkspace_ModuleReorderHint>
+    <RimChat_PromptWorkspace_ModuleReorderUpTip>Move selected module up.</RimChat_PromptWorkspace_ModuleReorderUpTip>
+    <RimChat_PromptWorkspace_ModuleReorderDownTip>Move selected module down.</RimChat_PromptWorkspace_ModuleReorderDownTip>
     <RimChat_PromptNodeSlot_Body>Body</RimChat_PromptNodeSlot_Body>
     <RimChat_PromptNode_FactGrounding>Fact Grounding</RimChat_PromptNode_FactGrounding>
     <RimChat_PromptNode_OutputLanguage>Output Language</RimChat_PromptNode_OutputLanguage>

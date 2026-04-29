@@ -2304,13 +2304,22 @@ namespace RimChat.AI
             }
 
             sb.Append("],");
-            sb.Append("\"temperature\":0.7,");
-            sb.Append("\"max_tokens\":2000");
 
-            // Thinking parameters from global settings — only emit when enabled.
-            // Some providers (e.g. Gemini) reject unknown keys, even with type=disabled.
             RimChatSettings globalSettings = RimChatMod.Settings;
             bool thinkingEnabled = globalSettings?.ThinkingEnabled ?? false;
+            bool isDeepSeek = config.Provider == AIProvider.DeepSeek;
+            float temperature = globalSettings?.Temperature ?? 0.7f;
+            int maxTokens = globalSettings?.MaxTokens ?? 2048;
+            if (maxTokens < 64) maxTokens = 2048;
+
+            // DeepSeek: temperature/top_p/presence_penalty/frequency_penalty are ignored when thinking is on.
+            // Skip temperature so callers don't assume it takes effect.
+            if (!thinkingEnabled || !isDeepSeek)
+            {
+                sb.Append($"\"temperature\":{temperature.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)},");
+            }
+            sb.Append($"\"max_tokens\":{maxTokens}");
+
             if (thinkingEnabled)
             {
                 string reasoningEffort = globalSettings?.ReasoningEffort ?? "medium";
@@ -2319,6 +2328,12 @@ namespace RimChat.AI
                 {
                     sb.Append($",\"reasoning_effort\":\"{EscapeJson(reasoningEffort)}\"");
                 }
+            }
+            else if (isDeepSeek)
+            {
+                // DeepSeek enables thinking by default; explicitly disable so that
+                // temperature and other sampling params take effect.
+                sb.Append($",\"thinking\":{{\"type\":\"disabled\"}}");
             }
             sb.Append("}");
 

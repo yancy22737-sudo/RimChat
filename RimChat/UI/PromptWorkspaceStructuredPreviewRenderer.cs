@@ -75,22 +75,18 @@ namespace RimChat.UI
             PromptWorkspaceStructuredPreview preview,
             ref Vector2 scroll)
         {
-            // Build a signature from the preview data + rect dimensions (excluding scroll
-            // since scroll changes every frame during user interaction).
-            // Dirty flag signals whether layout recalculation is needed.
+            // Direct IMGUI rendering — skips RenderTexture cache so scrolling works
+            DrawDirect(rect, preview, ref scroll);
+        }
+
+        internal void DrawDirect(
+            Rect rect,
+            PromptWorkspaceStructuredPreview preview,
+            ref Vector2 scroll)
+        {
             string signature = BuildRenderSignature(preview, rect);
             _rtCache.MarkDirtyIfChanged(signature);
-
-            // IMGUI requires rendering every frame to avoid flicker.
-            // The dirty flag only controls whether layout calculations are skipped.
-            Vector2 capturedScroll = scroll;
-            _rtCache.DrawWithCacheTracking(rect, localRect =>
-            {
-                DrawContent(localRect, preview, ref capturedScroll, _rtCache.Dirty);
-            });
-
-            // Update scroll from the rendered state (scroll may have been clamped)
-            scroll = capturedScroll;
+            DrawContent(rect, preview, ref scroll, _rtCache.Dirty);
         }
 
         private string BuildRenderSignature(PromptWorkspaceStructuredPreview preview, Rect rect)

@@ -70,6 +70,55 @@ namespace RimChat.Prompting
             }
         }
 
+        public string RenderLenient(
+            string templateId,
+            string channel,
+            string templateText,
+            PromptRenderContext context)
+        {
+            EnsureRuntimeProbeLogged();
+            if (string.IsNullOrWhiteSpace(templateText))
+            {
+                return string.Empty;
+            }
+
+            if (PromptTemplateBlockRegistry.TryGetReason(templateId, channel, out string reason))
+            {
+                Log.Warning($"[RimChat] Template blocked in lenient mode: {templateId} | {channel} | {reason}");
+                return string.Empty;
+            }
+
+            Template template;
+            try
+            {
+                template = ResolveTemplateOrThrow(templateId, channel, templateText);
+            }
+            catch (PromptRenderException ex)
+            {
+                Log.Warning($"[RimChat] Parse error in lenient mode: {templateId} | {ex.Message}");
+                return templateText ?? string.Empty;
+            }
+
+            TemplateContext runtimeContext = BuildLenientTemplateContext(context);
+            long startedTicks = Stopwatch.GetTimestamp();
+            try
+            {
+                string rendered = template.Render(runtimeContext);
+                return rendered?.Trim() ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[RimChat] Render error in lenient mode: {templateId} | {ex.Message}");
+                return templateText ?? string.Empty;
+            }
+            finally
+            {
+                long elapsedTicks = Stopwatch.GetTimestamp() - startedTicks;
+                long renderCount = PromptRenderTelemetry.RecordRenderTicks(elapsedTicks);
+                TryWriteTelemetryLog(renderCount);
+            }
+        }
+
         public void ValidateOrThrow(
             string templateId,
             string channel,
@@ -203,6 +252,20 @@ namespace RimChat.Prompting
             TrySetTemplateContextBool(templateContext, "EnableRelaxedMemberAccess", false);
             TrySetTemplateContextBool(templateContext, "EnableRelaxedTargetAccess", false);
             templateContext.PushGlobal(context?.Root ?? PromptRenderContext.Create("adhoc", "unknown").Root);
+            return templateContext;
+        }
+
+        private static TemplateContext BuildLenientTemplateContext(PromptRenderContext context)
+        {
+            var templateContext = new TemplateContext();
+            TrySetTemplateContextBool(templateContext, "StrictVariables", false);
+            TrySetTemplateContextBool(templateContext, "EnableRelaxedFunctionAccess", true);
+            TrySetTemplateContextBool(templateContext, "EnableRelaxedIndexerAccess", true);
+            TrySetTemplateContextBool(templateContext, "EnableRelaxedMemberAccess", true);
+            TrySetTemplateContextBool(templateContext, "EnableRelaxedTargetAccess", true);
+            ScriptObject rawRoot = context?.Root ?? PromptRenderContext.Create("adhoc", "unknown").Root;
+            var lenientRoot = new LenientScriptObject(rawRoot);
+            templateContext.PushGlobal(lenientRoot);
             return templateContext;
         }
 
@@ -383,6 +446,75 @@ namespace RimChat.Prompting
                     Column = Math.Max(0, column)
                 },
                 inner);
+        }
+
+        private sealed class LenientScriptObject : ScriptObject
+        {
+            private readonly ScriptObject inner;
+
+            public LenientScriptObject(ScriptObject inner)
+            {
+                this.inner = inner ?? new ScriptObject();
+                foreach (var kvp in this.inner)
+                {
+                    this[kvp.Key] = kvp.Value;
+                }
+            }
+
+            public override bool TryGetValue(TemplateContext context, Scriban.Parsing.SourceSpan span, string member, out object value)
+            {
+                if (TryGetValueInternal(context, span, member, out value))
+                {
+                    return true;
+                }
+
+                value = string.Empty;
+                return true;
+            }
+
+            private bool TryGetValueInternal(TemplateContext context, Scriban.Parsing.SourceSpan span, string member, out object value)
+            {
+                // 1. Exact match on self
+                if (base.TryGetValue(context, span, member, out value) && !(value is null))
+                {
+                    return true;
+                }
+
+                // 2. Case-insensitive match on self
+                foreach (var kvp in this)
+                {
+                    if (string.Equals(kvp.Key, member, StringComparison.OrdinalIgnoreCase))
+                    {
+                        value = kvp.Value;
+                        return true;
+                    }
+                }
+
+                // 3. Exact match on inner
+                if (inner.TryGetValue(context, span, member, out value) && !(value is null))
+                {
+                    return true;
+                }
+
+                // 4. Case-insensitive match on inner
+                foreach (var kvp in inner)
+                {
+                    if (string.Equals(kvp.Key, member, StringComparison.OrdinalIgnoreCase))
+                    {
+                        value = kvp.Value;
+                        return true;
+                    }
+                }
+
+                value = null;
+                return false;
+            }
+
+            public override bool TrySetValue(TemplateContext context, Scriban.Parsing.SourceSpan span, string member, object value, bool readOnly)
+            {
+                this[member] = value;
+                return true;
+            }
         }
     }
 }

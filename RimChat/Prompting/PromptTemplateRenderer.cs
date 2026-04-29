@@ -20,6 +20,15 @@ namespace RimChat.Prompting
             return Engine.RenderOrThrow(templateId, channel, templateText, context);
         }
 
+        public static string RenderLenient(
+            string templateId,
+            string channel,
+            string templateText,
+            PromptRenderContext context)
+        {
+            return Engine.RenderLenient(templateId, channel, templateText, context);
+        }
+
         public static PromptRenderContext BuildValidationContext(
             string templateId,
             string channel,

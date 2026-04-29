@@ -18,7 +18,7 @@ namespace RimChat.Prompting
     internal sealed class PromptRenderContext
     {
         private static readonly HashSet<string> AllowedNamespaces =
-            new HashSet<string>(new[] { "ctx", "pawn", "world", "dialogue", "system" }, StringComparer.Ordinal);
+            new HashSet<string>(new[] { "ctx", "pawn", "world", "dialogue", "system" }, StringComparer.OrdinalIgnoreCase);
 
         public string TemplateId { get; }
         public string Channel { get; }
@@ -96,7 +96,7 @@ namespace RimChat.Prompting
             for (int i = 0; i < segments.Length - 1; i++)
             {
                 string segment = segments[i];
-                if (!(current[segment] is ScriptObject next))
+                if (!(GetChildCaseInsensitive(current, segment) is ScriptObject next))
                 {
                     next = new ScriptObject();
                     current[segment] = next;
@@ -106,6 +106,25 @@ namespace RimChat.Prompting
             }
 
             return current;
+        }
+
+        private static object GetChildCaseInsensitive(ScriptObject parent, string key)
+        {
+            object exact = parent[key];
+            if (exact != null)
+            {
+                return exact;
+            }
+
+            foreach (var kvp in parent)
+            {
+                if (string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
+                {
+                    return kvp.Value;
+                }
+            }
+
+            return null;
         }
     }
 

@@ -292,21 +292,50 @@ namespace RimChat.DiplomacySystem
                 forced = true
             };
 
-            if (!TryResolveExecutableMilitaryAidIncident(parms, out IncidentDef militaryAidDef, out string resolveReason))
+            if (TryResolveExecutableMilitaryAidIncident(parms, out IncidentDef militaryAidDef, out string resolveReason))
             {
-                Log.Error($"[RimChat][AidIncidentExecuteFailFast] faction={faction?.Name ?? "null"}, reason={resolveReason}");
+                bool success = militaryAidDef.Worker.TryExecute(parms);
+                if (success)
+                {
+                    Log.Message($"[RimChat][AidIncidentResolve] faction={faction.Name}, incident={militaryAidDef.defName}, result=success");
+                    Log.Message($"[RimChat] Triggered military aid from {faction.Name}");
+                    SendAidLetter(faction, "RimChat_MilitaryAidArrivedTitle".Translate(),
+                        "RimChat_MilitaryAidLetterBody".Translate(faction.Name));
+                    return true;
+                }
+
+                Log.Warning($"[RimChat][AidIncidentResolve] faction={faction.Name}, incident={militaryAidDef.defName}, TryExecute returned false; falling back to custom spawn.");
+            }
+            else
+            {
+                Log.Warning($"[RimChat][AidIncidentResolve] faction={faction.Name}, vanilla incident unavailable ({resolveReason}); falling back to custom spawn.");
+            }
+
+            // Fallback: custom pawn generation (same approach as CallEveryone military aid)
+            return TriggerMilitaryAidCustomFallback(faction);
+        }
+
+        private static bool TriggerMilitaryAidCustomFallback(Faction faction)
+        {
+            if (!TryBuildCallEveryoneAidParms(faction, out Map map, out IncidentParms aidParms, out string buildReason))
+            {
+                Log.Error($"[RimChat][AidCustomFallbackFailFast] faction={faction?.Name ?? "null"}, stage=BuildParms, reason={buildReason}");
                 return false;
             }
 
-            bool success = militaryAidDef.Worker.TryExecute(parms);
-            if (!success)
+            if (!TryGenerateCallEveryoneAidPawns(aidParms, out List<Pawn> pawns, out string pawnReason))
             {
-                Log.Error($"[RimChat][AidIncidentExecuteFailFast] faction={faction?.Name ?? "null"}, incident={militaryAidDef.defName}, reason=TryExecuteReturnedFalse");
+                Log.Error($"[RimChat][AidCustomFallbackFailFast] faction={faction?.Name ?? "null"}, stage=GeneratePawns, reason={pawnReason}");
                 return false;
             }
 
-            Log.Message($"[RimChat][AidIncidentResolve] faction={faction.Name}, incident={militaryAidDef.defName}, result=success");
-            Log.Message($"[RimChat] Triggered military aid from {faction.Name}");
+            if (!TryArriveCallEveryoneAidPawns(map, aidParms, pawns, out string arriveReason))
+            {
+                Log.Error($"[RimChat][AidCustomFallbackFailFast] faction={faction?.Name ?? "null"}, stage=Arrive, reason={arriveReason}");
+                return false;
+            }
+
+            Log.Message($"[RimChat] Triggered military aid (custom fallback) from {faction.Name}, pawns={pawns.Count}");
             SendAidLetter(faction, "RimChat_MilitaryAidArrivedTitle".Translate(),
                 "RimChat_MilitaryAidLetterBody".Translate(faction.Name));
             return true;

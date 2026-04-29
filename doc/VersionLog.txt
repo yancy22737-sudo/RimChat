@@ -1,3 +1,20 @@
+0.9.1047
+- [优化] Scriban 渲染引擎新增宽松模式：未知变量返回空字符串不再报错，大小写不敏感解析，magic property 快捷访问
+- [优化] PromptRenderContext 改为大小写不敏感的命名空间查找（ctx/pawn/world/dialogue/system）
+- [优化] ResolveTemplateVariableValue 对未知变量返回空字符串 + 新增 5 个缺失变量（faction.relation_band/ideology_summary/tech_level、target.traits_summary、social.diplomacy_stance）
+- [优化] PromptVariableCatalog 新增相似变量建议（编辑距离算法）
+- [优化] 预览使用实时光照/温度/季节数据替代占位符；FactionPromptEditor 预览走 Scriban 渲染
+- [优化] 预览渲染改为直接 IMGUI（移除 RenderTexture 缓存中间层）修复完整预览滚动失效
+- [优化] 预览构建改为同步全量执行解决缓存为空时的预览空白问题
+- [修复] 模块列表崩溃：共享滚动变量导致虚拟滚动越界 → 改用独立 _promptWorkspaceModuleScroll + 移除虚拟滚动
+- [修复] 模块选中无视觉反馈 → 添加蓝色高亮背景
+- [修复] Checkbox 点击报错（GUI 栈失衡连锁故障）
+- [修复] 模块排序跨种类静默失败 → 扫描最近同种类邻居交换 + 刷新缓存
+- [修复] 完整预览"当前通道没有可预览内容"→ 同步构建 + 直接 IMGUI 渲染
+- [移除] 模块行 × 删除按钮 + DeletePromptWorkspaceModule/DuplicatePromptWorkspaceModule 死代码
+- [废弃] FactionPromptConfig 标记为 Obsolete（推荐 PromptTemplatePreset）
+- [新增] PromptTemplateEntry / PromptTemplatePreset / PromptEntryMigrationService 模型
+
 0.9.1046
 - [新增] 右侧pawn画像拖拽系统：弹簧物理跟随+弹簧回弹，碰撞检测（30%重叠），碰撞动画（震动+金色闪光），弹出动态关系菜单（强制恋爱/结婚/分手/离婚/约会/送礼/招募/降抵抗/降意志/灵感/事件）
 - [新增] 悬停右侧pawn画像上2/3区域触发钟摆式阻尼旋转动画（28°振幅，顶部中心为轴），提示"按住拖拽以触发强制行为"

@@ -46,36 +46,83 @@ namespace RimChat.Persistence
                 return;
             }
 
-            try
-            {
-                StepBuildStateCore(state);
-            }
-            catch (PromptRenderException ex)
-            {
-                MarkBuildFailed(state, BuildErrorDiagnostic(ex));
-            }
-            catch (Exception ex)
-            {
-                MarkBuildFailed(state, BuildErrorDiagnostic(ex, state.PromptChannel));
-            }
+            StepBuildStateCore(state);
         }
 
         private void StepBuildStateCore(PromptWorkspaceIncrementalPreviewBuildState state)
         {
+            try
+            {
+                switch (state.Preview.Stage)
+                {
+                    case PromptWorkspacePreviewBuildStage.Init:
+                        StepInitStage(state);
+                        return;
+                    case PromptWorkspacePreviewBuildStage.Sections:
+                        StepSectionStage(state);
+                        return;
+                    case PromptWorkspacePreviewBuildStage.Nodes:
+                        StepNodeStage(state);
+                        return;
+                    case PromptWorkspacePreviewBuildStage.Finalize:
+                        StepFinalizeStage(state);
+                        return;
+                }
+            }
+            catch (PromptRenderException ex)
+            {
+                RecordStepErrorAndAdvance(state, BuildErrorDiagnostic(ex));
+            }
+            catch (Exception ex)
+            {
+                RecordStepErrorAndAdvance(state, BuildErrorDiagnostic(ex, state.PromptChannel));
+            }
+        }
+
+        private void RecordStepErrorAndAdvance(
+            PromptWorkspaceIncrementalPreviewBuildState state,
+            PromptWorkspacePreviewErrorDiagnostic diagnostic)
+        {
+            // Record the error but continue building the preview.
+            // Keep the first error diagnostic but don't mark the entire build as failed.
+            if (state.Preview.ErrorDiagnostic == null)
+            {
+                state.Preview.ErrorDiagnostic = diagnostic;
+            }
+
+            // Add error block for this stage
+            state.Preview.Blocks.Add(new PromptWorkspacePreviewBlock
+            {
+                Kind = PromptWorkspacePreviewBlockKind.Error,
+                PromptChannel = state.PromptChannel,
+                Content = "RimChat_PromptWorkspacePreviewBuild_ErrorBody".Translate(
+                    diagnostic?.TemplateId ?? string.Empty,
+                    diagnostic?.Channel ?? string.Empty,
+                    diagnostic?.ErrorLine ?? 0,
+                    diagnostic?.ErrorColumn ?? 0,
+                    diagnostic?.Message ?? string.Empty).ToString()
+            });
+
+            // Advance to the next stage instead of failing entirely
+            AdvanceStageAfterError(state);
+        }
+
+        private void AdvanceStageAfterError(PromptWorkspaceIncrementalPreviewBuildState state)
+        {
             switch (state.Preview.Stage)
             {
                 case PromptWorkspacePreviewBuildStage.Init:
-                    StepInitStage(state);
-                    return;
+                    state.Preview.Stage = PromptWorkspacePreviewBuildStage.Sections;
+                    break;
                 case PromptWorkspacePreviewBuildStage.Sections:
-                    StepSectionStage(state);
-                    return;
+                    state.Preview.Stage = PromptWorkspacePreviewBuildStage.Nodes;
+                    break;
                 case PromptWorkspacePreviewBuildStage.Nodes:
-                    StepNodeStage(state);
-                    return;
-                case PromptWorkspacePreviewBuildStage.Finalize:
                     StepFinalizeStage(state);
-                    return;
+                    break;
+                default:
+                    state.Preview.Stage = PromptWorkspacePreviewBuildStage.Completed;
+                    break;
             }
         }
 

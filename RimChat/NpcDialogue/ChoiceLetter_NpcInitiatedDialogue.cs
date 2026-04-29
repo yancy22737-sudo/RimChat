@@ -35,6 +35,16 @@ namespace RimChat.NpcDialogue
             return nextUniqueLoadID++;
         }
 
+        /// <summary>
+        /// Assign a unique loadID to this letter instance immediately.
+        /// Must be called before ReceiveLetter to prevent loadID=0 collisions
+        /// when two letters are saved in the same save cycle.
+        /// </summary>
+        public void AssignLoadID()
+        {
+            LetterLoadIDField?.SetValue(this, nextUniqueLoadID++);
+        }
+
         public void Setup(Faction faction, TaggedString labelText, TaggedString bodyText, LetterDef letterDef)
         {
             relatedFaction = faction;

@@ -38,6 +38,16 @@ namespace RimChat.PawnRpgPush
             return nextUniqueLoadID++;
         }
 
+        /// <summary>
+        /// Assign a unique loadID to this letter instance immediately.
+        /// Must be called before ReceiveLetter to prevent loadID=0 collisions
+        /// when two letters are saved in the same save cycle.
+        /// </summary>
+        public void AssignLoadID()
+        {
+            LetterLoadIDField?.SetValue(this, nextUniqueLoadID++);
+        }
+
         public void Setup(Pawn npcPawn, Pawn playerPawn, TaggedString labelText, TaggedString bodyText, LetterDef letterDef)
         {
             npcLoadId = npcPawn?.thingIDNumber ?? -1;

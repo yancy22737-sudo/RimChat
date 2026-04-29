@@ -687,6 +687,7 @@ namespace RimChat.DiplomacySystem
             }
 
             var letter = new ChoiceLetter_NpcInitiatedDialogue();
+            letter.AssignLoadID();
             letter.Setup(faction, title, body, letterDef ?? LetterDefOf.NeutralEvent);
             Find.LetterStack.ReceiveLetter(letter, string.Empty, 0, true);
         }

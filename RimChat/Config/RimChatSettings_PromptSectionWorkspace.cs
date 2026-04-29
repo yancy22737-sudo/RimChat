@@ -30,6 +30,7 @@ namespace RimChat.Config
         private string _promptWorkspaceLastRenderedEditorTarget = string.Empty;
         private string _promptWorkspaceLastRenderedEditorText = string.Empty;
         private Vector2 _promptWorkspaceSectionScroll = Vector2.zero;
+        private Vector2 _promptWorkspaceModuleScroll = Vector2.zero;
         private Vector2 _promptWorkspaceNodeScroll = Vector2.zero;
         private Vector2 _promptWorkspaceEditorScroll = Vector2.zero;
         private Vector2 _promptWorkspacePreviewScroll = Vector2.zero;

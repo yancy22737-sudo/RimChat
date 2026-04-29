@@ -48,6 +48,7 @@ namespace RimChat.Config
     /// <summary>/// faction Prompt configuration
  /// 定义单个faction的 LLM dialogue风格和behavior特征
  ///</summary>
+    [Obsolete("Use PromptTemplatePreset with flat PromptTemplateEntry list instead. Migration available via PromptEntryMigrationService.")]
     public class FactionPromptConfig : IExposable
     {
         /// <summary>/// faction defName

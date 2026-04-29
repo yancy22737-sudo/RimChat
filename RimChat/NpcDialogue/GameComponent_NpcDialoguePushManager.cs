@@ -741,6 +741,7 @@ namespace RimChat.NpcDialogue
             TaggedString title = GetLetterTitle(context);
             LetterDef def = GetLetterDef(context);
             var letter = new ChoiceLetter_NpcInitiatedDialogue();
+            letter.AssignLoadID();
             letter.Setup(context.Faction, title, text, def);
             Find.LetterStack.ReceiveLetter(letter, string.Empty, 0, true);
         }

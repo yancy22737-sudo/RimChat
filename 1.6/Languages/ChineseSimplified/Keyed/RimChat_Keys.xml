@@ -2433,6 +2433,13 @@ ID：{5}
     <RimChat_PromptNodeSlot_MainChainAfter>主链后</RimChat_PromptNodeSlot_MainChainAfter>
     <RimChat_PromptNodeSlot_DynamicDataAfter>动态数据后</RimChat_PromptNodeSlot_DynamicDataAfter>
     <RimChat_PromptNodeSlot_ContractBeforeEnd>结尾契约前</RimChat_PromptNodeSlot_ContractBeforeEnd>
+
+    <!-- 工作台模块列表 -->
+    <RimChat_PromptWorkspace_DeleteModuleBlocked>无法删除最后一项。</RimChat_PromptWorkspace_DeleteModuleBlocked>
+    <RimChat_PromptWorkspace_DeleteModuleTip>从预设中移除此项。</RimChat_PromptWorkspace_DeleteModuleTip>
+    <RimChat_PromptWorkspace_ModuleReorderHint>在上方选中一个模块，然后用 ▲▼ 排序（仅限同类型）。</RimChat_PromptWorkspace_ModuleReorderHint>
+    <RimChat_PromptWorkspace_ModuleReorderUpTip>上移选中模块。</RimChat_PromptWorkspace_ModuleReorderUpTip>
+    <RimChat_PromptWorkspace_ModuleReorderDownTip>下移选中模块。</RimChat_PromptWorkspace_ModuleReorderDownTip>
     <RimChat_PromptNodeSlot_Body>正文</RimChat_PromptNodeSlot_Body>
     <RimChat_PromptNode_FactGrounding>事实约束</RimChat_PromptNode_FactGrounding>
     <RimChat_PromptNode_OutputLanguage>输出语言</RimChat_PromptNode_OutputLanguage>

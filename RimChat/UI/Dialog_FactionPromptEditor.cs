@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 using RimChat.Config;
+using RimChat.Prompting;
 
 namespace RimChat.UI
 {
@@ -252,12 +253,35 @@ namespace RimChat.UI
         private string BuildPreviewText()
         {
             var parts = new List<string>();
+            var renderContext = PromptRenderContext.Create("faction_editor.preview", "editor");
+            renderContext.SetValue("faction.name", factionConfig.DisplayName ?? "Faction");
+            renderContext.SetValue("faction.def_name", factionConfig.FactionDefName ?? "unknown");
+
             foreach (var field in factionConfig.TemplateFields)
             {
                 string value = fieldBuffers.ContainsKey(field.FieldName) ? fieldBuffers[field.FieldName] : field.FieldValue;
-                if (!string.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value))
                 {
-                    parts.Add($"{GetFieldLabel(field.FieldName)}: {value}");
+                    continue;
+                }
+
+                string rendered;
+                if (value.IndexOf("{{", System.StringComparison.Ordinal) >= 0)
+                {
+                    rendered = PromptTemplateRenderer.RenderLenient(
+                        "faction_editor.preview",
+                        "editor",
+                        value,
+                        renderContext);
+                }
+                else
+                {
+                    rendered = value;
+                }
+
+                if (!string.IsNullOrEmpty(rendered))
+                {
+                    parts.Add($"{GetFieldLabel(field.FieldName)}: {rendered}");
                 }
             }
             return string.Join("\n\n", parts);
