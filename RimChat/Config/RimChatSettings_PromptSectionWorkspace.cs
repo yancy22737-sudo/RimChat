@@ -726,10 +726,12 @@ namespace RimChat.Config
             }
 
             // Preview/FullPreview: read-only content — skip during Layout (only Repaint renders blocks).
+            // Must capture BeginScrollView return value so scroll input is preserved across events.
             if (Event.current.type != EventType.Repaint)
             {
-                GUI.BeginScrollView(contentRect, _promptWorkspacePreviewScroll,
-                    new Rect(0f, 0f, contentRect.width - 16f, 200f), false, true);
+                float contentH = _promptWorkspacePreviewRenderer?.CachedContentHeight ?? 200f;
+                _promptWorkspacePreviewScroll = GUI.BeginScrollView(contentRect, _promptWorkspacePreviewScroll,
+                    new Rect(0f, 0f, contentRect.width - 16f, Mathf.Max(1f, contentH)), false, true);
                 GUI.EndScrollView();
                 return;
             }

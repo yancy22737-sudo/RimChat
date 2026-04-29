@@ -29,6 +29,7 @@ namespace RimChat.UI
         private readonly List<float> _cachedBodyHeights = new List<float>();
         private readonly List<float> _cachedHeaderHeights = new List<float>();
         private float _cachedContentHeight = MinContentHeight;
+        internal float CachedContentHeight => _cachedContentHeight;
         private GUIStyle _headerStyle;
         private GUIStyle _subHeaderStyle;
         private GUIStyle _bodyStyle;
