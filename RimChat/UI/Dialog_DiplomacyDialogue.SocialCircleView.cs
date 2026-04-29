@@ -34,11 +34,18 @@ namespace RimChat.UI
             string socialLabel = unreadCount > 0
                 ? "RimChat_SocialCircleTabWithUnread".Translate(unreadCount)
                 : "RimChat_SocialCircleTab".Translate();
-            Rect chatRect = new Rect(rect.x, rect.y, 122f, 28f);
-            Rect socialRect = new Rect(chatRect.xMax + 6f, rect.y, 145f, 28f);
-            Rect albumRect = new Rect(socialRect.xMax + 8f, rect.y, 98f, 28f);
-            Rect selfieRect = new Rect(albumRect.xMax + 6f, rect.y, 98f, 28f);
-            Rect historyRect = new Rect(selfieRect.xMax + 6f, rect.y, 110f, 28f);
+            float tabH = 28f;
+            float gap = 5f;
+            float chatW = 100f;
+            float socialW = 110f;
+            float albumW = 82f;
+            float selfieW = 82f;
+            float historyW = rect.width - chatW - socialW - albumW - selfieW - gap * 4;
+            Rect chatRect = new Rect(rect.x, rect.y, chatW, tabH);
+            Rect socialRect = new Rect(chatRect.xMax + gap, rect.y, socialW, tabH);
+            Rect albumRect = new Rect(socialRect.xMax + gap, rect.y, albumW, tabH);
+            Rect selfieRect = new Rect(albumRect.xMax + gap, rect.y, selfieW, tabH);
+            Rect historyRect = new Rect(selfieRect.xMax + gap, rect.y, historyW, tabH);
             DrawDialogueMainTabButton(chatRect, "RimChat_DialogueMainTabChat".Translate(), currentMainTab == DialogueMainTab.Chat, DialogueMainTab.Chat);
             DrawDialogueMainTabButton(socialRect, socialLabel, currentMainTab == DialogueMainTab.SocialCircle, DialogueMainTab.SocialCircle);
             bool blockImageFeatures = false;
@@ -134,13 +141,12 @@ namespace RimChat.UI
 
         private void DrawSocialToolbar(Rect rect, GameComponent_DiplomacyManager manager)
         {
-            Rect allRect = new Rect(rect.x, rect.y, 58f, rect.height);
-            Rect militaryRect = new Rect(allRect.xMax + 4f, rect.y, 78f, rect.height);
-            Rect ecoRect = new Rect(militaryRect.xMax + 4f, rect.y, 78f, rect.height);
-            Rect dipRect = new Rect(ecoRect.xMax + 4f, rect.y, 78f, rect.height);
-            Rect anomalyRect = new Rect(dipRect.xMax + 4f, rect.y, 78f, rect.height);
-            const float publishWidth = 84f;
-            const float countWidth = 170f;
+            Rect allRect = new Rect(rect.x, rect.y, 50f, rect.height);
+            Rect militaryRect = new Rect(allRect.xMax + 3f, rect.y, 65f, rect.height);
+            Rect ecoRect = new Rect(militaryRect.xMax + 3f, rect.y, 65f, rect.height);
+            Rect dipRect = new Rect(ecoRect.xMax + 3f, rect.y, 65f, rect.height);
+            const float publishWidth = 76f;
+            const float countWidth = 120f;
             Rect publishRect = new Rect(rect.xMax - publishWidth, rect.y + 2f, publishWidth, rect.height - 4f);
             Rect countRect = new Rect(publishRect.x - 8f - countWidth, rect.y + 8f, countWidth, 18f);
 
@@ -148,7 +154,6 @@ namespace RimChat.UI
             DrawSocialFilterButton(militaryRect, "RimChat_NewsCategoryMilitary".Translate(), socialCategoryFilter == SocialPostCategory.Military, SocialPostCategory.Military);
             DrawSocialFilterButton(ecoRect, "RimChat_NewsCategoryEconomic".Translate(), socialCategoryFilter == SocialPostCategory.Economic, SocialPostCategory.Economic);
             DrawSocialFilterButton(dipRect, "RimChat_NewsCategoryDiplomatic".Translate(), socialCategoryFilter == SocialPostCategory.Diplomatic, SocialPostCategory.Diplomatic);
-            DrawSocialFilterButton(anomalyRect, "RimChat_NewsCategoryAnomaly".Translate(), socialCategoryFilter == SocialPostCategory.Anomaly, SocialPostCategory.Anomaly);
             DrawSocialPrimaryButton(publishRect, "RimChat_ManualSocialPostOpen".Translate(), OpenManualSocialPostDialog);
 
             GUI.color = new Color(0.75f, 0.8f, 0.86f);

@@ -1,3 +1,17 @@
+0.9.1049
+- [New] Comms terminal CRT display theme: barrel distortion, green phosphor, scanlines, vignette
+- [New] Terminal bezel texture (terminal.png) replaces flat color backgrounds
+- [New] Spacer auto-theme: auto-switches to space texture after completing Spacer-level research
+- [New] Bezel hotspot (bottom-left): manual theme toggle for Spacer era, with hover highlight and sound
+- [Adjust] Faction list width 220→160, icon 40→32, row height 62→48, more space for chat area
+- [Adjust] Tab buttons resized to fit new layout, history tab auto-fills remaining width
+- [Adjust] Social toolbar buttons narrowed, removed Anomaly filter button
+- [Adjust] Window width 900→960, panel padding 10→8
+- [Adjust] Terminal pauses once on open, player can manually unpause (forcePause→false)
+- [Adjust] Close button uses custom draw (default position hidden by bezel)
+- [Fix] Window background now matches CRT bezel (disabled Window base class semi-transparent bg)
+- Version: bumped `About/About.xml` to `0.9.1049`.
+
 0.9.1048
 - [New] Module list header: New/Import/Export buttons next to module title
 - [New] New custom module dialog (ID/name/slot selection)

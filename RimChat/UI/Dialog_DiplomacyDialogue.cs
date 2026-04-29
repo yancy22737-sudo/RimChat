@@ -66,13 +66,13 @@ namespace RimChat.UI
         private Rect lastMessagesViewRect = Rect.zero;
         private Rect lastWindowContentRect = Rect.zero;
         private const int MAX_INPUT_LENGTH = 500;
-        private const float FACTION_LIST_WIDTH = 220f;
+        private const float FACTION_LIST_WIDTH = 160f;
         private const float INPUT_AREA_HEIGHT = 80f;
         private const float STRATEGY_BAR_HEIGHT = 36f;
         private const float TIME_GAP_THRESHOLD_MINUTES = 15f;
         private const float BUBBLE_CORNER_RADIUS = 12f;
         private const float LayoutHeaderTop = 45f;
-        private const float LayoutPanelPadding = 10f;
+        private const float LayoutPanelPadding = 8f;
         private const float LayoutTabsHeight = 32f;
         private const float LayoutTabsSpacing = 4f;
         private const float LayoutTraderCardHeight = 60f;
@@ -92,14 +92,14 @@ namespace RimChat.UI
         private const float LayoutTitleVersionChoiceTotalWidth = LayoutTitleVersionChoiceWidth * 2f + LayoutTitleVersionChoiceGap;
         private const float LayoutTitleVersionRightPadding = 75f;
         private const float LayoutCloseButtonSize = 30f;
-        private const float LayoutFactionInnerPadding = 8f;
-        private const float LayoutFactionHeaderHeight = 31f;
-        private const float LayoutFactionHeaderButtonSize = 22f;
-        private const float LayoutFactionRowHeight = 62f;
+        private const float LayoutFactionInnerPadding = 6f;
+        private const float LayoutFactionHeaderHeight = 28f;
+        private const float LayoutFactionHeaderButtonSize = 20f;
+        private const float LayoutFactionRowHeight = 48f;
         private const float LayoutFactionRowSpacing = 4f;
         private const float LayoutFactionVerticalLineY = 26f;
-        private const float LayoutGoodwillAnimOffsetX = 63f;
-        private const float LayoutGoodwillAnimOffsetY = 32f;
+        private const float LayoutGoodwillAnimOffsetX = 47f;
+        private const float LayoutGoodwillAnimOffsetY = 22f;
         private const float BlockedReasonAutoScrollSpeed = 18f;
         private const float BlockedReasonAutoScrollPauseSeconds = 0.6f;
         private const string DialogueInputControlName = "DialogueInput";
@@ -290,7 +290,7 @@ namespace RimChat.UI
             }
         }
 
-        public override Vector2 InitialSize => new Vector2(900f, 720f);
+        public override Vector2 InitialSize => new Vector2(960f, 720f);
 
         public Dialog_DiplomacyDialogue(
             Faction faction,
@@ -302,12 +302,13 @@ namespace RimChat.UI
             this.negotiator = ResolveAutoNegotiator(negotiator);
             closeOnClickedOutside = false;
             absorbInputAroundWindow = false;
-            doCloseX = true;
+            doCloseX = false; // disabled: bezel covers the default position; custom close button in DrawTitleBar
             closeOnAccept = false;
             closeOnCancel = true;
             onlyOneOfTypeAllowed = false;
-            forcePause = true;
+            forcePause = false;
             draggable = true;
+            doWindowBackground = false;
 
             // Settings打开和关闭音效
             if (!muteOpenSound)
@@ -318,6 +319,9 @@ namespace RimChat.UI
 
             BindActiveFactionState(faction, runtimeContext, windowLifecycleKey);
             RefreshPresenceOnDialogueOpen();
+
+            // Pause once on open; player can manually unpause (forcePause=false)
+            Find.TickManager.Pause();
 
             // 订阅goodwill变化event
             GoodwillChangeAnimator.OnGoodwillChanged += OnGoodwillChanged;
@@ -511,29 +515,33 @@ namespace RimChat.UI
 
         public override void DoWindowContents(Rect inRect)
         {
+            // Layer 1: CRT bezel frame (outermost background)
+            DrawCRTBezelBackground(inRect);
+
+            // Shrink content area inward so nothing is hidden behind the bezel frame
+            Rect crtContent = ShrinkForBezel(inRect);
+
             PollDiplomacyMemoryRevision();
             ApplyPendingDiplomacyMemoryRefresh();
-            // inRect is window-local coords, so x=y=0 is expected for centered windows
-            lastWindowScreenPos = new Vector2(inRect.x, inRect.y);
-            lastWindowContentRect = inRect;
+            lastWindowScreenPos = new Vector2(crtContent.x, crtContent.y);
+            lastWindowContentRect = crtContent;
             speakerHoverRequestThisFrame = false;
-            // 更新逐字output效果
             UpdateTypewriterEffect();
 
-            DrawTitleBar(inRect);
+            DrawTitleBar(crtContent);
 
             Rect factionListRect = new Rect(
-                inRect.x,
-                inRect.y + LayoutHeaderTop,
+                crtContent.x,
+                crtContent.y + LayoutHeaderTop,
                 FACTION_LIST_WIDTH,
-                inRect.height - LayoutHeaderTop - LayoutPanelPadding);
+                crtContent.height - LayoutHeaderTop - LayoutPanelPadding);
             DrawFactionList(factionListRect);
 
-            float rightX = inRect.x + FACTION_LIST_WIDTH + LayoutPanelPadding;
-            float rightWidth = inRect.width - FACTION_LIST_WIDTH - LayoutPanelPadding;
+            float rightX = crtContent.x + FACTION_LIST_WIDTH + LayoutPanelPadding;
+            float rightWidth = crtContent.width - FACTION_LIST_WIDTH - LayoutPanelPadding;
             float contentY = LayoutHeaderTop;
 
-            Rect tabsRect = new Rect(rightX, inRect.y + contentY, rightWidth, LayoutTabsHeight);
+            Rect tabsRect = new Rect(rightX, crtContent.y + contentY, rightWidth, LayoutTabsHeight);
             contentY += DrawDialogueMainTabs(tabsRect) + LayoutTabsSpacing;
 
             if (IsChatTabActive())
@@ -541,16 +549,16 @@ namespace RimChat.UI
                 TradeShip tradeShip = GetTradeShip();
                 if (tradeShip != null)
                 {
-                    Rect cardRect = new Rect(rightX, inRect.y + contentY, rightWidth, LayoutTraderCardHeight);
+                    Rect cardRect = new Rect(rightX, crtContent.y + contentY, rightWidth, LayoutTraderCardHeight);
                     DrawOrbitalTraderCard(cardRect, tradeShip);
                     contentY += LayoutTraderCardSpacing;
                 }
 
-                contentY += DrawExpandedActions(new Rect(rightX, inRect.y + contentY, rightWidth, inRect.height - contentY));
+                contentY += DrawExpandedActions(new Rect(rightX, crtContent.y + contentY, rightWidth, crtContent.height - contentY));
             }
 
-            float contentHeight = inRect.height - contentY - LayoutPanelPadding;
-            Rect rightPanelRect = new Rect(rightX, inRect.y + contentY, rightWidth, contentHeight);
+            float contentHeight = crtContent.height - contentY - LayoutPanelPadding;
+            Rect rightPanelRect = new Rect(rightX, crtContent.y + contentY, rightWidth, contentHeight);
             if (IsChatTabActive())
             {
                 DrawChatArea(rightPanelRect);
@@ -560,10 +568,11 @@ namespace RimChat.UI
                 DrawSocialCirclePanel(rightPanelRect);
             }
 
-            // 绘制goodwill变化动画 (在所有 UI 之上)
-            GoodwillChangeAnimator.UpdateAndDrawAnimations();
+            // Layer 2: CRT overlay (green tint + scanlines + vignette on content)
+            DrawCRTOverlay(crtContent);
 
-            // 绘制发言者悬浮卡 (在所有 UI 之上)
+            // Layer 3: goodwill animations and hover cards (topmost interactive layer)
+            GoodwillChangeAnimator.UpdateAndDrawAnimations();
             DrawSpeakerHoverCard();
         }
 
@@ -871,10 +880,10 @@ namespace RimChat.UI
                 Widgets.DrawBoxSolid(new Rect(rect.x + 2f, rect.y + 6f, 3f, rect.height - 12f), new Color(0.24f, 0.82f, 0.96f));
             }
 
-            float x = rect.x + 8f + (hasUnread && !isSelected ? 5f : 0f);
-            float y = rect.y + 6f;
+            float x = rect.x + 6f + (hasUnread && !isSelected ? 4f : 0f);
+            float y = rect.y + 4f;
 
-            Rect iconFrame = new Rect(x, y, 40f, 40f);
+            Rect iconFrame = new Rect(x, y, 32f, 32f);
             Widgets.DrawBoxSolid(iconFrame, new Color(0.18f, 0.2f, 0.25f, 0.95f));
             GUI.color = new Color(0.34f, 0.38f, 0.46f, 0.9f);
             Widgets.DrawBox(iconFrame);
@@ -886,23 +895,23 @@ namespace RimChat.UI
             {
                 GUI.DrawTexture(iconRect, factionIcon);
             }
-            x += 48f;
+            x += 38f;
 
-            float rightReserved = Mathf.Lerp(8f, 62f, hoverAlpha);
-            float contentWidth = Mathf.Max(50f, rect.xMax - x - rightReserved);
-            Rect nameRect = new Rect(x, y + 1f, contentWidth, 32f);
+            float rightReserved = Mathf.Lerp(4f, 44f, hoverAlpha);
+            float contentWidth = Mathf.Max(40f, rect.xMax - x - rightReserved);
+            Rect nameRect = new Rect(x, y + 1f, contentWidth, 24f);
             GUI.color = isSelected ? Color.white : new Color(0.9f, 0.93f, 0.98f);
             bool previousWordWrap = Text.WordWrap;
             Text.WordWrap = true;
             Widgets.Label(nameRect, f.Name ?? "Unknown");
             Text.WordWrap = previousWordWrap;
 
-            Rect presenceRect = new Rect(x, y + 34f, contentWidth, 16f);
+            Rect presenceRect = new Rect(x, y + 25f, contentWidth, 14f);
             Text.Font = GameFont.Tiny;
             DrawFactionPresenceStatus(f, presenceRect, false);
 
             string goodwillText = goodwill >= 0 ? $"+{goodwill}" : goodwill.ToString();
-            Rect goodwillRect = new Rect(rect.xMax - 60f, y + 1f, 52f, 20f);
+            Rect goodwillRect = new Rect(rect.xMax - 44f, y + 1f, 38f, 16f);
             if (showGoodwillValue)
             {
                 GUI.color = new Color(goodwillColor.r, goodwillColor.g, goodwillColor.b, hoverAlpha);
@@ -911,7 +920,7 @@ namespace RimChat.UI
                 Text.Anchor = TextAnchor.UpperLeft;
             }
 
-            Rect relationBgRect = new Rect(rect.xMax - 66f, y + 33f, 58f, 18f);
+            Rect relationBgRect = new Rect(rect.xMax - 48f, y + 25f, 42f, 14f);
             Widgets.DrawBoxSolid(relationBgRect, new Color(goodwillColor.r * 0.3f, goodwillColor.g * 0.3f, goodwillColor.b * 0.3f, 0.55f));
             GUI.color = goodwillColor;
             Text.Font = GameFont.Tiny;
@@ -1542,6 +1551,7 @@ namespace RimChat.UI
             _whiteTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             _whiteTexture.SetPixel(0, 0, Color.white);
             _whiteTexture.Apply();
+            InitTerminalTheme();
         }
 
         private static Texture2D _circleTexture;
